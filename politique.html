@@ -1,28 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BamanaShop - Politique de confidentialité.</title>
+    <title>BamanaShop - Politique de confidentialité</title>
+    <!-- Google Fonts for premium feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/politique.css">
 </head>
-<body></title>
-</head>
-<body>
+<body class="secondary-page">
     <header>
-        <h1>Politique de confidentialité.</h1>
+        <div class="header-container">
+            <div class="logo-area">
+                <h1>BamanaShop</h1>
+                <p class="subtitle">Politique de confidentialité</p>
+            </div>
+            <div class="header-controls">
+                <button id="theme-toggle" class="icon-btn" aria-label="Changer de thème">
+                    <span class="theme-icon-sun">☀️</span>
+                    <span class="theme-icon-moon">🌙</span>
+                </button>
+            </div>
+        </div>
+        <nav>
+            <ul>
+               <li><a href="index.html">Accueil</a></li>
+               <li><a href="index.html#produits">Produits</a></li>
+               <li><a href="index.html#about">À propos</a></li>
+               <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
     </header>
-    <main>
-       <p> Nous prenons la confidentialité des informations personnelles de nos utilisateurs au sérieux. Ce site est en phase de développement et n'est pas encore actif pour la collecte de données. Les informations personnelles qui pourraient être collectées lors de tests ou d'interactions sur le site ne seront pas utilisées à des fins commerciales ou partagées avec des tiers.</p>
 
-<h2>Collecte de données :</h2> <p>Les données que nous pourrions collecter dans cet environnement de développement, comme le nom, l'adresse e-mail ou les informations de paiement, sont uniquement utilisées à des fins de test et de développement interne. Aucune donnée réelle n'est stockée sur ce site en phase de test.</p>
+    <main class="container page-content">
+        <section class="card-section">
+            <p class="intro-text">Nous prenons la confidentialité des informations personnelles de nos utilisateurs au sérieux. Ce site est en phase de développement et n'est pas encore actif pour la collecte de données réelles. Les informations qui pourraient être renseignées lors de tests ou d'interactions sur le site ne seront pas utilisées à des fins commerciales ou partagées avec des tiers.</p>
 
-<h2>Sécurité des données :</h2> <p>Des mesures de sécurité de base sont mises en place pour protéger toutes les informations collectées pendant le développement. Cependant, ce site n'est pas encore prêt à garantir la sécurité totale des informations sensibles.</p>
+            <div class="legal-block">
+                <h2>Collecte de données :</h2>
+                <p>Les données que nous pourrions collecter dans cet environnement de développement, comme le nom, l'adresse e-mail ou les informations de paiement simulées, sont uniquement utilisées à des fins de test et de développement interne. Aucune donnée réelle n'est stockée de façon permanente sur ce site en phase de test.</p>
+            </div>
 
-<h2>Utilisation des données :</h2> <p>Les données collectées servent uniquement à tester les fonctionnalités du site et à simuler une expérience d'achat. Elles ne sont pas utilisées à des fins commerciales ou partagées avec des partenaires externes.</p>
+            <div class="legal-block">
+                <h2>Sécurité des données :</h2>
+                <p>Des mesures de sécurité de base sont mises en place pour protéger toutes les informations collectées pendant le développement. Cependant, ce site n'est pas encore configuré ni prêt à garantir la sécurité totale des informations hautement sensibles.</p>
+            </div>
+
+            <div class="legal-block">
+                <h2>Utilisation des données :</h2>
+                <p>Les données collectées servent uniquement à tester les fonctionnalités du site et à simuler une expérience d'achat. Elles ne sont en aucun cas revendues, utilisées à des fins commerciales ou partagées avec des partenaires externes.</p>
+            </div>
+        </section>
     </main>
+
     <footer>
-        <p>&copy; 2024 BamanaShop. Créé et distribué par NovaCreations.</p>
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h3>BamanaShop</h3>
+                <p>&copy; 2024 BamanaShop. Créé et distribué par NovaCreations.</p>
+            </div>
+            <div class="footer-links">
+                <a href="utilisation.html">Conditions d'utilisation</a>
+                <a href="politique.html" class="active">Politique de confidentialité</a>
+            </div>
+        </div>
+        <div class="footer-notice">
+            <p>Veuillez noter que ce site est actuellement en développement et ne permet pas de réaliser de transactions réelles.</p>
+        </div>
     </footer>
+
+    <script src="js/app.js"></script>
 </body>
 </html>

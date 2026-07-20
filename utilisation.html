@@ -3,26 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BamanaShop - Conditions d'utilisation</title>
+    <!-- Google Fonts for premium feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/utilisation.css">
-    <title>BamanaShop - Conditions d'utilisation.</title>
 </head>
-<body>
+<body class="secondary-page">
     <header>
-        <h1>Conditions d'utilisation.</h1>
+        <div class="header-container">
+            <div class="logo-area">
+                <h1>BamanaShop</h1>
+                <p class="subtitle">Conditions d'utilisation</p>
+            </div>
+            <div class="header-controls">
+                <button id="theme-toggle" class="icon-btn" aria-label="Changer de thème">
+                    <span class="theme-icon-sun">☀️</span>
+                    <span class="theme-icon-moon">🌙</span>
+                </button>
+            </div>
+        </div>
+        <nav>
+            <ul>
+               <li><a href="index.html">Accueil</a></li>
+               <li><a href="index.html#produits">Produits</a></li>
+               <li><a href="index.html#about">À propos</a></li>
+               <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
     </header>
-    <main>
-        <p>Les présentes conditions d'utilisation s'appliquent à ce site en développement. Ce site est actuellement en phase de test et ne doit pas être utilisé pour effectuer des achats réels ou partager des informations sensibles.</p>
 
-<h2>Utilisation du site :</h2> <p>Ce site est destiné à être utilisé uniquement à des fins de développement et de tests. Vous acceptez que toutes les interactions effectuées dans cet environnement de test soient utilisées à des fins internes uniquement.</p>
+    <main class="container page-content">
+        <section class="card-section">
+            <p class="intro-text">Les présentes conditions d'utilisation s'appliquent à ce site en développement. Ce site est actuellement en phase de test et de démonstration technique et ne doit pas être utilisé pour effectuer des achats réels ou partager des informations sensibles.</p>
 
-<h2>Propriété intellectuelle :</h2> <p>Tout le contenu du site, y compris les textes, images, et graphismes, est sous réserve de droits de propriété intellectuelle et est utilisé uniquement pour les besoins du développement. Ce contenu ne doit pas être reproduit ou utilisé à des fins commerciales.</p>
+            <div class="legal-block">
+                <h2>Utilisation du site :</h2>
+                <p>Ce site est destiné à être utilisé uniquement à des fins de développement, de test et de démonstration d'interface. Vous acceptez que toutes les interactions effectuées dans cet environnement soient utilisées à des fins internes uniquement.</p>
+            </div>
 
-<h2>Limitation de responsabilité :</h2> <p>Étant donné que ce site est en développement, aucune responsabilité ne peut être engagée pour les erreurs ou bugs qui pourraient survenir. Les données saisies dans ce cadre sont fictives et ne doivent pas être considérées comme réelles.</p>
+            <div class="legal-block">
+                <h2>Propriété intellectuelle :</h2>
+                <p>Tout le contenu du site, y compris les textes, images, et éléments graphiques, fait l'objet de droits de propriété intellectuelle ou est utilisé temporairement à des fins d'illustration dans le cadre du développement de la vitrine. Ce contenu ne doit pas être reproduit ou utilisé à des fins commerciales sans autorisation.</p>
+            </div>
 
-<h2>Modifications des conditions :</h2> <p>Ces conditions d'utilisation sont susceptibles d'être mises à jour à mesure que le développement du site avance. Toute modification sera indiquée sur cette page.</p>
+            <div class="legal-block">
+                <h2>Limitation de responsabilité :</h2>
+                <p>Étant donné que ce site est en développement, aucune responsabilité ne peut être engagée pour les erreurs, bugs ou interruptions de service qui pourraient survenir. Les données saisies dans ce cadre sont considérées comme fictives et ne doivent pas être traitées comme réelles.</p>
+            </div>
+
+            <div class="legal-block">
+                <h2>Modifications des conditions :</h2>
+                <p>Ces conditions d'utilisation sont susceptibles d'être adaptées et mises à jour à mesure que le développement de BamanaShop progresse. Toute modification sera immédiatement répercutée sur cette page.</p>
+            </div>
+        </section>
     </main>
+
     <footer>
-        <p>&copy; 2024 BamanaShop. Créé et distribué par NovaCreations.</p>
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h3>BamanaShop</h3>
+                <p>&copy; 2024 BamanaShop. Créé et distribué par NovaCreations.</p>
+            </div>
+            <div class="footer-links">
+                <a href="utilisation.html" class="active">Conditions d'utilisation</a>
+                <a href="politique.html">Politique de confidentialité</a>
+            </div>
+        </div>
+        <div class="footer-notice">
+            <p>Veuillez noter que ce site est actuellement en développement et ne permet pas de réaliser de transactions réelles.</p>
+        </div>
     </footer>
+
+    <script src="js/app.js"></script>
 </body>
 </html>

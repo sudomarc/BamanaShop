@@ -4,13 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BamanaShop - Produits Culturels</title>
+    <!-- Google Fonts for premium feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/style.css">
 </head>
 <body>
     <!-- En-tête -->
     <header>
-      <h1>Découvrez les Produits Bamana</h1>
-   <nav>
+        <div class="header-container">
+            <div class="logo-area">
+                <h1>BamanaShop</h1>
+                <p class="subtitle">Artisanat & Objets Culturels</p>
+            </div>
+            <div class="header-controls">
+                <!-- Theme toggle button -->
+                <button id="theme-toggle" class="icon-btn" aria-label="Changer de thème">
+                    <span class="theme-icon-sun">☀️</span>
+                    <span class="theme-icon-moon">🌙</span>
+                </button>
+                <!-- Cart button -->
+                <button id="cart-btn" class="icon-btn" aria-label="Voir le panier">
+                    🛒 <span id="cart-badge" class="badge">0</span>
+                </button>
+            </div>
+        </div>
+        <nav>
             <ul>
                <li><a href="#">Accueil</a></li>
                <li><a href="#produits">Produits</a></li>
@@ -20,48 +40,194 @@
         </nav>
     </header>
 
-    <!-- Section des Produits -->
-    <section id="produits">
-        <h2>Nos Produits</h2>
-        <div class="produit">
-            <img src="res/img/bamana.png" alt="Bamana" />
-            <h3>Bamana</h3>
-            <p>Découvrez la culture Bamana avec nos produits exclusifs.</p>
-            <button>Acheter</button>
-        </div>
-        <div class="produit">
-            <img src="res/img/vintage.png" alt="Vintage" />
-            <h3>Vintage</h3>
-            <p>Explorez les traditions Fang avec notre sélection spéciale.</p>
-            <button>Acheter</button>
-        </div>
-        <div class="produit">
-            <img src="res/img/nostalgie.png" alt="Nostalgie" />
-            <h3>Nostalgie</h3>
-            <p>Découvrez l'artisanat nostalgique pour enrichir votre collection.</p>
-            <button>Acheter</button>
-        </div>
-    </section>
+    <main class="container">
+        <!-- Section Hero / Introduction -->
+        <section class="hero">
+            <h2>Explorez l'authenticité et l'héritage culturel</h2>
+            <p>Chaque pièce raconte une histoire unique. Notre collection met en lumière l'art, les traditions et le savoir-faire ancestral africain.</p>
+        </section>
 
-    <!-- Section À propos -->
-    <section id="about">
-        <h2>À propos de Nous</h2>
-        <p>Notre site vous offre une sélection unique de produits culturels pour explorer la richesse de diverses cultures.</p>
-    </section>
+        <!-- Barre de Recherche et Filtres -->
+        <section class="filters-section">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Rechercher un produit culturel..." aria-label="Rechercher">
+                <span class="search-icon">🔍</span>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-category="all">Tous</button>
+                <button class="filter-btn" data-category="bamana">Bamana</button>
+                <button class="filter-btn" data-category="vintage">Vintage</button>
+                <button class="filter-btn" data-category="nostalgie">Nostalgie</button>
+            </div>
+        </section>
 
-    <!-- Section Contact -->
-    <section id="contact">
-        <h2>Contactez-nous !</h2>
-        <p>Pour toute question, n'hésitez pas à nous contacter .</p>
-        <a href="mailto:novacreationsbypat@gmail.com"><img src="res/img/mail.png" alt="Mail"></a>
-        <a href="https://github.com/Patrrikcode2"><img src="res/img/github.png" alt="github"></a>
-        <a href="https://www.instagram.com/nova.creationsbypat/profilecard/?igsh=MTFmcXI4N3BqNXRkZA==">$<img src="res/img/insta.png" alt="insta"></a>
-    </section>
+        <!-- Section des Produits -->
+        <section id="produits" class="products-section">
+            <h2>Nos Pièces d'Exception</h2>
+            <div class="products-grid">
+                <!-- Produit 1 -->
+                <div class="produit-card" data-category="bamana" data-id="1" data-name="Masque Bamana" data-price="120">
+                    <div class="produit-image-container">
+                        <img src="res/img/bamana.png" alt="Masque Bamana" class="lightbox-trigger" />
+                        <span class="tag">Bamana</span>
+                    </div>
+                    <div class="produit-info">
+                        <h3>Masque Bamana</h3>
+                        <p class="description">Découvrez la culture Bamana à travers ce masque traditionnel de cérémonie sculpté à la main.</p>
+                        <div class="price-action">
+                            <span class="price">120,00 €</span>
+                            <button class="btn btn-primary add-to-cart-btn">Acheter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produit 2 -->
+                <div class="produit-card" data-category="vintage" data-id="2" data-name="Statue Fang Vintage" data-price="185">
+                    <div class="produit-image-container">
+                        <img src="res/img/vintage.png" alt="Statue Fang Vintage" class="lightbox-trigger" />
+                        <span class="tag">Vintage</span>
+                    </div>
+                    <div class="produit-info">
+                        <h3>Statue Fang Vintage</h3>
+                        <p class="description">Explorez les traditions Fang avec cette magnifique statue d'ancêtre à patine sombre et riche d'histoire.</p>
+                        <div class="price-action">
+                            <span class="price">185,00 €</span>
+                            <button class="btn btn-primary add-to-cart-btn">Acheter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produit 3 -->
+                <div class="produit-card" data-category="nostalgie" data-id="3" data-name="Calebasse Nostalgie" data-price="75">
+                    <div class="produit-image-container">
+                        <img src="res/img/nostalgie.png" alt="Calebasse Nostalgie" class="lightbox-trigger" />
+                        <span class="tag">Nostalgie</span>
+                    </div>
+                    <div class="produit-info">
+                        <h3>Calebasse Nostalgie</h3>
+                        <p class="description">Une œuvre artisanale gravée aux motifs ancestraux, idéale pour enrichir votre collection ou décorer.</p>
+                        <div class="price-action">
+                            <span class="price">75,00 €</span>
+                            <button class="btn btn-primary add-to-cart-btn">Acheter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section À propos -->
+        <section id="about" class="about-section">
+            <div class="about-content">
+                <h2>À propos de BamanaShop</h2>
+                <p>Notre mission est de proposer une sélection unique et authentique d'objets d'artisanat et de pièces de collection africaines. En collaborant directement avec des artisans et des experts locaux, nous contribuons à la préservation et au rayonnement de traditions culturelles inestimables.</p>
+                <p>Chaque produit est minutieusement vérifié pour certifier son caractère authentique, sa qualité de fabrication, et son profond respect envers l'histoire de la communauté dont il est issu.</p>
+            </div>
+        </section>
+
+        <!-- Section Contact -->
+        <section id="contact" class="contact-section">
+            <h2>Contactez-nous</h2>
+            <p>Une question sur un produit, une commande ou l'origine d'une œuvre ? Notre équipe est à votre entière disposition.</p>
+
+            <div class="contact-grid">
+                <!-- Contact Form -->
+                <div class="contact-form-container">
+                    <form id="contact-form">
+                        <div class="form-group">
+                            <label for="contact-name">Nom complet</label>
+                            <input type="text" id="contact-name" name="name" placeholder="Votre nom" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-email">Adresse e-mail</label>
+                            <input type="email" id="contact-email" name="email" placeholder="votre@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-message">Votre message</label>
+                            <textarea id="contact-message" name="message" rows="5" placeholder="Comment pouvons-nous vous aider ?" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-submit">Envoyer le message</button>
+                    </form>
+                </div>
+
+                <!-- Socials & Direct Mail -->
+                <div class="contact-info-container">
+                    <h3>Canaux de communication</h3>
+                    <p>Vous pouvez nous écrire directement ou nous suivre sur nos réseaux sociaux pour découvrir nos nouveautés.</p>
+                    <div class="social-links">
+                        <a href="mailto:novacreationsbypat@gmail.com" class="social-item">
+                            <img src="res/img/mail.png" alt="Email Direct">
+                            <span>novacreationsbypat@gmail.com</span>
+                        </a>
+                        <a href="https://github.com/Patrrikcode2" target="_blank" rel="noopener" class="social-item">
+                            <img src="res/img/github.png" alt="GitHub">
+                            <span>GitHub (Patrrikcode2)</span>
+                        </a>
+                        <a href="https://www.instagram.com/nova.creationsbypat/profilecard/?igsh=MTFmcXI4N3BqNXRkZA==" target="_blank" rel="noopener" class="social-item">
+                            <img src="res/img/insta.png" alt="Instagram">
+                            <span>@nova.creationsbypat</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Panier (Cart Drawer) -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content cart-drawer">
+            <div class="modal-header">
+                <h2>Votre Panier</h2>
+                <button class="close-btn" id="close-cart-btn" aria-label="Fermer le panier">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="cart-items" class="cart-items-container">
+                    <!-- Dynamic cart items will go here -->
+                    <p class="empty-cart-msg">Votre panier est vide.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="cart-summary">
+                    <div class="summary-line">
+                        <span>Total :</span>
+                        <span id="cart-total-price">0,00 €</span>
+                    </div>
+                </div>
+                <div class="cart-actions">
+                    <button id="clear-cart-btn" class="btn btn-secondary">Vider le panier</button>
+                    <button id="checkout-btn" class="btn btn-primary btn-block">Valider la commande</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal for Images -->
+    <div id="lightbox" class="lightbox-modal">
+        <span class="lightbox-close">&times;</span>
+        <img class="lightbox-content" id="lightbox-img" alt="Agrandissement du produit">
+        <div id="lightbox-caption"></div>
+    </div>
+
+    <!-- Alert system for notifications -->
+    <div id="toast-container" class="toast-container"></div>
 
     <!-- Pied de page -->
     <footer>
-        <p>&copy; 2024 BamanaShop. Créé et distribué par NovaCreations.</p>
-        <p>En utilisant ce site, vous accepter nos <a href="utilisation.html">Conditions d'utilisation</a> et notre <a href="politique.html">Politique de confidentialité</a>. Veuillez noter que ce site est actuellement en développement et ne permet pas de réaliser de transaction réelles.</p>
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h3>BamanaShop</h3>
+                <p>&copy; 2024 BamanaShop. Créé et distribué par NovaCreations.</p>
+            </div>
+            <div class="footer-links">
+                <a href="utilisation.html">Conditions d'utilisation</a>
+                <a href="politique.html">Politique de confidentialité</a>
+            </div>
+        </div>
+        <div class="footer-notice">
+            <p>Veuillez noter que ce site est actuellement en développement et ne permet pas de réaliser de transactions réelles.</p>
+        </div>
     </footer>
+
+    <!-- JavaScript logic -->
+    <script src="js/app.js"></script>
 </body>
 </html>
