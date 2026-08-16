@@ -1,23 +1,109 @@
+/* Politique CSS */
+:root {
+    --bg-primary: #f8fafc;
+    --bg-surface: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --accent: #d97706;
+    --border-color: #e2e8f0;
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07);
+    --radius-md: 12px;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-surface: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --accent: #f59e0b;
+    --border-color: #334155;
+}
+
 * {
-    margin: 0;
     padding: 0;
+    margin: 0;
     box-sizing: border-box;
 }
 
 body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     line-height: 1.6;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #333;
-    background-color: #f0f0f0;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
-header {
-    padding: 15px;
+
+.page-header {
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    padding: 2.5rem 1.5rem;
+}
+
+.header-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.back-link {
+    display: inline-block;
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.header-content h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.4rem;
+}
+
+.legal-container {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 0 1.5rem;
+    flex-grow: 1;
+}
+
+.legal-card {
+    background-color: var(--bg-surface);
+    padding: 2.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.intro-text {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.legal-section {
+    margin-bottom: 2rem;
+}
+
+.legal-section h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+}
+
+.legal-section p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+footer {
+    background-color: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
+    padding: 2rem 1.5rem;
     text-align: center;
-    background-color: #333;
-    color: #f0f0f0;
+    color: var(--text-secondary);
+    margin-top: auto;
 }
-
-main {
-    margin: 15px;
-}
-

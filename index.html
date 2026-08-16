@@ -1,67 +1,224 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BamanaShop - Produits Culturels</title>
+    <title>BamanaShop - Artisants & Culture Africaine</title>
     <link rel="stylesheet" href="styles/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- En-tête -->
-    <header>
-      <h1>Découvrez les Produits Bamana</h1>
-   <nav>
-            <ul>
-               <li><a href="#">Accueil</a></li>
-               <li><a href="#produits">Produits</a></li>
-               <li><a href="#about">À propos</a></li>
-               <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
+    <!-- En-tête / Header -->
+    <header class="navbar-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">✨</span>
+                    <span class="logo-text">Bamana<span>Shop</span></span>
+                </a>
+            </div>
+
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#accueil" class="active">Accueil</a></li>
+                    <li><a href="#produits">Catalogue</a></li>
+                    <li><a href="#about">À propos</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-actions">
+                <button id="theme-toggle" class="icon-btn" aria-label="Changer le thème">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button id="cart-btn" class="cart-btn" aria-label="Ouvrir le panier">
+                    <span class="cart-icon">🛒</span>
+                    <span class="cart-label">Panier</span>
+                    <span id="cart-count" class="cart-badge">0</span>
+                </button>
+            </div>
+        </div>
     </header>
 
+    <!-- Hero Section -->
+    <section id="accueil" class="hero-section">
+        <div class="hero-content">
+            <span class="hero-badge">Authenticité & Tradition</span>
+            <h1>L'artisanat Bamana & Africain d'exception</h1>
+            <p>Explorez une collection unique de créations traditionnelles et contemporaines façonnées à la main par nos artisans d'Afrique de l'Ouest.</p>
+            <div class="hero-buttons">
+                <a href="#produits" class="btn btn-primary">Découvrir le catalogue</a>
+                <a href="#about" class="btn btn-outline">En savoir plus</a>
+            </div>
+        </div>
+    </section>
+
     <!-- Section des Produits -->
-    <section id="produits">
-        <h2>Nos Produits</h2>
-        <div class="produit">
-            <img src="res/img/bamana.png" alt="Bamana" />
-            <h3>Bamana</h3>
-            <p>Découvrez la culture Bamana avec nos produits exclusifs.</p>
-            <button>Acheter</button>
+    <section id="produits" class="products-section">
+        <div class="section-header">
+            <h2>Notre Collection Exclusive</h2>
+            <p>Des pièces uniques chargées d'histoire et de savoir-faire ancestral.</p>
         </div>
-        <div class="produit">
-            <img src="res/img/vintage.png" alt="Vintage" />
-            <h3>Vintage</h3>
-            <p>Explorez les traditions Fang avec notre sélection spéciale.</p>
-            <button>Acheter</button>
+
+        <!-- Bar de recherche & filtres -->
+        <div class="filter-bar">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" placeholder="Rechercher un produit (ex: Bamana, Vintage...)" aria-label="Rechercher un produit">
+            </div>
+            <div class="category-filters">
+                <button class="filter-btn active" data-category="all">Tous</button>
+                <button class="filter-btn" data-category="masques">Masques & Statues</button>
+                <button class="filter-btn" data-category="artisanat">Artisanat</button>
+                <button class="filter-btn" data-category="textiles">Textiles & Reliques</button>
+            </div>
         </div>
-        <div class="produit">
-            <img src="res/img/nostalgie.png" alt="Nostalgie" />
-            <h3>Nostalgie</h3>
-            <p>Découvrez l'artisanat nostalgique pour enrichir votre collection.</p>
-            <button>Acheter</button>
+
+        <div id="product-grid" class="product-grid">
+            <!-- Produit 1 -->
+            <article class="produit-card" data-id="1" data-name="Masque Bamana Traditionnel" data-price="120" data-category="masques">
+                <div class="card-image-wrapper">
+                    <img src="res/img/bamana.png" alt="Masque Bamana Traditionnel" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'300\' viewBox=\'0 0 300 300\'><rect width=\'100%\' height=\'100%\' fill=\'%23d97706\'/><text x=\'50%\' y=\'50%\' font-family=\'sans-serif\' font-size=\'22\' fill=\'%23ffffff\' text-anchor=\'middle\' dominant-baseline=\'middle\'>Masque Bamana</text></svg>';">
+                    <span class="tag-badge">Populaire</span>
+                </div>
+                <div class="card-body">
+                    <span class="category-tag">Masques & Statues</span>
+                    <h3>Masque Bamana Traditionnel</h3>
+                    <p class="description">Sculpture authentique en bois précieux, symbole de sagesse et de tradition Bamana.</p>
+                    <div class="card-footer">
+                        <span class="price">120,00 €</span>
+                        <button class="btn-add-cart" data-id="1" data-name="Masque Bamana Traditionnel" data-price="120" data-img="res/img/bamana.png">
+                            + Ajouter
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Produit 2 -->
+            <article class="produit-card" data-id="2" data-name="Statuette Fang Vintage" data-price="85" data-category="masques">
+                <div class="card-image-wrapper">
+                    <img src="res/img/vintage.png" alt="Statuette Fang Vintage">
+                    <span class="tag-badge">Rare</span>
+                </div>
+                <div class="card-body">
+                    <span class="category-tag">Masques & Statues</span>
+                    <h3>Statuette Fang Vintage</h3>
+                    <p class="description">Explorez les traditions Fang avec cette sélection spéciale sculptée à la main.</p>
+                    <div class="card-footer">
+                        <span class="price">85,00 €</span>
+                        <button class="btn-add-cart" data-id="2" data-name="Statuette Fang Vintage" data-price="85" data-img="res/img/vintage.png">
+                            + Ajouter
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Produit 3 -->
+            <article class="produit-card" data-id="3" data-name="Reliqutaire Nostalgie" data-price="65" data-category="artisanat">
+                <div class="card-image-wrapper">
+                    <img src="res/img/nostalgie.png" alt="Reliquaire Nostalgie">
+                </div>
+                <div class="card-body">
+                    <span class="category-tag">Artisanat</span>
+                    <h3>Reliquaire Nostalgie</h3>
+                    <p class="description">Découvrez l'artisanat nostalgique d'Afrique pour enrichir et sublimer votre collection.</p>
+                    <div class="card-footer">
+                        <span class="price">65,00 €</span>
+                        <button class="btn-add-cart" data-id="3" data-name="Reliquaire Nostalgie" data-price="65" data-img="res/img/nostalgie.png">
+                            + Ajouter
+                        </button>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <div id="no-results" class="no-results hidden">
+            <p>Aucun produit ne correspond à votre recherche.</p>
         </div>
     </section>
 
     <!-- Section À propos -->
-    <section id="about">
-        <h2>À propos de Nous</h2>
-        <p>Notre site vous offre une sélection unique de produits culturels pour explorer la richesse de diverses cultures.</p>
+    <section id="about" class="about-section">
+        <div class="about-container">
+            <div class="about-text">
+                <h2>À propos de NovaCreations</h2>
+                <p>BamanaShop est une initiative portée par <strong>NovaCreations</strong>, visant à promouvoir, préserver et valoriser le patrimoine culturel africain.</p>
+                <p>Chaque pièce présente dans notre catalogue provient directement de créateurs passionnés qui perpétuent des gestes séculaires tout en intégrant des esthétiques contemporaines.</p>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Artisanal</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">Fait Main</span>
+                        <span class="stat-label">Pièces Uniques</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">Équitable</span>
+                        <span class="stat-label">Engagement</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- Section Contact -->
-    <section id="contact">
-        <h2>Contactez-nous !</h2>
-        <p>Pour toute question, n'hésitez pas à nous contacter .</p>
-        <a href="mailto:novacreationsbypat@gmail.com"><img src="res/img/mail.png" alt="Mail"></a>
-        <a href="https://github.com/Patrrikcode2"><img src="res/img/github.png" alt="github"></a>
-        <a href="https://www.instagram.com/nova.creationsbypat/profilecard/?igsh=MTFmcXI4N3BqNXRkZA==">$<img src="res/img/insta.png" alt="insta"></a>
+    <section id="contact" class="contact-section">
+        <div class="contact-container">
+            <h2>Restons en contact</h2>
+            <p>Une question sur une pièce ? Une commande personnalisée ? Contactez l'équipe NovaCreations.</p>
+            <div class="social-links">
+                <a href="mailto:novacreationsbypat@gmail.com" class="social-card" title="Nous envoyer un e-mail">
+                    <img src="res/img/mail.png" alt="Email NovaCreations">
+                    <span>E-mail</span>
+                </a>
+                <a href="https://github.com/Patrrikcode2" target="_blank" rel="noopener noreferrer" class="social-card" title="Profil GitHub">
+                    <img src="res/img/github.png" alt="GitHub NovaCreations">
+                    <span>GitHub</span>
+                </a>
+                <a href="https://www.instagram.com/nova.creationsbypat/profilecard/?igsh=MTFmcXI4N3BqNXRkZA==" target="_blank" rel="noopener noreferrer" class="social-card" title="Compte Instagram">
+                    <img src="res/img/insta.png" alt="Instagram NovaCreations">
+                    <span>Instagram</span>
+                </a>
+            </div>
+        </div>
     </section>
+
+    <!-- Drawer du Panier -->
+    <div id="cart-overlay" class="cart-overlay"></div>
+    <aside id="cart-drawer" class="cart-drawer" aria-label="Panier d'achat">
+        <div class="cart-header">
+            <h3>Mon Panier (<span id="cart-drawer-count">0</span>)</h3>
+            <button id="close-cart" class="close-btn" aria-label="Fermer le panier">&times;</button>
+        </div>
+        <div id="cart-items" class="cart-items">
+            <!-- Rempli dynamiquement en JS -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total-row">
+                <span>Total :</span>
+                <span id="cart-total-price">0,00 €</span>
+            </div>
+            <button id="checkout-btn" class="btn btn-primary btn-block">Valider ma commande (Simulation)</button>
+            <button id="clear-cart-btn" class="btn btn-text btn-block">Vider le panier</button>
+        </div>
+    </aside>
+
+    <!-- Notifications Toast -->
+    <div id="toast-container" class="toast-container"></div>
 
     <!-- Pied de page -->
     <footer>
-        <p>&copy; 2024 BamanaShop. Créé et distribué par NovaCreations.</p>
-        <p>En utilisant ce site, vous accepter nos <a href="utilisation.html">Conditions d'utilisation</a> et notre <a href="politique.html">Politique de confidentialité</a>. Veuillez noter que ce site est actuellement en développement et ne permet pas de réaliser de transaction réelles.</p>
+        <div class="footer-container">
+            <div class="footer-info">
+                <p>&copy; 2024-2026 BamanaShop. Créé et distribué par <strong>NovaCreations</strong>.</p>
+                <p class="footer-disclaimer">En utilisant ce site, vous acceptez nos <a href="utilisation.html">Conditions d'utilisation</a> et notre <a href="politique.html">Politique de confidentialité</a>. Notez que ce site est actuellement en démonstration vitrine.</p>
+            </div>
+        </div>
     </footer>
+
+    <script src="js/app.js"></script>
 </body>
 </html>
