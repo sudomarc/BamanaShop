@@ -10,7 +10,7 @@ Périmètre exclusif :
 - `supabase/**`
 - `packages/contracts/**`
 - `packages/domain/**`
-- tests SQL sous `supabase/tests/**)
+- tests SQL sous `supabase/tests/**`
 
 Livrables :
 - modèle de données initial et migrations ;
@@ -62,7 +62,7 @@ L'UI ne remplace jamais les contrôles serveur. Aucun vendeur ne peut accéder a
 Périmètre exclusif :
 - `apps/admin/**`
 - `tests/**`
-- `docs/qa/**)
+- `docs/qa/**`
 
 Livrables :
 - base Next.js / TypeScript ;
