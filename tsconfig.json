@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@bamanashop/contracts": ["packages/contracts/src"],
+      "@bamanashop/domain": ["packages/domain/src"],
+      "@bamanashop/contracts/*": ["packages/contracts/src/*"],
+      "@bamanashop/domain/*": ["packages/domain/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build", ".expo", ".next"]
+}

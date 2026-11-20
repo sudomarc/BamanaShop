@@ -1,0 +1,37 @@
+{
+  "name": "bamanashop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "BamanaShop Marketplace - Monorepo for Customer, Pro, Admin apps with shared packages and Supabase backend",
+  "scripts": {
+    "dev:customer": "pnpm --filter=@bamanashop/customer dev",
+    "dev:pro": "pnpm --filter=@bamanashop/pro dev",
+    "dev:admin": "pnpm --filter=@bamanashop/admin dev",
+    "dev": "pnpm run --parallel dev:customer dev:pro dev:admin",
+    "build": "pnpm run --filter=@bamanashop/customer build && pnpm run --filter=@bamanashop/pro build && pnpm run --filter=@bamanashop/admin build",
+    "build:packages": "pnpm run --filter=@bamanashop/contracts build && pnpm run --filter=@bamanashop/domain build",
+    "lint": "pnpm run -r --filter=!@bamanashop/admin lint",
+    "format:check": "pnpm run -r format:check",
+    "typecheck": "pnpm run -r typecheck",
+    "test": "pnpm run -r test",
+    "test:rls": "pnpm --filter=@bamanashop/supabase test:rls",
+    "supabase:start": "pnpm --filter=@bamanashop/supabase start",
+    "supabase:stop": "pnpm --filter=@bamanashop/supabase stop",
+    "supabase:reset": "pnpm --filter=@bamanashop/supabase reset",
+    "supabase:types": "pnpm --filter=@bamanashop/supabase types",
+    "supabase:db:pull": "pnpm --filter=@bamanashop/supabase db:pull",
+    "verify:all": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@12.21.0",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.0.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0"
+  }
+}
