@@ -95,19 +95,6 @@ jobs:
     needs: verify
     if: github.event_name != 'workflow_dispatch' || inputs.task == 'verify'
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: supabase/postgres:15.1.0.137
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -143,10 +130,10 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Generate database types
-        run: pnpm supabase:types
+        run: npx supabase gen types typescript --local > packages/contracts/src/database.generated.ts
 
       - name: Run RLS tests
-        run: pnpm test:rls
+        run: pnpm --filter=@bamanashop/supabase exec vitest run tests
 
   eas-build:
     name: EAS build (${{ matrix.platform }})
