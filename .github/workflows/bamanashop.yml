@@ -1,0 +1,290 @@
+name: BamanaShop
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Manual action"
+        type: choice
+        options:
+          - verify
+          - build-android
+          - build-ios
+          - download-eas-build
+          - cleanup-legacy-history
+        default: verify
+      profile:
+        description: "EAS build profile"
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+        default: preview
+      download_platform:
+        description: "Platform of the EAS build to download"
+        type: choice
+        options:
+          - android
+          - ios
+        default: android
+      build_id:
+        description: "EAS build ID (required for download-eas-build)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bamanashop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Quality checks
+    if: github.event_name != 'workflow_dispatch' || inputs.task == 'verify'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # react-native-screens currently has a postinstall hook that calls an
+      # unavailable bob binary. CI does not need native install hooks.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build Admin dashboard
+        run: pnpm --filter=@bamanashop/admin build
+
+      - name: Validate legacy storefront SEO
+        run: node scripts/validate-seo.mjs
+
+  rls:
+    name: Supabase RLS tests
+    needs: verify
+    if: github.event_name != 'workflow_dispatch' || inputs.task == 'verify'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: supabase/postgres:15.1.0.137
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Start local Supabase
+        working-directory: supabase
+        run: npx supabase start
+        env:
+          SUPABASE_URL: http://127.0.0.1:54321
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Reset database
+        working-directory: supabase
+        run: npx supabase db reset --linked=false
+        env:
+          SUPABASE_URL: http://127.0.0.1:54321
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Generate database types
+        run: pnpm supabase:types
+
+      - name: Run RLS tests
+        run: pnpm test:rls
+
+  eas-build:
+    name: EAS build (${{ matrix.platform }})
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      ((inputs.task == 'build-android' && matrix.platform == 'android') ||
+       (inputs.task == 'build-ios' && matrix.platform == 'ios'))
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            runner: ubuntu-latest
+          - platform: ios
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Install EAS CLI
+        run: npm install --global eas-cli
+
+      - name: Verify Expo authentication
+        working-directory: apps/customer
+        run: eas whoami
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Queue EAS build
+        working-directory: apps/customer
+        run: eas build --platform "${{ matrix.platform }}" --profile "${{ inputs.profile }}" --non-interactive --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+
+  download-eas-build:
+    name: Download EAS build
+    if: github.event_name == 'workflow_dispatch' && inputs.task == 'download-eas-build'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install EAS CLI
+        run: npm install --global eas-cli
+
+      - name: Download build
+        run: |
+          if [ -z "$BUILD_ID" ]; then
+            echo "::error::Enter an EAS build ID in the workflow inputs."
+            exit 1
+          fi
+          mkdir -p eas-build
+          eas build:download --platform "$PLATFORM" --id "$BUILD_ID" --output ./eas-build
+          test -n "$(find eas-build -type f -print -quit)"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+          BUILD_ID: ${{ inputs.build_id }}
+          PLATFORM: ${{ inputs.download_platform }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bamanashop-eas-${{ inputs.download_platform }}-${{ inputs.build_id }}
+          path: eas-build/*
+          if-no-files-found: error
+          retention-days: 30
+
+  cleanup-legacy-history:
+    name: Delete runs from retired workflows
+    if: github.event_name == 'workflow_dispatch' && inputs.task == 'cleanup-legacy-history'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Delete legacy workflow runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const activePath = ".github/workflows/bamanashop.yml";
+            const runs = [];
+            let page = 1;
+
+            // Fetch every page before deleting; deletion changes page offsets.
+            while (true) {
+              const response = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page,
+              });
+              runs.push(...response.data.workflow_runs);
+              if (
+                response.data.workflow_runs.length < 100 ||
+                runs.length >= response.data.total_count
+              ) break;
+              page += 1;
+            }
+
+            const legacyRuns = runs.filter((run) =>
+              run.id !== context.runId &&
+              run.path?.startsWith(".github/workflows/") &&
+              run.path !== activePath
+            );
+
+            for (const run of legacyRuns) {
+              await github.rest.actions.deleteWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id,
+              });
+              core.info("Deleted " + run.id + ": " + run.name + " (" + run.path + ")");
+            }
+
+            await core.summary
+              .addHeading("Legacy workflow history cleanup")
+              .addRaw("Deleted " + legacyRuns.length + " run(s) from retired workflow files. The current BamanaShop workflow and GitHub Pages system runs were kept.")
+              .write();
