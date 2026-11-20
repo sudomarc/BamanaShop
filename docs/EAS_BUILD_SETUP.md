@@ -1,0 +1,208 @@
+# EAS Build Setup & APK Installation Guide
+
+This guide walks you through setting up GitHub Actions for automated EAS builds, downloading the APK, and installing it on your Android phone via ADB.
+
+## Prerequisites
+
+1. **Expo Account** - Create at https://expo.dev
+2. **EAS CLI** - `npm install -g eas-cli`
+3. **GitHub Repository** - With Actions enabled
+4. **Android Phone** - With USB Debugging enabled
+5. **ADB** - Installed on your computer
+
+## Step 1: Configure EAS Project
+
+### 1.1 Login to Expo
+```bash
+eas login
+```
+
+### 1.2 Initialize EAS Project (if not done)
+```bash
+cd apps/customer
+eas project:init
+```
+This will create/update `eas.json` and add the `projectId` to `app.json`.
+
+### 1.3 Verify Configuration
+```bash
+eas project:info
+```
+
+## Step 2: Add GitHub Secrets
+
+Go to your GitHub repository: **Settings → Secrets and variables → Actions → New repository secret**
+
+Add these secrets:
+
+| Secret Name | Value | Description |
+|-------------|-------|-------------|
+| `EXPO_TOKEN` | Your Expo access token | Get from `eas login` or https://expo.dev/accounts/[account]/settings/access-tokens |
+| `EAS_PROJECT_ID` | Your EAS project ID | From `eas project:info` or app.json extra.eas.projectId |
+
+### Get EXPO_TOKEN:
+```bash
+# After eas login, token is stored in ~/.expo/token.json
+# Or create a new access token at:
+# https://expo.dev/accounts/[your-account]/settings/access-tokens
+```
+
+### Get EAS_PROJECT_ID:
+```bash
+eas project:info
+# Look for "Project ID" in output
+# Or check apps/customer/app.json -> extra.eas.projectId
+```
+
+## Step 3: Trigger the Build
+
+### Option A: Via GitHub Actions UI (Recommended)
+1. Go to **Actions** tab in GitHub
+2. Select **"EAS Build - Android APK"** workflow
+3. Click **"Run workflow"**
+4. Choose:
+   - **Platform**: `android`
+   - **Profile**: `production` (or `preview` for internal testing)
+5. Click **"Run workflow"**
+
+### Option B: Via Git Push
+```bash
+git add .
+git commit -m "trigger eas build"
+git push origin main
+```
+
+### Option C: Local Build (for testing)
+```bash
+cd apps/customer
+eas build --platform android --profile production
+```
+
+## Step 4: Monitor Build Progress
+
+1. **GitHub Actions**: Watch the workflow run in the Actions tab
+2. **EAS Dashboard**: https://expo.dev/accounts/[account]/projects/bamanashop/builds
+3. **Build Logs**: Click on the build in EAS dashboard for detailed logs
+
+Build typically takes **10-20 minutes** for Android APK.
+
+## Step 5: Download the APK
+
+### Option A: From GitHub Actions (if workflow succeeds)
+1. Go to the completed workflow run
+2. Click **"Artifacts"** → Download `eas-build-android-apk` or `eas-apk-<BUILD_ID>`
+3. Extract the ZIP to get the `.apk` file
+
+### Option B: From EAS Dashboard
+1. Go to https://expo.dev/accounts/[account]/projects/bamanashop/builds
+2. Click on the completed build
+3. Click **"Download"** → **"APK"**
+
+### Option C: Using the Download Script
+```bash
+# Get BUILD_ID from eas build output or EAS dashboard
+./scripts/download-and-install-apk.sh <BUILD_ID>
+```
+
+### Option D: Manual EAS CLI Download
+```bash
+eas build:download --platform android --id <BUILD_ID> --output ./apk
+```
+
+## Step 6: Install on Phone via ADB
+
+### 6.1 Enable USB Debugging on Phone
+1. **Settings → About Phone** → Tap "Build Number" 7 times
+2. **Settings → Developer Options** → Enable "USB Debugging"
+3. Connect phone via USB
+4. Allow USB debugging prompt on phone
+
+### 6.2 Verify ADB Connection
+```bash
+adb devices
+# Should show your device as "device" (not "unauthorized")
+```
+
+### 6.3 Install APK
+```bash
+# Using the script (downloads + installs)
+./scripts/download-and-install-apk.sh <BUILD_ID>
+
+# Or manually:
+adb install -r ./apk/bamanashop-android.apk
+```
+
+### 6.4 Verify Installation
+- App should appear in your app drawer as "BamanaShop"
+- Launch and test the app
+
+## Troubleshooting
+
+### Build Fails
+| Error | Solution |
+|-------|----------|
+| `EXPO_TOKEN` invalid | Regenerate token at expo.dev/settings/access-tokens |
+| `EAS_PROJECT_ID` not found | Run `eas project:init` in apps/customer |
+| Gradle build failed | Check `eas.json` build config, ensure `buildType: "apk"` for Android |
+| Out of memory | Use `preview` profile instead of `production` |
+
+### ADB Issues
+| Issue | Solution |
+|-------|----------|
+| `adb: command not found` | Install Android SDK Platform Tools |
+| `device unauthorized` | Allow USB debugging on phone prompt |
+| `device not found` | Check USB cable, try different port, restart ADB: `adb kill-server && adb start-server` |
+| `INSTALL_FAILED_VERSION_DOWNGRADE` | Uninstall old version first: `adb uninstall com.bamanashop.customer` |
+
+### App Crashes on Launch
+1. Check logs: `adb logcat | grep -i bamanashop`
+2. Ensure all permissions are granted
+3. Check if google-services.json is properly configured for Firebase
+
+## Quick Commands Reference
+
+```bash
+# Login to Expo
+eas login
+
+# Initialize project
+eas project:init
+
+# Build Android APK
+eas build --platform android --profile production
+
+# Build without waiting (get BUILD_ID)
+eas build --platform android --profile production --no-wait
+
+# Download build
+eas build:download --platform android --id <BUILD_ID>
+
+# List builds
+eas build:list --platform android
+
+# Install APK via ADB
+adb install -r ./apk/bamanashop-android.apk
+
+# Uninstall app
+adb uninstall com.bamanashop.customer
+
+# View logs
+adb logcat | grep -i bamanashop
+```
+
+## Workflow Files Created
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/eas-build.yml` | Main build workflow (Android + iOS) |
+| `.github/workflows/eas-download-apk.yml` | Download APK from build ID |
+| `eas.json` | EAS build configuration |
+| `scripts/download-and-install-apk.sh` | Helper script for download + install |
+
+## Next Steps After Installation
+
+1. **Test the app** - Login with phone OTP, browse products, add to cart
+2. **Configure Firebase** - Add real google-services.json for push notifications
+3. **Set up Supabase** - Add real credentials for backend
+4. **Test on multiple devices** - Different Android versions/screen sizes
+5. **Submit to Play Store** - Use `eas submit --platform android` when ready
