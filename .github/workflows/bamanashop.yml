@@ -135,21 +135,10 @@ jobs:
       - name: Run RLS tests
         run: pnpm --filter=@bamanashop/supabase exec vitest run tests
 
-  eas-build:
-    name: EAS build (${{ matrix.platform }})
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      ((inputs.task == 'build-android' && matrix.platform == 'android') ||
-       (inputs.task == 'build-ios' && matrix.platform == 'ios'))
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: android
-            runner: ubuntu-latest
-          - platform: ios
-            runner: macos-latest
-    runs-on: ${{ matrix.runner }}
+  eas-build-android:
+    name: EAS build (Android)
+    if: github.event_name == 'workflow_dispatch' && inputs.task == 'build-android'
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Checkout
@@ -180,7 +169,46 @@ jobs:
 
       - name: Queue EAS build
         working-directory: apps/customer
-        run: eas build --platform "${{ matrix.platform }}" --profile "${{ inputs.profile }}" --non-interactive --no-wait
+        run: eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+
+  eas-build-ios:
+    name: EAS build (iOS)
+    if: github.event_name == 'workflow_dispatch' && inputs.task == 'build-ios'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Install EAS CLI
+        run: npm install --global eas-cli
+
+      - name: Verify Expo authentication
+        working-directory: apps/customer
+        run: eas whoami
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Queue EAS build
+        working-directory: apps/customer
+        run: eas build --platform ios --profile "${{ inputs.profile }}" --non-interactive --no-wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
