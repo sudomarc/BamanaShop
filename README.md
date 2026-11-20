@@ -1,57 +1,51 @@
 # BamanaShop
 
-**BamanaShop** est une plateforme dédiée à la vente de produits culturels et artisanaux, avec un focus particulier sur la culture Bamana et d'autres traditions africaines. Notre mission est de proposer une sélection unique et authentique, afin que chaque visiteur puisse découvrir et apprécier les richesses culturelles de diverses communautés.
+BamanaShop is being developed into a general-purpose multi-vendor marketplace launching in Conakry, Guinea.
 
-## Structure du Projet
+## Product structure
 
-### HTML
+- **BamanaShop** — customer mobile app for discovering products, shopping, paying and tracking orders.
+- **BamanaShop Pro** — one mobile app for sellers and delivery couriers, with separate role-based workspaces.
+- **BamanaShop Admin** — internal Next.js web dashboard for marketplace operations, seller moderation, orders, commissions, payment reconciliation and delivery dispatch.
 
-Le site est structuré autour de plusieurs sections :
+The three interfaces share one secured backend and PostgreSQL database.
 
-- **Accueil** : Introduction aux produits Bamana.
-- **Produits** : Affichage des produits disponibles, avec des images, descriptions et boutons pour l'achat.
-- **À propos** : Présentation de la mission de BamanaShop et de l'engagement pour la préservation des traditions culturelles.
-- **Contact** : Informations de contact, incluant des liens vers l'email, GitHub et Instagram.
-- **Pied de page** : Mentions légales, conditions d'utilisation, politique de confidentialité et avertissement sur le développement actuel du site.
+## Current repository status
 
-### Fichiers Importants
+The existing root HTML/CSS/JavaScript site is a legacy, non-transactional storefront prototype. It has no production accounts, order backend, payment processing, seller portal or logistics integration. It is retained as a visual/history reference while the marketplace monorepo is prepared. Do not use it to accept real orders or payments.
 
-- **`index.html`** : La page principale où l'ensemble des éléments visuels sont organisés.
-- **`styles/style.css`** : Le fichier CSS qui contient la mise en forme de toutes les pages.
-- **Images** : Contenues dans `res/img/`, elles représentent les produits et les liens sociaux.
+## Project documents
 
-## Fonctionnalités
+- [Product specification](docs/PRODUCT_SPEC.md)
+- [Technical architecture](docs/ARCHITECTURE.md)
+- [Roadmap](ROADMAP.md)
+- [Current status and next actions](STATUS.md)
+- [Four-agent workstream boundaries](docs/WORKSTREAMS.md)
+- [Architecture decisions](docs/DECISIONS.md)
+- [Development start prompt](docs/START_PROMPT.md)
 
-- **Navigation** : Un menu de navigation simple en haut de la page permet de naviguer entre les sections.
-- **Catalogue de Produits** : Les produits sont présentés avec des images, des descriptions et des boutons "Acheter" (non fonctionnels pour l’instant).
-- **Contact et Réseaux Sociaux** : Lien direct vers l'email, GitHub et Instagram de NovaCreations pour faciliter les échanges avec les visiteurs.
+## Technology baseline
 
-## Technologies Utilisées
+- pnpm workspaces and TypeScript
+- Expo / React Native: Customer and Pro apps
+- Next.js: Admin dashboard
+- Supabase: PostgreSQL, Auth, Storage, Realtime and Edge Functions
 
-- **Frontend** : HTML5 et CSS3
-- **Design Responsif** : L'interface est optimisée pour offrir une bonne expérience sur divers écrans grâce au responsive design.
+The root workspace scaffold is planned; commands will be documented after the manifests are created and verified.
 
-## Installation et Utilisation
+## Important product constraints
 
-1. **Cloner le dépôt** :
+- Initial market: Conakry. Currency: GNF.
+- Checkout is single-seller per order for the MVP.
+- Delivery is provided by external partners; dispatch starts manually in Admin.
+- Cash on delivery and Orange Money are target payment methods, subject to provider onboarding, contracts, technical verification and applicable approvals.
+- Seller payables are an auditable accounting balance, not a customer or seller wallet. Do not custody or split funds without an approved legal and provider model.
+- No production payment or delivery integration may be claimed until it has been tested end-to-end with authorized provider access.
 
-   ```bash
-   git clone https://github.com/Patrrikcode2/Bamanashop.git
-   ```
+## Repository conventions
 
-2. **Accéder au répertoire du projet** :
+Read [AGENTS.md](AGENTS.md) before making changes. Use a feature branch and Pull Request; never push directly to `main`. Preserve the existing NovaCreations attribution on legacy public pages. Sudomarc is the repository maintainer; repository ownership does not establish brand ownership.
 
-   ```bash
-   cd Bamanashop
-   ```
+## Legacy storefront
 
-3. **Lancer le site** : Ouvrez `index.html` dans un navigateur pour voir le site en local.
-
-## Remarques
-
-Ce site est en phase de développement, et aucune transaction réelle n'est encore possible. Ce projet est actuellement une vitrine pour démontrer le concept et le design de la plateforme BamanaShop.
-
-## Auteurs et Crédits
-
-Créé par **NovaCreations**.  
-Retrouvez-nous sur [GitHub](https://github.com/Patrrikcode2) et [Instagram](https://www.instagram.com/nova.creationsbypat).
+The root `index.html` and its supporting assets remain a demonstration storefront. Its checkout is simulated and must not be represented as a real commerce service while the new platform is under development.
