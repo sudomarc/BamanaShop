@@ -62,7 +62,7 @@ jobs:
 
       - name: Build Android APK
         run: |
-          eas build --platform android --profile ${{ github.event.inputs.profile || 'production' }} --non-interactive --no-wait
+          eas build --platform android --profile ${{ github.event.inputs.profile || 'production' }} --non-interactive --no-wait --project-dir apps/customer
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
@@ -107,7 +107,7 @@ jobs:
 
       - name: Build iOS
         run: |
-          eas build --platform ios --profile ${{ github.event.inputs.profile || 'production' }} --non-interactive --no-wait
+          eas build --platform ios --profile ${{ github.event.inputs.profile || 'production' }} --non-interactive --no-wait --project-dir apps/customer
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
