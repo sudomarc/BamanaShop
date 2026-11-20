@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,30 +11,113 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuthStore } from "@/store/authStore";
+import { SemanticColors } from "@/constants/colors";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, loading } = useAuthStore();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const params = useLocalSearchParams();
+  const { sendOtp, loading, verifyOtp } = useAuthStore();
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [sentCode, setSentCode] = useState(false);
   const [error, setError] = useState("");
+  const [countdown, setCountdown] = useState(0);
+  const [focusedInput, setFocusedInput] = useState<"phone" | "code">("phone");
 
-  const handleLogin = async () => {
-    setError("");
-    if (!email || !password) {
-      setError("Veuillez remplir tous les champs");
+  // Check if coming from deep link with phone pre-filled
+  useEffect(() => {
+    if (params.phone) {
+      setPhone(params.phone as string);
+    }
+  }, [params]);
+
+  // Countdown timer for resend
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  const formatPhone = (value: string) => {
+    // Remove non-digits
+    const digits = value.replace(/\D/g, "");
+    // Format as +224 XX XXXXXXX
+    if (digits.startsWith("224")) {
+      const rest = digits.slice(3);
+      if (rest.length <= 2) return `+224 ${rest}`;
+      if (rest.length <= 9) return `+224 ${rest.slice(0, 2)} ${rest.slice(2)}`;
+      return `+224 ${rest.slice(0, 2)} ${rest.slice(2, 9)}`;
+    }
+    if (digits.length <= 2) return `+224 ${digits}`;
+    if (digits.length <= 9) return `+224 ${digits.slice(0, 2)} ${digits.slice(2)}`;
+    return `+224 ${digits.slice(0, 2)} ${digits.slice(2, 9)}`;
+  };
+
+  const handlePhoneChange = (text: string) => {
+    const formatted = formatPhone(text);
+    setPhone(formatted);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    // Check if it matches Guinea format +224 XX XXXXXXX
+    const cleaned = phone.replace(/\D/g, "");
+    return cleaned.length === 12 && cleaned.startsWith("224");
+  };
+
+  const handleSendOtp = async () => {
+    if (!validatePhone(phone)) {
+      setError("Numéro invalide. Format: +224 XX XXXXXXX");
       return;
     }
-    const { error: signInError } = await signIn(email, password);
-    if (signInError) {
-      setError(signInError.message);
+    setError("");
+
+    const { error: sendError } = await sendOtp(phone.replace(/\D/g, "") as any);
+    if (sendError) {
+      setError(sendError.message);
+      return;
+    }
+
+    setSentCode(true);
+    setCountdown(60);
+    setFocusedInput("code");
+  };
+
+  const handleVerifyOtp = async () => {
+    if (code.length !== 6) {
+      setError("Veuillez entrer les 6 chiffres");
+      return;
+    }
+    setError("");
+
+    const { error: verifyError } = await verifyOtp(
+      phone.replace(/\D/g, "") as any,
+      code,
+    );
+
+    if (verifyError) {
+      setError(verifyError.message);
+      return;
+    }
+
+    // Check if profile needs completion
+    const { profile } = useAuthStore.getState();
+    if (!profile?.full_name) {
+      router.replace("/(onboarding)/profile");
     } else {
       router.replace("/(tabs)");
     }
+  };
+
+  const handleResend = async () => {
+    if (countdown > 0) return;
+    setCode("");
+    await handleSendOtp();
   };
 
   return (
@@ -46,164 +129,309 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.logoContainer}>
-          <Ionicons name="storefront" size={60} color="#2563EB" />
+          <Ionicons name="storefront" size={60} color={SemanticColors.primaryAction} />
           <Text style={styles.appName}>BamanaShop</Text>
+          <Text style={styles.appTagline}>Vos courses livrées chez vous</Text>
         </View>
 
-        <Text style={styles.welcomeTitle}>Connexion</Text>
-        <Text style={styles.welcomeSubtitle}>Accédez à votre compte</Text>
+        {!sentCode ? (
+          <>
+            <Text style={styles.welcomeTitle}>Connexion</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Entrez votre numéro pour recevoir un code par SMS
+            </Text>
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={20} color="#DC2626" />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
+            {error && (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={20} color={SemanticColors.error} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Numéro de téléphone</Text>
+              <View style={styles.inputWrapper}>
+                <View style={styles.countryCode}>
+                  <Text style={styles.countryCodeText}>+224</Text>
+                </View>
+                <TextInput
+                  style={styles.input}
+                  value={phone}
+                  onChangeText={handlePhoneChange}
+                  placeholder="XX XXXXXXX"
+                  keyboardType="phone-pad"
+                  autoCompleteType="tel"
+                  maxLength={16}
+                  onFocus={() => setFocusedInput("phone")}
+                  autoFocus
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                loading && styles.buttonDisabled,
+              ]}
+              onPress={handleSendOtp}
+              disabled={loading || !validatePhone(phone)}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Envoyer le code</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.termsText}
+              onPress={() => router.push("/(auth)/terms")}
+            >
+              <Text style={styles.termsTextContent}>
+                En continuant, vous acceptez nos{" "}
+                <Text style={styles.termsLink}>Conditions d'utilisation</Text>
+                {" et notre "}
+                <Text style={styles.termsLink}>Politique de confidentialité</Text>
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.welcomeTitle}>Vérification</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Nous avons envoyé un code à 6 chiffres au{" "}
+              <Text style={styles.phoneHighlight}>{phone}</Text>
+            </Text>
+
+            {error && (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={20} color={SemanticColors.error} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            <View style={styles.codeInputContainer}>
+              {[...Array(6)].map((_, i) => (
+                <TextInput
+                  key={i}
+                  style={[
+                    styles.codeInput,
+                    code.length > i && styles.codeInputFilled,
+                    i === code.length && styles.codeInputFocused,
+                  ]}
+                  value={code[i] || ""}
+                  onChangeText={(text) => {
+                    if (text.length <= 1 && /^\d*$/.test(text)) {
+                      setCode(code.slice(0, i) + text + code.slice(i + 1));
+                    }
+                  }}
+                  maxLength={1}
+                  keyboardType="number-pad"
+                  textAlign="center"
+                  autoComplete="one-time-code"
+                  onFocus={() => setFocusedInput("code")}
+                  autoFocus={i === 0}
+                />
+              ))}
+            </View>
+
+            <Text style={styles.resendText}>
+              {countdown > 0
+                ? `Renvoyer dans {countdown}s`
+                : (
+                  <TouchableOpacity onPress={handleResend}>
+                    <Text style={styles.resendLink}>Renvoyer le code</Text>
+                  </TouchableOpacity>
+                )}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.changeNumberButton}
+              onPress={() => {
+                setSentCode(false);
+                setCode("");
+              }}
+            >
+              <Text style={styles.changeNumberText}>Changer de numéro</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                loading && styles.buttonDisabled,
+              ]}
+              onPress={handleVerifyOtp}
+              disabled={loading || code.length !== 6}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Vérifier</Text>
+              )}
+            </TouchableOpacity>
+          </>
         )}
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <View style={styles.inputWrapper}>
-            <Ionicons
-              name="mail"
-              size={22}
-              color="#94A3B8"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="votre@email.com"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoCompleteType="email"
-            />
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Mot de passe</Text>
-          <View style={styles.inputWrapper}>
-            <Ionicons
-              name="lock-closed"
-              size={22}
-              color="#94A3B8"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              secureTextEntry
-              autoCompleteType="password"
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.forgotPassword, { alignSelf: "flex-end" }]}
-          onPress={() => router.push("/(auth)/forgot-password")}
-        >
-          <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.primaryButton, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.primaryButtonText}>Se connecter</Text>
-          )}
-        </TouchableOpacity>
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>ou</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/(auth)/register")}
-        >
-          <Text style={styles.secondaryButtonText}>Créer un compte</Text>
-        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  container: { flex: 1, backgroundColor: SemanticColors.screenBackground },
   scrollContent: { flexGrow: 1, padding: 24, justifyContent: "center" },
   logoContainer: { alignItems: "center", marginBottom: 32 },
-  appName: { fontSize: 28, fontWeight: "700", color: "#1E293B", marginTop: 12 },
+  appName: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: SemanticColors.textPrimary,
+    marginTop: 12,
+  },
+  appTagline: {
+    fontSize: 14,
+    color: SemanticColors.textSecondary,
+    marginTop: 4,
+  },
   welcomeTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#1E293B",
+    color: SemanticColors.textPrimary,
     textAlign: "center",
     marginBottom: 8,
   },
   welcomeSubtitle: {
     fontSize: 14,
-    color: "#64748B",
+    color: SemanticColors.textSecondary,
     textAlign: "center",
     marginBottom: 32,
+  },
+  phoneHighlight: {
+    fontWeight: "600",
+    color: SemanticColors.primaryAction,
   },
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#FEF2F2",
+    backgroundColor: SemanticColors.errorBackground,
     borderWidth: 1,
-    borderColor: "#FECACA",
+    borderColor: SemanticColors.error,
     borderRadius: 8,
     padding: 12,
     marginBottom: 20,
   },
-  errorText: { color: "#DC2626", fontSize: 13 },
+  errorText: { color: SemanticColors.error, fontSize: 13 },
   inputGroup: { marginBottom: 20 },
-  label: { fontSize: 13, fontWeight: "500", color: "#374151", marginBottom: 8 },
+  label: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: SemanticColors.textSecondary,
+    marginBottom: 8,
+  },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: SemanticColors.inputBackground,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
+    borderColor: SemanticColors.borderDefault,
+    borderRadius: BorderRadius.input,
+    paddingHorizontal: 0,
+  },
+  countryCode: {
+    paddingHorizontal: 16,
+    borderRightWidth: 1,
+    borderRightColor: SemanticColors.borderDefault,
+    backgroundColor: SemanticColors.backgroundSecondary,
+    borderTopLeftRadius: BorderRadius.input,
+    borderBottomLeftRadius: BorderRadius.input,
+    height: "100%",
+    justifyContent: "center",
+  },
+  countryCodeText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: SemanticColors.textPrimary,
+  },
+  input: {
+    flex: 1,
+    height: 56,
+    fontSize: 16,
+    color: SemanticColors.textPrimary,
     paddingHorizontal: 16,
   },
-  inputIcon: { marginRight: 12 },
-  input: { flex: 1, height: 52, fontSize: 16, color: "#1E293B" },
-  forgotPassword: { marginBottom: 24 },
-  forgotPasswordText: { fontSize: 13, color: "#2563EB", fontWeight: "500" },
   primaryButton: {
     height: 56,
-    borderRadius: 12,
-    backgroundColor: "#2563EB",
+    borderRadius: BorderRadius.button,
+    backgroundColor: SemanticColors.primaryAction,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
-  primaryButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
-  buttonDisabled: { opacity: 0.6 },
-  divider: { flexDirection: "row", alignItems: "center", marginVertical: 16 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#E2E8F0" },
-  dividerText: { paddingHorizontal: 16, fontSize: 13, color: "#94A3B8" },
-  secondaryButton: {
-    height: 56,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#2563EB",
-    alignItems: "center",
-    justifyContent: "center",
+  primaryButtonText: {
+    color: SemanticColors.buttonTextOnPrimary,
+    fontSize: 16,
+    fontWeight: "600",
   },
-  secondaryButtonText: { color: "#2563EB", fontSize: 16, fontWeight: "600" },
+  buttonDisabled: { opacity: 0.6 },
+  termsText: { marginTop: 16, alignItems: "center" },
+  termsTextContent: {
+    fontSize: 12,
+    color: SemanticColors.textTertiary,
+    textAlign: "center",
+    lineHeight: 18,
+  },
+  termsLink: {
+    color: SemanticColors.primaryAction,
+    fontWeight: "500",
+  },
+  // Code input styles
+  codeInputContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 32,
+    gap: 8,
+  },
+  codeInput: {
+    flex: 1,
+    height: 56,
+    fontSize: 24,
+    fontWeight: "600",
+    color: SemanticColors.textPrimary,
+    textAlign: "center",
+    backgroundColor: SemanticColors.inputBackground,
+    borderWidth: 2,
+    borderColor: SemanticColors.borderDefault,
+    borderRadius: BorderRadius.md,
+  },
+  codeInputFilled: {
+    borderColor: SemanticColors.primaryAction,
+    backgroundColor: SemanticColors.primaryBackground,
+  },
+  codeInputFocused: {
+    borderColor: SemanticColors.primaryAction,
+    borderWidth: 3,
+  },
+  resendText: {
+    textAlign: "center",
+    color: SemanticColors.textSecondary,
+    marginBottom: 16,
+  },
+  resendLink: {
+    color: SemanticColors.primaryAction,
+    fontWeight: "600",
+  },
+  changeNumberButton: {
+    marginBottom: 24,
+    alignItems: "center",
+  },
+  changeNumberText: {
+    color: SemanticColors.textTertiary,
+    fontSize: 14,
+    textDecorationLine: "underline",
+  },
 });
+
+// Import here to avoid circular dependency
+import { BorderRadius } from "@/constants/theme";

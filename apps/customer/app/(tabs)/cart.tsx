@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,14 +14,18 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
 import { calculateOrderTotals } from "@bamanashop/domain";
 import {
   formatGnf,
   GnfAmount,
   PaymentMethod,
   Product,
+  DeliveryPartner,
 } from "@bamanashop/contracts";
 import { MOCK_DELIVERY_PARTNER } from "@bamanashop/contracts";
+import { SemanticColors } from "@/constants/colors";
+import { BorderRadius, Spacing, FontSize, FontWeight, Shadows } from "@/constants/theme";
 
 interface CartItem {
   product: Product;
@@ -31,7 +35,7 @@ interface CartItem {
 export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { items, updateQuantity, removeItem, clearCart, getTotalItems, getStoreId } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [addresses, setAddresses] = useState<
     Array<{ id: string; label: string; commune: string }>
@@ -47,47 +51,38 @@ export default function CartScreen() {
     courierCost: GnfAmount;
     sellerPayable: GnfAmount;
   } | null>(null);
+  const [deliveryCommune, setDeliveryCommune] = useState("Matam");
 
-  // Load cart from async storage or context
   useEffect(() => {
-    loadCart();
     loadAddresses();
   }, []);
 
   useEffect(() => {
-    if (cartItems.length > 0) {
+    if (items.length > 0) {
       calculateTotals();
     } else {
       setTotals(null);
     }
-  }, [cartItems, paymentMethod, deliveryCommune]);
-
-  const loadCart = async () => {
-    // In real app, load from AsyncStorage or Zustand cart store
-    // For now, use mock data
-    if (cartItems.length === 0) {
-      // Mock cart for demo
-    }
-  };
+  }, [items, paymentMethod, deliveryCommune]);
 
   const loadAddresses = async () => {
     const mockAddresses = [
-      { id: "addr-1", label: "Domicile", commune: "Matam" },
-      { id: "addr-2", label: "Travail", commune: "Kaloum" },
+      { id: "addr-1", label: "Domicile", commune: "Matam", quartier: "Hamdallaye" },
+      { id: "addr-2", label: "Travail", commune: "Kaloum", quartier: "Centre" },
     ];
     setAddresses(mockAddresses);
     setSelectedAddressId("addr-1");
   };
 
   const calculateTotals = async () => {
-    if (cartItems.length === 0) return;
+    if (items.length === 0) return;
     try {
       const mockStore = {
         id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
         commission_rate_bps: 1000,
       };
       const result = await calculateOrderTotals({
-        items: cartItems.map((i) => ({
+        items: items.map((i) => ({
           unitPrice: i.product.price_gnf,
           quantity: i.quantity,
         })),
@@ -104,20 +99,6 @@ export default function CartScreen() {
     }
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
-    setCartItems((prev) => {
-      const existing = prev.find((i) => i.product.id === productId);
-      if (!existing) return prev;
-      const newQty = existing.quantity + delta;
-      if (newQty <= 0) {
-        return prev.filter((i) => i.product.id !== productId);
-      }
-      return prev.map((i) =>
-        i.product.id === productId ? { ...i, quantity: newQty } : i,
-      );
-    });
-  };
-
   const handleCheckout = async () => {
     if (!user) {
       Alert.alert(
@@ -127,7 +108,7 @@ export default function CartScreen() {
       router.push("/(auth)/login");
       return;
     }
-    if (cartItems.length === 0) {
+    if (items.length === 0) {
       Alert.alert("Panier vide", "Ajoutez des produits avant de commander");
       return;
     }
@@ -140,6 +121,7 @@ export default function CartScreen() {
     try {
       // Mock order creation
       await new Promise((r) => setTimeout(r, 1000));
+      clearCart();
       router.push("/(tabs)/orders");
     } catch {
       Alert.alert("Erreur", "Impossible de créer la commande");
@@ -148,10 +130,10 @@ export default function CartScreen() {
     }
   };
 
-  if (cartItems.length === 0) {
+  if (items.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="cart-outline" size={64} color="#94A3B8" />
+        <Ionicons name="cart-outline" size={64} color={SemanticColors.textTertiary} />
         <Text style={styles.emptyTitle}>Votre panier est vide</Text>
         <Text style={styles.emptySubtitle}>
           Ajoutez des produits pour commencer
@@ -174,36 +156,42 @@ export default function CartScreen() {
       contentContainerStyle={styles.contentContainer}
     >
       <FlatList
-        data={cartItems}
+        data={items}
         keyExtractor={(item) => item.product.id}
         renderItem={({ item }) => (
           <View style={styles.cartItem}>
-            <View style={styles.productInfo}>
-              <View style={styles.productImage}>
-                <Ionicons name="image" size={32} color="#94A3B8" />
+            {item.product.images?.[0] ? (
+              <Image
+                source={{ uri: item.product.images[0] }}
+                style={styles.productImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.productImagePlaceholder}>
+                <Ionicons name="image" size={32} color={SemanticColors.textTertiary} />
               </View>
-              <View style={styles.productDetails}>
-                <Text style={styles.productName} numberOfLines={1}>
-                  {item.product.name}
-                </Text>
-                <Text style={styles.productPrice}>
-                  {formatGnf(item.product.price_gnf)}
-                </Text>
-              </View>
+            )}
+            <View style={styles.productDetails}>
+              <Text style={styles.productName} numberOfLines={1}>
+                {item.product.name}
+              </Text>
+              <Text style={styles.productPrice}>
+                {formatGnf(item.product.price_gnf)}
+              </Text>
             </View>
             <View style={styles.quantityControls}>
               <TouchableOpacity
                 style={styles.qtyButton}
                 onPress={() => updateQuantity(item.product.id, -1)}
               >
-                <Ionicons name="remove" size={20} color="#2563EB" />
+                <Ionicons name="remove" size={20} color={SemanticColors.primaryAction} />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{item.quantity}</Text>
               <TouchableOpacity
                 style={styles.qtyButton}
                 onPress={() => updateQuantity(item.product.id, 1)}
               >
-                <Ionicons name="add" size={20} color="#2563EB" />
+                <Ionicons name="add" size={20} color={SemanticColors.primaryAction} />
               </TouchableOpacity>
             </View>
           </View>
@@ -212,7 +200,7 @@ export default function CartScreen() {
       />
 
       <View style={styles.deliverySection}>
-        <Text style={styles.sectionTitle}>Livraison</Text>
+        <Text style={styles.sectionTitle}>Adresse de livraison</Text>
         <View style={styles.addressSelector}>
           {addresses.map((addr) => (
             <TouchableOpacity
@@ -225,7 +213,9 @@ export default function CartScreen() {
             >
               <View style={styles.addressOptionContent}>
                 <Text style={styles.addressLabel}>{addr.label}</Text>
-                <Text style={styles.addressCommune}>{addr.commune}</Text>
+                <Text style={styles.addressCommune}>
+                  {addr.quartier}, {addr.commune}
+                </Text>
               </View>
               <View
                 style={[
@@ -239,7 +229,7 @@ export default function CartScreen() {
       </View>
 
       <View style={styles.paymentSection}>
-        <Text style={styles.sectionTitle}>Paiement</Text>
+        <Text style={styles.sectionTitle}>Méthode de paiement</Text>
         <TouchableOpacity
           style={[
             styles.paymentOption,
@@ -251,7 +241,7 @@ export default function CartScreen() {
             <Ionicons
               name="cash"
               size={24}
-              color="#2563EB"
+              color={SemanticColors.primaryAction}
               style={{ marginRight: 12 }}
             />
             <View>
@@ -305,8 +295,7 @@ export default function CartScreen() {
           <Text style={styles.sectionTitle}>Récapitulatif</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>
-              Sous-total ({cartItems.reduce((s, i) => s + i.quantity, 0)}{" "}
-              articles)
+              Sous-total ({items.reduce((s, i) => s + i.quantity, 0)} articles)
             </Text>
             <Text style={styles.summaryValue}>
               {formatGnf(totals.subtotal)}
@@ -354,124 +343,133 @@ export default function CartScreen() {
   );
 }
 
+// Need to import Image
+import { Image } from "react-native";
+
 const styles = StyleSheet.create({
-  scrollView: { flex: 1, backgroundColor: "#F8FAFC" },
+  scrollView: { flex: 1, backgroundColor: SemanticColors.screenBackground },
   contentContainer: { paddingBottom: 100 },
   emptyContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    padding: Spacing.xl,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1E293B",
-    marginTop: 16,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.semibold,
+    color: SemanticColors.textPrimary,
+    marginTop: Spacing.lg,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: "#64748B",
-    marginTop: 8,
+    fontSize: FontSize.base,
+    color: SemanticColors.textSecondary,
+    marginTop: Spacing.sm,
     textAlign: "center",
   },
   continueShoppingBtn: {
-    marginTop: 24,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    backgroundColor: "#2563EB",
-    borderRadius: 12,
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    backgroundColor: SemanticColors.primaryAction,
+    borderRadius: BorderRadius.button,
   },
   continueShoppingBtnText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
   },
   cartItem: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
-    marginHorizontal: 16,
-    marginTop: 12,
+    backgroundColor: SemanticColors.cardBackground,
+    borderRadius: BorderRadius.card,
+    padding: Spacing.md,
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: SemanticColors.cardBorder,
   },
-  productInfo: { flexDirection: "row", flex: 1 },
   productImage: {
     width: 64,
     height: 64,
-    borderRadius: 8,
-    backgroundColor: "#F1F5F9",
+    borderRadius: BorderRadius.sm,
+    marginRight: Spacing.md,
+  },
+  productImagePlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: SemanticColors.backgroundTertiary,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
   productDetails: { flex: 1, justifyContent: "center" },
-  productName: { fontSize: 14, fontWeight: "500", color: "#1E293B" },
+  productName: { fontSize: FontSize.base, fontWeight: FontWeight.medium, color: SemanticColors.textPrimary },
   productPrice: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2563EB",
-    marginTop: 4,
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
+    color: SemanticColors.primaryAction,
+    marginTop: 2,
   },
   quantityControls: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 8,
+    borderColor: SemanticColors.borderDefault,
+    borderRadius: BorderRadius.md,
     overflow: "hidden",
   },
-  qtyButton: { padding: 10, backgroundColor: "#F8FAFC" },
+  qtyButton: { padding: 12, backgroundColor: SemanticColors.backgroundSecondary },
   qtyText: {
-    fontSize: 16,
-    fontWeight: "600",
-    minWidth: 24,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    minWidth: 28,
     textAlign: "center",
+    color: SemanticColors.textPrimary,
   },
   deliverySection: {
-    margin: 16,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
+    margin: Spacing.md,
+    backgroundColor: SemanticColors.cardBackground,
+    borderRadius: BorderRadius.card,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: SemanticColors.cardBorder,
   },
   paymentSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    backgroundColor: SemanticColors.cardBackground,
+    borderRadius: BorderRadius.card,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: SemanticColors.cardBorder,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1E293B",
-    marginBottom: 12,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    color: SemanticColors.textPrimary,
+    marginBottom: Spacing.md,
   },
-  addressSelector: { gap: 8 },
+  addressSelector: { gap: Spacing.sm },
   addressOption: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 12,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 8,
+    borderColor: SemanticColors.borderDefault,
+    borderRadius: BorderRadius.md,
   },
-  addressOptionSelected: { borderColor: "#2563EB", backgroundColor: "#EFF6FF" },
+  addressOptionSelected: { borderColor: SemanticColors.primaryAction, backgroundColor: SemanticColors.primaryBackground },
   addressOptionContent: { flex: 1 },
-  addressLabel: { fontSize: 14, fontWeight: "500", color: "#1E293B" },
-  addressCommune: { fontSize: 12, color: "#64748B", marginTop: 2 },
+  addressLabel: { fontSize: FontSize.base, fontWeight: FontWeight.medium, color: SemanticColors.textPrimary },
+  addressCommune: { fontSize: FontSize.sm, color: SemanticColors.textSecondary, marginTop: 2 },
   radioOuter: {
     width: 20,
     height: 20,
     borderWidth: 2,
-    borderColor: "#E2E8F0",
+    borderColor: SemanticColors.borderDefault,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -479,56 +477,56 @@ const styles = StyleSheet.create({
   radioInner: {
     width: 10,
     height: 10,
-    backgroundColor: "#2563EB",
+    backgroundColor: SemanticColors.primaryAction,
     borderRadius: 5,
-    borderColor: "#2563EB",
+    borderColor: SemanticColors.primaryAction,
     borderWidth: 2,
   },
   paymentOption: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 8,
-    marginBottom: 8,
+    borderColor: SemanticColors.borderDefault,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
   },
-  paymentOptionSelected: { borderColor: "#2563EB", backgroundColor: "#EFF6FF" },
+  paymentOptionSelected: { borderColor: SemanticColors.primaryAction, backgroundColor: SemanticColors.primaryBackground },
   paymentOptionContent: { flexDirection: "row", alignItems: "center", flex: 1 },
-  paymentOptionLabel: { fontSize: 14, fontWeight: "500", color: "#1E293B" },
-  paymentOptionDesc: { fontSize: 12, color: "#64748B", marginTop: 2 },
+  paymentOptionLabel: { fontSize: FontSize.base, fontWeight: FontWeight.medium, color: SemanticColors.textPrimary },
+  paymentOptionDesc: { fontSize: FontSize.sm, color: SemanticColors.textSecondary, marginTop: 2 },
   summarySection: {
-    margin: 16,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
+    margin: Spacing.md,
+    backgroundColor: SemanticColors.cardBackground,
+    borderRadius: BorderRadius.card,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: SemanticColors.cardBorder,
   },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 8,
+    paddingVertical: Spacing.xs,
   },
-  summaryLabel: { fontSize: 14, color: "#64748B" },
-  summaryValue: { fontSize: 14, fontWeight: "600", color: "#1E293B" },
+  summaryLabel: { fontSize: FontSize.base, color: SemanticColors.textSecondary },
+  summaryValue: { fontSize: FontSize.base, fontWeight: FontWeight.semibold, color: SemanticColors.textPrimary },
   summaryTotal: {
     borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
-    marginTop: 8,
-    paddingTop: 12,
+    borderTopColor: SemanticColors.borderDefault,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.md,
   },
-  summaryTotalLabel: { fontSize: 16, fontWeight: "700", color: "#1E293B" },
-  summaryTotalValue: { fontSize: 18, fontWeight: "700", color: "#2563EB" },
+  summaryTotalLabel: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: SemanticColors.textPrimary },
+  summaryTotalValue: { fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: SemanticColors.primaryAction },
   checkoutButton: {
-    margin: 16,
+    margin: Spacing.md,
     height: 56,
-    borderRadius: 12,
-    backgroundColor: "#059669",
+    borderRadius: BorderRadius.button,
+    backgroundColor: SemanticColors.success,
     alignItems: "center",
     justifyContent: "center",
   },
-  checkoutButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  checkoutButtonText: { color: "#FFFFFF", fontSize: FontSize.base, fontWeight: FontWeight.semibold },
   buttonDisabled: { opacity: 0.6 },
 });
