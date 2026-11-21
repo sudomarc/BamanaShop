@@ -51,7 +51,7 @@ The Android `versionCode` is calculated from the semantic version, so increase t
 
 ```bash
 adb devices
-./scripts/install-apk.sh ./BamanaShop-beta-v1.0.0.apk
+bash ./scripts/install-apk.sh ./BamanaShop-beta-v1.0.0.apk
 ```
 
 If Android reports a signature conflict with a previously installed build, uninstall the old app first:
