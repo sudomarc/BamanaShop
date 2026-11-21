@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "expo start",
     "build:web": "expo export --platform web",
-    "build:android": "eas build --platform android",
-    "build:ios": "eas build --platform ios",
+    "build:android": "expo prebuild --platform android --clean --no-install && cd android && ./gradlew assembleRelease",
+    "build:ios": "expo run:ios",
     "lint": "eslint . --ext .ts,.tsx",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",

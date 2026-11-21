@@ -1,36 +1,61 @@
-# Local EAS Build Instructions
+# Local Android APK Build
+
+This guide builds the Customer Android APK locally. It does not use EAS Build or require an Expo account.
 
 ## Prerequisites
+
 - Node.js 20+
-- Expo account with EAS access
-- EAS CLI installed globally
+- pnpm 12.21.0
+- Java 17
+- Android SDK with platform 34 and build-tools 34.0.0
+- Android platform-tools / ADB (only needed for device installation)
 
-## Setup
+## Build
+
+From the repository root:
+
 ```bash
-npm install -g eas-cli
-eas login
-# OR use: export EXPO_TOKEN="your-token"; eas whoami
+./BUILD_AND_INSTALL.sh beta 1.0.0
 ```
 
-## Build Android APK
-```bash
-cd apps/customer
-eas build --platform android --profile production --non-interactive
-```
+Arguments:
 
-## Download Build
-```bash
-eas build:list --platform android
-eas build:download --platform android --id <BUILD_ID> --output ./apk
-```
+- Profile: `dev`, `beta`, or `production` (default: `beta`)
+- Version: `MAJOR.MINOR.PATCH` (default: `1.0.0`)
 
-## Install on Phone via ADB
+The script installs workspace dependencies, runs Expo Prebuild to generate the native Android project, compiles it with Gradle, validates the APK, and installs it through ADB when a device is connected.
+
+The APK is saved in `apk/`.
+
+## GitHub Actions build
+
+1. Open the repository's **Actions** tab.
+2. Select **BamanaShop** and click **Run workflow**.
+3. Choose the profile: `dev`, `beta`, or `production`.
+4. Enter the app version, for example `1.2.3`.
+5. Start the run and download the APK from its **Artifacts** section.
+
+GitHub Actions compiles Android locally on its runner using Gradle. Android builds require neither `EXPO_TOKEN` nor `EAS_PROJECT_ID`.
+
+## Build profiles
+
+- `dev`: Gradle debug APK. A Metro development server is needed to load the JavaScript bundle.
+- `beta`: Gradle release APK for testing.
+- `production`: Gradle release APK.
+
+The Android `versionCode` is calculated from the semantic version, so increase the version when preparing an upgrade.
+
+**Signing note:** the workflow does not provision a private Google Play upload key. The generated APKs are for direct installation and testing; publishing to Google Play requires a persistent Android signing key configured in Gradle.
+
+## Install a downloaded APK
+
 ```bash
 adb devices
-adb install -r ./apk/*.apk
+bash ./scripts/install-apk.sh ./BamanaShop-beta-v1.0.0.apk
 ```
 
-## GitHub Actions
+If Android reports a signature conflict with a previously installed build, uninstall the old app first:
+
 ```bash
-gh workflow run eas-build.yml -f platform=android -f profile=production
+adb uninstall com.bamanashop.customer
 ```
