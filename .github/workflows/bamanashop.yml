@@ -67,6 +67,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Validate Customer Expo config
+        working-directory: apps/customer
+        run: pnpm exec expo config --json > /dev/null
+
       # Shared packages have runnable lint, type, build and unit-test suites.
       - name: Build shared packages
         id: shared_build
