@@ -40,14 +40,6 @@
         }
       ],
       "expo-font",
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "BamanaShop accède à vos photos pour envoyer des images aux commerçants.",
-          "cameraPermission": "BamanaShop utilise l'appareil photo pour prendre des photos de vos produits.",
-          "microphonePermission": false
-        }
-      ],
       "expo-system-ui"
     ],
     "experiments": {
