@@ -77,9 +77,6 @@
       "reactCompiler": true
     },
     "extra": {
-      "eas": {
-        "projectId": "your-project-id"
-      },
       "router": {
         "asyncRoutes": {
           "web": true
@@ -87,6 +84,10 @@
       }
     },
     "sdkVersion": "51.0.0",
-    "platforms": ["ios", "android", "web"]
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ]
   }
 }
