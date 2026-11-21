@@ -7,23 +7,20 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      task:
-        description: "Manual action"
-        type: choice
-        options:
-          - verify
-          - build-android
-          - build-ios
-          - cleanup-legacy-history
-        default: verify
       profile:
-        description: "EAS build profile"
+        description: "APK build profile"
         type: choice
         options:
-          - development
-          - preview
+          - dev
+          - beta
           - production
-        default: preview
+        default: beta
+        required: true
+      version:
+        description: "App version (MAJOR.MINOR.PATCH, for example 1.2.3)"
+        type: string
+        default: "1.0.0"
+        required: true
 
 permissions:
   contents: read
@@ -35,7 +32,7 @@ concurrency:
 jobs:
   verify:
     name: Quality checks
-    if: github.event_name != 'workflow_dispatch' || inputs.task == 'verify'
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -86,13 +83,12 @@ jobs:
           for (const file of files) {
             const image = readFileSync(file);
             if (!image.subarray(0, signature.length).equals(signature)) {
-              throw new Error(`${file} is not a valid PNG file.`);
+              throw new Error(file + " is not a valid PNG file.");
             }
           }
-          console.log(`Validated ${files.length} PNG assets.`);
+          console.log("Validated " + files.length + " PNG assets.");
           NODE
 
-      # Shared packages have runnable lint, type, build and unit-test suites.
       - name: Build shared packages
         id: shared_build
         run: pnpm build:packages
@@ -113,8 +109,6 @@ jobs:
         id: shared_tests
         run: pnpm --filter=@bamanashop/contracts test && pnpm --filter=@bamanashop/domain test
 
-      # Keep known app-level failures visible without blocking the verified
-      # shared-package baseline. These are technical-debt signals, not passes.
       - name: Diagnose app lint
         id: app_lint
         continue-on-error: true
@@ -161,8 +155,8 @@ jobs:
         run: |
           failed=0
           for check in SHARED_BUILD SHARED_LINT SHARED_FORMAT SHARED_TYPECHECK SHARED_TESTS SEO; do
-            result="${!check}"
-            echo "${check}: ${result:-not-run}"
+            result="$${!check}"
+            echo "${check}: $${result:-not-run}"
             if [ "$result" != "success" ]; then
               failed=1
             fi
@@ -170,13 +164,13 @@ jobs:
           echo
           echo "Application diagnostics (non-blocking until app issues are fixed):"
           for check in APP_LINT APP_FORMAT APP_TYPECHECK APP_TESTS ADMIN_BUILD; do
-            echo "${check}: ${!check:-not-run}"
+            echo "${check}: $${!check:-not-run}"
           done
           exit "$failed"
 
   rls:
     name: Supabase migration check
-    if: github.event_name != 'workflow_dispatch' || inputs.task == 'verify'
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -196,7 +190,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      # All Supabase CLI commands must run from the same project directory.
       - name: Start local Supabase
         working-directory: supabase
         run: npx supabase start
@@ -209,158 +202,44 @@ jobs:
         working-directory: supabase
         run: npx supabase gen types typescript --local > ../packages/contracts/src/database.generated.ts
 
-  eas-build-android:
-    name: EAS build (Android)
-    if: github.event_name == 'workflow_dispatch' && inputs.task == 'build-android'
+  build-android:
+    name: Build Android APK (${{ inputs.profile }})
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.21.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
-
-      - name: Install EAS CLI
-        run: npm install --global eas-cli
-
-      - name: Verify Expo authentication
-        working-directory: apps/customer
-        run: eas whoami
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Validate Expo project configuration
-        working-directory: apps/customer
-        env:
-          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
-        run: |
-          if [[ ! "${EAS_PROJECT_ID:-}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
-            echo "::error::Set the EAS_PROJECT_ID repository secret to the UUID of the Expo project."
-            exit 1
-          fi
-
-          config_file="$RUNNER_TEMP/expo-config.json"
-          error_file="$RUNNER_TEMP/expo-config.err"
-          if ! pnpm exec expo config --json > "$config_file" 2> "$error_file"; then
-            cat "$error_file" >&2
-            sed "s/$EAS_PROJECT_ID/[redacted]/g" "$config_file" >&2
-            exit 1
-          fi
-          EXPO_CONFIG_PATH="$config_file" node -e '
-            const fs = require("node:fs");
-            const config = JSON.parse(fs.readFileSync(process.env.EXPO_CONFIG_PATH, "utf8"));
-            if (config.extra?.eas?.projectId !== process.env.EAS_PROJECT_ID) {
-              console.error("Resolved Expo config does not match EAS_PROJECT_ID.");
-              process.exit(1);
-            }
-            if (config.owner !== "marcopolos-team") {
-              console.error("Resolved Expo config must set owner to \"marcopolos-team\".");
-              process.exit(1);
-            }
-            const easConfig = JSON.parse(fs.readFileSync("eas.json", "utf8"));
-            if (easConfig.cli?.appVersionSource !== "remote") {
-              console.error("eas.json must set cli.appVersionSource to \"remote\".");
-              process.exit(1);
-            }
-            if (Object.hasOwn(easConfig.cli ?? {}, "owner")) {
-              console.error("eas.json cli.owner is not supported; keep owner in app.json.");
-              process.exit(1);
-            }
-          '
-          rm -f "$config_file" "$error_file"
-
-      - name: Build Android app and wait for completion
-        id: eas_build
-        working-directory: apps/customer
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
-        run: |
-          set -euo pipefail
-          build_output="$RUNNER_TEMP/eas-build.json"
-          # Capture both stdout and stderr to debug build failures
-          if ! eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --wait --json > "$build_output" 2>&1; then
-            echo "::error::EAS build command failed"
-            cat "$build_output" >&2
-            exit 1
-          fi
-
-          BUILD_ID="$(node - "$build_output" <<'NODE'
-          const fs = require("node:fs");
-          const raw = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-          const builds = Array.isArray(raw) ? raw : [raw];
-          if (builds.length !== 1 || !builds[0]?.id) {
-            throw new Error("EAS did not return exactly one Android build with an ID.");
-          }
-          const build = builds[0];
-          if (build.status !== "FINISHED" || !build.artifacts?.applicationArchiveUrl) {
-            throw new Error(`EAS build did not finish successfully (status: ${build.status ?? "unknown"}).`);
-          }
-          process.stdout.write(build.id);
-          NODE
-          )"
-
-          echo "EAS Android build finished: $BUILD_ID"
-          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
-
-      - name: Download completed Android APK
-        working-directory: apps/customer
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
-          BUILD_ID: ${{ steps.eas_build.outputs.build_id }}
-          PROFILE: ${{ inputs.profile }}
-        run: |
-          set -euo pipefail
-          download_output="$RUNNER_TEMP/eas-download.json"
-          eas build:download --build-id "$BUILD_ID" --json > "$download_output"
-
-          APP_PATH="$(node - "$download_output" <<'NODE'
-          const fs = require("node:fs");
-          const result = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-          if (typeof result.path !== "string" || result.path.length === 0) {
-            throw new Error("EAS download did not return an application archive path.");
-          }
-          process.stdout.write(result.path);
-          NODE
-          )"
-
-          test -f "$APP_PATH"
-          mkdir -p "$RUNNER_TEMP/bamanashop-apk"
-          APK_PATH="$RUNNER_TEMP/bamanashop-apk/BamanaShop-$PROFILE.apk"
-          cp "$APP_PATH" "$APK_PATH"
-          unzip -t "$APK_PATH" >/dev/null
-          echo "Verified APK: $APK_PATH"
-
-      - name: Upload APK to GitHub Actions
-        uses: actions/upload-artifact@v4
-        with:
-          name: bamanashop-android-${{ inputs.profile }}-${{ github.run_number }}
-          path: ${{ runner.temp }}/bamanashop-apk/*.apk
-          if-no-files-found: error
-          retention-days: 30
-
-  eas-build-ios:
-    name: EAS build (iOS)
-    if: github.event_name == 'workflow_dispatch' && inputs.task == 'build-ios'
-    runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate version and calculate Android versionCode
+        id: version
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const version = process.env.APP_VERSION ?? "";
+          const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version);
+
+          if (!match) {
+            throw new Error("Version must use MAJOR.MINOR.PATCH, for example 1.2.3.");
+          }
+
+          const [major, minor, patch] = match.slice(1).map(Number);
+          if (major > 2099 || minor > 999 || patch > 999) {
+            throw new Error("Version is outside the supported Android versionCode range.");
+          }
+
+          const versionCode = major * 1000000 + minor * 1000 + patch + 1;
+          if (!Number.isSafeInteger(versionCode) || versionCode > 2100000000) {
+            throw new Error("Calculated Android versionCode exceeds Android's supported maximum.");
+          }
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, "android_version_code=" + versionCode + "\n");
+          console.log("App version: " + version);
+          console.log("Android versionCode: " + versionCode);
+          NODE
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -372,80 +251,112 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Install EAS CLI
-        run: npm install --global eas-cli
-
-      - name: Verify Expo authentication
-        working-directory: apps/customer
-        run: eas whoami
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Validate Expo project configuration
+      - name: Generate native Android project
         working-directory: apps/customer
         env:
-          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
+          BAMANASHOP_VERSION: ${{ inputs.version }}
+          BAMANASHOP_ANDROID_VERSION_CODE: ${{ steps.version.outputs.android_version_code }}
+          EXPO_NO_TELEMETRY: "1"
+        run: CI=1 pnpm exec expo prebuild --platform android --clean --no-install
+
+      - name: Build APK with Gradle
+        env:
+          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
+          BAMANASHOP_VERSION: ${{ inputs.version }}
         run: |
-          if [[ ! "${EAS_PROJECT_ID:-}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
-            echo "::error::Set the EAS_PROJECT_ID repository secret to the UUID of the Expo project."
-            exit 1
-          fi
+          set -euo pipefail
 
-          config_file="$RUNNER_TEMP/expo-config.json"
-          error_file="$RUNNER_TEMP/expo-config.err"
-          if ! pnpm exec expo config --json > "$config_file" 2> "$error_file"; then
-            cat "$error_file" >&2
-            sed "s/$EAS_PROJECT_ID/[redacted]/g" "$config_file" >&2
-            exit 1
-          fi
-          EXPO_CONFIG_PATH="$config_file" node -e '
-            const fs = require("node:fs");
-            const config = JSON.parse(fs.readFileSync(process.env.EXPO_CONFIG_PATH, "utf8"));
-            if (config.extra?.eas?.projectId !== process.env.EAS_PROJECT_ID) {
-              console.error("Resolved Expo config does not match EAS_PROJECT_ID.");
-              process.exit(1);
-            }
-            if (config.owner !== "marcopolos-team") {
-              console.error("Resolved Expo config must set owner to \"marcopolos-team\".");
-              process.exit(1);
-            }
-            const easConfig = JSON.parse(fs.readFileSync("eas.json", "utf8"));
-            if (easConfig.cli?.appVersionSource !== "remote") {
-              console.error("eas.json must set cli.appVersionSource to \"remote\".");
-              process.exit(1);
-            }
-            if (Object.hasOwn(easConfig.cli ?? {}, "owner")) {
-              console.error("eas.json cli.owner is not supported; keep owner in app.json.");
-              process.exit(1);
-            }
-          '
-          rm -f "$config_file" "$error_file"
+          case "$BAMANASHOP_BUILD_PROFILE" in
+            dev)
+              gradle_task="assembleDebug"
+              apk_source="app/build/outputs/apk/debug/app-debug.apk"
+              ;;
+            beta|production)
+              gradle_task="assembleRelease"
+              apk_source="app/build/outputs/apk/release/app-release.apk"
+              ;;
+            *)
+              echo "::error::Unsupported build profile: $BAMANASHOP_BUILD_PROFILE"
+              exit 1
+              ;;
+          esac
 
-      - name: Queue EAS build
-        working-directory: apps/customer
-        run: eas build --platform ios --profile "${{ inputs.profile }}" --non-interactive --no-wait
+          cd apps/customer/android
+          ./gradlew --no-daemon --stacktrace ":app:$gradle_task"
+
+          test -s "$apk_source"
+          mkdir -p "$RUNNER_TEMP/bamanashop-apk"
+          apk_name="BamanaShop-$BAMANASHOP_BUILD_PROFILE-v$BAMANASHOP_VERSION.apk"
+          cp "$apk_source" "$RUNNER_TEMP/bamanashop-apk/$apk_name"
+          unzip -t "$RUNNER_TEMP/bamanashop-apk/$apk_name" >/dev/null
+          echo "Verified APK: $apk_name"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bamanashop-android-${{ inputs.profile }}-v${{ inputs.version }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/bamanashop-apk/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Summarize build
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+          PROFILE: ${{ inputs.profile }}
+          APP_VERSION: ${{ inputs.version }}
+          ANDROID_VERSION_CODE: ${{ steps.version.outputs.android_version_code }}
+        run: |
+          {
+            echo "### BamanaShop Android APK"
+            echo "- Profile: $PROFILE"
+            echo "- App version: $APP_VERSION"
+            echo "- Android versionCode: $ANDROID_VERSION_CODE"
+            echo "- Artifact: bamanashop-android-$PROFILE-v$APP_VERSION-${{ github.run_number }}"
+            if [ "$PROFILE" = "dev" ]; then
+              echo "- Build type: Debug (requires the Metro development server to load the JavaScript bundle)."
+            else
+              echo "- Build type: Release."
+            fi
+            echo "- Build engine: local Gradle on GitHub Actions; no EAS cloud build."
+          } >> "$GITHUB_STEP_SUMMARY"
 
-  cleanup-legacy-history:
-    name: Delete runs from retired workflows
-    if: (github.event_name == 'workflow_dispatch' && inputs.task == 'cleanup-legacy-history') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+  cleanup-history:
+    name: Delete previous workflow runs
+    needs: [verify, rls, build-android]
+    if: >-
+      always() &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      )
     runs-on: ubuntu-latest
     permissions:
       actions: write
     steps:
-      - name: Delete legacy workflow runs
+      - name: Remove previous completed workflow runs
         uses: actions/github-script@v7
         with:
           script: |
             const runs = [];
             let page = 1;
 
-            // Fetch every page before deleting; deletion changes page offsets.
             while (true) {
               const response = await github.rest.actions.listWorkflowRunsForRepo({
                 owner: context.repo.owner,
@@ -453,6 +364,7 @@ jobs:
                 per_page: 100,
                 page,
               });
+
               runs.push(...response.data.workflow_runs);
               if (
                 response.data.workflow_runs.length < 100 ||
@@ -463,6 +375,7 @@ jobs:
 
             const previousRuns = runs.filter((run) =>
               run.id !== context.runId &&
+              run.status === "completed" &&
               run.path?.startsWith(".github/workflows/")
             );
 
@@ -476,6 +389,6 @@ jobs:
             }
 
             await core.summary
-              .addHeading("Legacy workflow history cleanup")
-              .addRaw("Deleted " + previousRuns.length + " previous repository workflow run(s). The run performing this cleanup and GitHub Pages system runs were kept.")
+              .addHeading("Workflow history cleanup")
+              .addRaw("Deleted " + previousRuns.length + " previous completed repository workflow run(s). The current run and GitHub Pages system runs were kept.")
               .write();
