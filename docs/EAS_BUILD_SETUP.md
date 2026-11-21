@@ -22,7 +22,7 @@ eas login
 cd apps/customer
 eas project:init
 ```
-This will create/update `eas.json` and add the `projectId` to `app.json`.
+Record the Expo project UUID returned by the command. This repository resolves `extra.eas.projectId` dynamically from the `EAS_PROJECT_ID` environment variable; do not commit a placeholder project ID in `app.json`.
 
 ### 1.3 Verify Configuration
 ```bash
@@ -38,7 +38,7 @@ Add these secrets:
 | Secret Name | Value | Description |
 |-------------|-------|-------------|
 | `EXPO_TOKEN` | Your Expo access token | Get from `eas login` or https://expo.dev/accounts/[account]/settings/access-tokens |
-| `EAS_PROJECT_ID` | Your EAS project ID | From `eas project:info` or app.json extra.eas.projectId |
+| `EAS_PROJECT_ID` | Expo project UUID | From the EAS project details or the output of `eas project:init`; consumed by the dynamic app config |
 
 ### Get EXPO_TOKEN:
 ```bash
@@ -49,9 +49,8 @@ Add these secrets:
 
 ### Get EAS_PROJECT_ID:
 ```bash
-eas project:info
-# Look for "Project ID" in output
-# Or check apps/customer/app.json -> extra.eas.projectId
+EAS_PROJECT_ID="<project-uuid>" eas project:info
+# The UUID is supplied through EAS_PROJECT_ID; it is not hardcoded in app.json.
 ```
 
 ## Step 3: Trigger the Build
@@ -75,7 +74,7 @@ git push origin main
 ### Option C: Local Build (for testing)
 ```bash
 cd apps/customer
-eas build --platform android --profile production
+EAS_PROJECT_ID="<project-uuid>" eas build --platform android --profile production
 ```
 
 ## Step 4: Monitor Build Progress
@@ -142,7 +141,7 @@ adb install -r ./apk/bamanashop-android.apk
 | Error | Solution |
 |-------|----------|
 | `EXPO_TOKEN` invalid | Regenerate token at expo.dev/settings/access-tokens |
-| `EAS_PROJECT_ID` not found | Run `eas project:init` in apps/customer |
+| `EAS_PROJECT_ID` missing or invalid | Set the repository secret to the Expo project UUID and rerun the workflow |
 | Gradle build failed | Check `eas.json` build config, ensure `buildType: "apk"` for Android |
 | Out of memory | Use `preview` profile instead of `production` |
 

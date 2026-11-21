@@ -52,6 +52,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -66,6 +68,19 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Validate Customer Expo config
+        working-directory: apps/customer
+        run: |
+          config_file="$RUNNER_TEMP/expo-config.json"
+          error_file="$RUNNER_TEMP/expo-config.err"
+          if ! pnpm exec expo config --json > "$config_file" 2> "$error_file"; then
+            cat "$error_file" >&2
+            cat "$config_file" >&2
+            exit 1
+          fi
+          echo "Customer Expo config resolved successfully."
+          rm -f "$config_file" "$error_file"
 
       # Shared packages have runnable lint, type, build and unit-test suites.
       - name: Build shared packages
@@ -216,6 +231,33 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Validate Expo project configuration
+        working-directory: apps/customer
+        env:
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+        run: |
+          if [[ ! "${EAS_PROJECT_ID:-}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
+            echo "::error::Set the EAS_PROJECT_ID repository secret to the UUID of the Expo project."
+            exit 1
+          fi
+
+          config_file="$RUNNER_TEMP/expo-config.json"
+          error_file="$RUNNER_TEMP/expo-config.err"
+          if ! pnpm exec expo config --json > "$config_file" 2> "$error_file"; then
+            cat "$error_file" >&2
+            sed "s/$EAS_PROJECT_ID/[redacted]/g" "$config_file" >&2
+            exit 1
+          fi
+          EXPO_CONFIG_PATH="$config_file" node -e '
+            const fs = require("node:fs");
+            const config = JSON.parse(fs.readFileSync(process.env.EXPO_CONFIG_PATH, "utf8"));
+            if (config.extra?.eas?.projectId !== process.env.EAS_PROJECT_ID) {
+              console.error("Resolved Expo config does not match EAS_PROJECT_ID.");
+              process.exit(1);
+            }
+          '
+          rm -f "$config_file" "$error_file"
+
       - name: Queue EAS build
         working-directory: apps/customer
         run: eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --no-wait
@@ -254,6 +296,33 @@ jobs:
         run: eas whoami
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Validate Expo project configuration
+        working-directory: apps/customer
+        env:
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+        run: |
+          if [[ ! "${EAS_PROJECT_ID:-}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
+            echo "::error::Set the EAS_PROJECT_ID repository secret to the UUID of the Expo project."
+            exit 1
+          fi
+
+          config_file="$RUNNER_TEMP/expo-config.json"
+          error_file="$RUNNER_TEMP/expo-config.err"
+          if ! pnpm exec expo config --json > "$config_file" 2> "$error_file"; then
+            cat "$error_file" >&2
+            sed "s/$EAS_PROJECT_ID/[redacted]/g" "$config_file" >&2
+            exit 1
+          fi
+          EXPO_CONFIG_PATH="$config_file" node -e '
+            const fs = require("node:fs");
+            const config = JSON.parse(fs.readFileSync(process.env.EXPO_CONFIG_PATH, "utf8"));
+            if (config.extra?.eas?.projectId !== process.env.EAS_PROJECT_ID) {
+              console.error("Resolved Expo config does not match EAS_PROJECT_ID.");
+              process.exit(1);
+            }
+          '
+          rm -f "$config_file" "$error_file"
 
       - name: Queue EAS build
         working-directory: apps/customer
