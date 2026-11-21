@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "pnpm": "12.21.0",
       "developmentClient": true,
       "distribution": "internal",
       "android": {
@@ -12,12 +13,14 @@
       }
     },
     "preview": {
+      "pnpm": "12.21.0",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "pnpm": "12.21.0",
       "autoIncrement": true,
       "android": {
         "buildType": "apk",
