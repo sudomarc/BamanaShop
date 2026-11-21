@@ -19,6 +19,7 @@
         "backgroundColor": "#E94D1C"
       },
       "package": "com.bamanashop.customer",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
