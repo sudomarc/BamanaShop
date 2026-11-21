@@ -8,7 +8,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "bamanashop",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bamanashop.customer",
