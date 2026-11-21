@@ -11,20 +11,20 @@ BamanaShop Customer APKs are compiled directly on GitHub Actions runners. The wo
    - `dev`
    - `beta`
    - `production`
-5. Enter a version in `MAJOR.MINOR.PATCH` format, for example `1.2.3`.
+5. Enter a version such as `1.2.3`, `1.2.3-beta.1`, or `dev.test-0.1`.
 6. Start the run. When it finishes, download the APK from the run's **Artifacts** section.
 
 No `EXPO_TOKEN` or `EAS_PROJECT_ID` repository secret is required for Android APK builds.
 
 ## Versioning
 
-The version entered in the workflow is applied to the app's version name. Android `versionCode` is derived as:
+The exact version entered in the workflow is applied to the app's version name. Accepted formats are SemVer (`MAJOR.MINOR.PATCH`, optionally with prerelease/build metadata) and named versions (`LABEL-MAJOR.MINOR`, for example `dev.test-0.1`). Named versions use patch `0` for Android version-code calculation. Android `versionCode` is derived as:
 
 ```text
 major * 1,000,000 + minor * 1,000 + patch + 1
 ```
 
-Use a higher semantic version for each upgrade. This keeps the Android version code deterministic and increasing.
+Use higher numeric components for each upgrade. The code is deterministic; different labels with the same numeric components produce the same Android versionCode.
 
 ## Profiles
 

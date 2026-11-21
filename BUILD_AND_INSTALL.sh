@@ -9,7 +9,7 @@ case "$PROFILE" in
   dev) GRADLE_TASK="assembleDebug"; APK_SOURCE="app/build/outputs/apk/debug/app-debug.apk" ;;
   beta|production) GRADLE_TASK="assembleRelease"; APK_SOURCE="app/build/outputs/apk/release/app-release.apk" ;;
   *)
-    echo "Usage: $0 [dev|beta|production] [MAJOR.MINOR.PATCH]" >&2
+    echo "Usage: $0 [dev|beta|production] [1.2.3|1.2.3-beta.1|dev.test-0.1]" >&2
     exit 2
     ;;
 esac
@@ -23,23 +23,7 @@ if ! command -v java >/dev/null 2>&1; then
   exit 1
 fi
 
-VERSION_CODE="$(node - "$VERSION" <<'NODE'
-const value = process.argv[2] ?? "";
-const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
-if (!match) {
-  throw new Error("Version must use MAJOR.MINOR.PATCH, for example 1.2.3.");
-}
-const [major, minor, patch] = match.slice(1).map(Number);
-if (major > 2099 || minor > 999 || patch > 999) {
-  throw new Error("Version is outside the supported Android versionCode range.");
-}
-const code = major * 1000000 + minor * 1000 + patch + 1;
-if (!Number.isSafeInteger(code) || code > 2100000000) {
-  throw new Error("Calculated Android versionCode exceeds Android's supported maximum.");
-}
-process.stdout.write(String(code));
-NODE
-)"
+VERSION_CODE="$(node "$ROOT_DIR/scripts/app-version.cjs" "$VERSION")"
 
 echo "Building BamanaShop Customer: profile=$PROFILE version=$VERSION versionCode=$VERSION_CODE"
 
