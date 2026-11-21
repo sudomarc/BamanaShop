@@ -1,8 +1,7 @@
 {
   "cli": {
     "version": ">= 5.0.0",
-    "appVersionSource": "remote",
-    "owner": "marcopolos-team"
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
