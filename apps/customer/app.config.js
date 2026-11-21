@@ -1,6 +1,6 @@
 const { expo: staticConfig } = require("./app.json");
 
-const VERSION_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+const { parseAppVersion } = require("../../scripts/app-version.cjs");
 
 module.exports = ({ config = staticConfig } = {}) => {
   const appVersion = process.env.BAMANASHOP_VERSION?.trim();
