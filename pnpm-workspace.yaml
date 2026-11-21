@@ -4,4 +4,4 @@ packages:
   - 'supabase'
 allowBuilds:
   esbuild: true
-  react-native-screens: true
+  react-native-screens: false
