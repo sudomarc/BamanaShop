@@ -203,7 +203,7 @@ jobs:
     name: EAS build (Android)
     if: github.event_name == 'workflow_dispatch' && inputs.task == 'build-android'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -258,12 +258,71 @@ jobs:
           '
           rm -f "$config_file" "$error_file"
 
-      - name: Queue EAS build
+      - name: Build Android app and wait for completion
+        id: eas_build
         working-directory: apps/customer
-        run: eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --no-wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          build_output="$RUNNER_TEMP/eas-build.json"
+          eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --wait --json > "$build_output"
+
+          BUILD_ID="$(node - "$build_output" <<'NODE'
+          const fs = require("node:fs");
+          const raw = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          const builds = Array.isArray(raw) ? raw : [raw];
+          if (builds.length !== 1 || !builds[0]?.id) {
+            throw new Error("EAS did not return exactly one Android build with an ID.");
+          }
+          const build = builds[0];
+          if (build.status !== "FINISHED" || !build.artifacts?.applicationArchiveUrl) {
+            throw new Error(`EAS build did not finish successfully (status: ${build.status ?? "unknown"}).`);
+          }
+          process.stdout.write(build.id);
+          NODE
+          )"
+
+          echo "EAS Android build finished: $BUILD_ID"
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Download completed Android APK
+        working-directory: apps/customer
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+          BUILD_ID: ${{ steps.eas_build.outputs.build_id }}
+          PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+          download_output="$RUNNER_TEMP/eas-download.json"
+          eas build:download --build-id "$BUILD_ID" --json > "$download_output"
+
+          APP_PATH="$(node - "$download_output" <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          if (typeof result.path !== "string" || result.path.length === 0) {
+            throw new Error("EAS download did not return an application archive path.");
+          }
+          process.stdout.write(result.path);
+          NODE
+          )"
+
+          test -f "$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/bamanashop-apk"
+          APK_PATH="$RUNNER_TEMP/bamanashop-apk/BamanaShop-$PROFILE.apk"
+          cp "$APP_PATH" "$APK_PATH"
+          unzip -t "$APK_PATH" >/dev/null
+          echo "Verified APK: $APK_PATH"
+
+      - name: Upload APK to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: bamanashop-android-${{ inputs.profile }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/bamanashop-apk/*.apk
+          if-no-files-found: error
+          retention-days: 30
 
   eas-build-ios:
     name: EAS build (iOS)
