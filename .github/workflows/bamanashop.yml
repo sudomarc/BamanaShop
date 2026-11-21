@@ -14,7 +14,6 @@ on:
           - verify
           - build-android
           - build-ios
-          - download-eas-build
           - cleanup-legacy-history
         default: verify
       profile:
@@ -25,17 +24,6 @@ on:
           - preview
           - production
         default: preview
-      download_platform:
-        description: "Platform of the EAS build to download"
-        type: choice
-        options:
-          - android
-          - ios
-        default: android
-      build_id:
-        description: "EAS build ID (required for download-eas-build)"
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -389,46 +377,6 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
-
-  download-eas-build:
-    name: Download EAS build
-    if: github.event_name == 'workflow_dispatch' && inputs.task == 'download-eas-build'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install EAS CLI
-        run: npm install --global eas-cli
-
-      - name: Download build
-        run: |
-          if [ -z "$BUILD_ID" ]; then
-            echo "::error::Enter an EAS build ID in the workflow inputs."
-            exit 1
-          fi
-          mkdir -p eas-build
-          eas build:download --platform "$PLATFORM" --id "$BUILD_ID" --output ./eas-build
-          test -n "$(find eas-build -type f -print -quit)"
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
-          BUILD_ID: ${{ inputs.build_id }}
-          PLATFORM: ${{ inputs.download_platform }}
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bamanashop-eas-${{ inputs.download_platform }}-${{ inputs.build_id }}
-          path: eas-build/*
-          if-no-files-found: error
-          retention-days: 30
 
   cleanup-legacy-history:
     name: Delete runs from retired workflows
