@@ -274,6 +274,10 @@ jobs:
               console.error("eas.json must set cli.appVersionSource to \"remote\".");
               process.exit(1);
             }
+            if (easConfig.cli?.owner !== "marcopolos-team") {
+              console.error("eas.json must set cli.owner to \"marcopolos-team\".");
+              process.exit(1);
+            }
           '
           rm -f "$config_file" "$error_file"
 
@@ -397,6 +401,19 @@ jobs:
             const config = JSON.parse(fs.readFileSync(process.env.EXPO_CONFIG_PATH, "utf8"));
             if (config.extra?.eas?.projectId !== process.env.EAS_PROJECT_ID) {
               console.error("Resolved Expo config does not match EAS_PROJECT_ID.");
+              process.exit(1);
+            }
+            if (config.owner !== "marcopolos-team") {
+              console.error("Resolved Expo config must set owner to \"marcopolos-team\".");
+              process.exit(1);
+            }
+            const easConfig = JSON.parse(fs.readFileSync("eas.json", "utf8"));
+            if (easConfig.cli?.appVersionSource !== "remote") {
+              console.error("eas.json must set cli.appVersionSource to \"remote\".");
+              process.exit(1);
+            }
+            if (easConfig.cli?.owner !== "marcopolos-team") {
+              console.error("eas.json must set cli.owner to \"marcopolos-team\".");
               process.exit(1);
             }
           '
