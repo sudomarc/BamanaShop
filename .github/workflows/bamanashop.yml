@@ -290,7 +290,12 @@ jobs:
         run: |
           set -euo pipefail
           build_output="$RUNNER_TEMP/eas-build.json"
-          eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --wait --json > "$build_output"
+          # Capture both stdout and stderr to debug build failures
+          if ! eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --wait --json > "$build_output" 2>&1; then
+            echo "::error::EAS build command failed"
+            cat "$build_output" >&2
+            exit 1
+          fi
 
           BUILD_ID="$(node - "$build_output" <<'NODE'
           const fs = require("node:fs");
