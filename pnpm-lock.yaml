@@ -324,6 +324,9 @@ importers:
       '@babel/core':
         specifier: ^7.24.0
         version: 7.29.13(supports-color@8.1.1)
+      '@react-native/gradle-plugin':
+        specifier: 0.74.87
+        version: 0.74.87
       '@types/react':
         specifier: ~18.2.0
         version: 18.2.79
