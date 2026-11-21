@@ -17,7 +17,8 @@
       "android": {
         "buildType": "apk"
       },
-      "pnpm": "12.21.0"
+      "pnpm": "12.21.0",
+      "image": "ubuntu-22.04"
     },
     "production": {
       "autoIncrement": true,
@@ -25,7 +26,8 @@
         "buildType": "apk",
         "credentialsSource": "remote"
       },
-      "pnpm": "12.21.0"
+      "pnpm": "12.21.0",
+      "image": "ubuntu-22.04"
     }
   },
   "submit": {
