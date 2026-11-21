@@ -69,7 +69,16 @@ jobs:
 
       - name: Validate Customer Expo config
         working-directory: apps/customer
-        run: pnpm exec expo config --json > /dev/null
+        run: |
+          config_file="$RUNNER_TEMP/expo-config.json"
+          error_file="$RUNNER_TEMP/expo-config.err"
+          if ! pnpm exec expo config --json > "$config_file" 2> "$error_file"; then
+            cat "$error_file" >&2
+            cat "$config_file" >&2
+            exit 1
+          fi
+          echo "Customer Expo config resolved successfully."
+          rm -f "$config_file" "$error_file"
 
       # Shared packages have runnable lint, type, build and unit-test suites.
       - name: Build shared packages
@@ -231,7 +240,12 @@ jobs:
           fi
 
           config_file="$RUNNER_TEMP/expo-config.json"
-          pnpm exec expo config --json > "$config_file"
+          error_file="$RUNNER_TEMP/expo-config.err"
+          if ! pnpm exec expo config --json > "$config_file" 2> "$error_file"; then
+            cat "$error_file" >&2
+            sed "s/$EAS_PROJECT_ID/[redacted]/g" "$config_file" >&2
+            exit 1
+          fi
           EXPO_CONFIG_PATH="$config_file" node -e '
             const fs = require("node:fs");
             const config = JSON.parse(fs.readFileSync(process.env.EXPO_CONFIG_PATH, "utf8"));
@@ -240,7 +254,7 @@ jobs:
               process.exit(1);
             }
           '
-          rm -f "$config_file"
+          rm -f "$config_file" "$error_file"
 
       - name: Queue EAS build
         working-directory: apps/customer
@@ -292,7 +306,12 @@ jobs:
           fi
 
           config_file="$RUNNER_TEMP/expo-config.json"
-          pnpm exec expo config --json > "$config_file"
+          error_file="$RUNNER_TEMP/expo-config.err"
+          if ! pnpm exec expo config --json > "$config_file" 2> "$error_file"; then
+            cat "$error_file" >&2
+            sed "s/$EAS_PROJECT_ID/[redacted]/g" "$config_file" >&2
+            exit 1
+          fi
           EXPO_CONFIG_PATH="$config_file" node -e '
             const fs = require("node:fs");
             const config = JSON.parse(fs.readFileSync(process.env.EXPO_CONFIG_PATH, "utf8"));
@@ -301,7 +320,7 @@ jobs:
               process.exit(1);
             }
           '
-          rm -f "$config_file"
+          rm -f "$config_file" "$error_file"
 
       - name: Queue EAS build
         working-directory: apps/customer
