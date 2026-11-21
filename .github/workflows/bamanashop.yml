@@ -70,6 +70,28 @@ jobs:
           echo "Customer Expo config resolved successfully."
           rm -f "$config_file" "$error_file"
 
+      - name: Validate Customer PNG assets
+        working-directory: apps/customer
+        run: |
+          node <<'NODE'
+          const { readFileSync } = require("node:fs");
+          const files = [
+            "assets/images/icon.png",
+            "assets/images/splash-icon.png",
+            "assets/images/notification-icon.png",
+            "assets/images/favicon.png",
+          ];
+          const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+          for (const file of files) {
+            const image = readFileSync(file);
+            if (!image.subarray(0, signature.length).equals(signature)) {
+              throw new Error(`${file} is not a valid PNG file.`);
+            }
+          }
+          console.log(`Validated ${files.length} PNG assets.`);
+          NODE
+
       # Shared packages have runnable lint, type, build and unit-test suites.
       - name: Build shared packages
         id: shared_build
