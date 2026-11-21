@@ -258,6 +258,10 @@ jobs:
           EXPO_NO_TELEMETRY: "1"
         run: CI=1 pnpm exec expo prebuild --platform android --clean --no-install
 
+      - name: Verify React Native Gradle plugin resolution
+        working-directory: apps/customer/android
+        run: node --print "require.resolve('@react-native/gradle-plugin/package.json')"
+
       - name: Build APK with Gradle
         env:
           BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
