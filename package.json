@@ -20,7 +20,8 @@
     "supabase:reset": "pnpm --filter=@bamanashop/supabase reset",
     "supabase:types": "pnpm --filter=@bamanashop/supabase types",
     "supabase:db:pull": "pnpm --filter=@bamanashop/supabase db:pull",
-    "verify:all": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test && pnpm run build"
+    "verify:all": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test && pnpm run build",
+    "validate:png": "node scripts/validate-png-assets.js"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -31,6 +32,7 @@
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",
+    "pngjs": "^7.0.0",
     "prettier": "^3.3.0",
     "typescript": "^5.5.0"
   }
