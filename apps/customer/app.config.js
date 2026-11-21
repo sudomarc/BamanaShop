@@ -4,10 +4,8 @@ const VERSION_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
 module.exports = ({ config = staticConfig } = {}) => {
   const appVersion = process.env.BAMANASHOP_VERSION?.trim();
-  if (appVersion && !VERSION_PATTERN.test(appVersion)) {
-    throw new Error(
-      "BAMANASHOP_VERSION must use MAJOR.MINOR.PATCH, for example 1.2.3."
-    );
+  if (appVersion) {
+    parseAppVersion(appVersion);
   }
 
   const versionCodeRaw = process.env.BAMANASHOP_ANDROID_VERSION_CODE?.trim();
