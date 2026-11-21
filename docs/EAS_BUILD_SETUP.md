@@ -84,10 +84,10 @@ Build typically takes **10-20 minutes** for Android APK.
 
 ## Step 5: Download the APK
 
-### Option A: From GitHub Actions (if workflow succeeds)
-1. Go to the completed workflow run
-2. Click **"Artifacts"** → Download `eas-build-android-apk` or `eas-apk-<BUILD_ID>`
-3. Extract the ZIP to get the `.apk` file
+### Option A: From GitHub Actions (recommended)
+1. Open the completed **BamanaShop** workflow run.
+2. In the **Artifacts** section, download `bamanashop-android-<profile>-<run-number>` (for example, `bamanashop-android-preview-42`).
+3. Extract the ZIP archive. The `.apk` file is inside.
 
 ### Option B: From EAS Dashboard
 1. Go to https://expo.dev/accounts/[account]/projects/bamanashop/builds
@@ -102,7 +102,7 @@ Build typically takes **10-20 minutes** for Android APK.
 
 ### Option D: Manual EAS CLI Download
 ```bash
-eas build:download --platform android --id <BUILD_ID> --output ./apk
+eas build:download --build-id <BUILD_ID> --non-interactive
 ```
 
 ## Step 6: Install on Phone via ADB
