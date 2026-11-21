@@ -17,7 +17,7 @@ on:
         default: beta
         required: true
       version:
-        description: "App version (MAJOR.MINOR.PATCH, for example 1.2.3)"
+        description: "App version (1.2.3, 1.2.3-beta.1, or dev.test-0.1)"
         type: string
         default: "1.0.0"
         required: true
@@ -216,30 +216,10 @@ jobs:
         env:
           APP_VERSION: ${{ inputs.version }}
         run: |
-          node <<'NODE'
-          const fs = require("node:fs");
-          const version = process.env.APP_VERSION ?? "";
-          const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version);
-
-          if (!match) {
-            throw new Error("Version must use MAJOR.MINOR.PATCH, for example 1.2.3.");
-          }
-
-          const [major, minor, patch] = match.slice(1).map(Number);
-          if (major > 2099 || minor > 999 || patch > 999) {
-            throw new Error("Version is outside the supported Android versionCode range.");
-          }
-
-          const versionCode = major * 1000000 + minor * 1000 + patch + 1;
-          if (!Number.isSafeInteger(versionCode) || versionCode > 2100000000) {
-            throw new Error("Calculated Android versionCode exceeds Android's supported maximum.");
-          }
-
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, "android_version_code=" + versionCode + "\n");
-          console.log("App version: " + version);
-          console.log("Android versionCode: " + versionCode);
-          NODE
-
+          version_code="$(node scripts/app-version.cjs "$APP_VERSION")"
+          echo "android_version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "App version: $APP_VERSION"
+          echo "Android versionCode: $version_code"
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
