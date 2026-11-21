@@ -48,12 +48,6 @@
           "microphonePermission": false
         }
       ],
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "BamanaShop utilise votre position pour la livraison."
-        }
-      ],
       "expo-system-ui"
     ],
     "experiments": {
