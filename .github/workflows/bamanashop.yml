@@ -220,6 +220,7 @@ jobs:
           echo "android_version_code=$version_code" >> "$GITHUB_OUTPUT"
           echo "App version: $APP_VERSION"
           echo "Android versionCode: $version_code"
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
