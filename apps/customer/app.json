@@ -62,15 +62,7 @@
           "locationWhenInUsePermission": "BamanaShop utilise votre position pour la livraison."
         }
       ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/notification-icon.png",
-          "color": "#E94D1C",
-          "defaultChannel": "default"
-        }
-      ]
-    ],
+          ],
     "experiments": {
       "typedRoutes": true
     },
