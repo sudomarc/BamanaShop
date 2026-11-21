@@ -155,8 +155,8 @@ jobs:
         run: |
           failed=0
           for check in SHARED_BUILD SHARED_LINT SHARED_FORMAT SHARED_TYPECHECK SHARED_TESTS SEO; do
-            result="$${!check}"
-            echo "${check}: $${result:-not-run}"
+            result="${!check}"
+            echo "${check}: ${result:-not-run}"
             if [ "$result" != "success" ]; then
               failed=1
             fi
@@ -164,7 +164,7 @@ jobs:
           echo
           echo "Application diagnostics (non-blocking until app issues are fixed):"
           for check in APP_LINT APP_FORMAT APP_TYPECHECK APP_TESTS ADMIN_BUILD; do
-            echo "${check}: $${!check:-not-run}"
+            echo "${check}: ${!check:-not-run}"
           done
           exit "$failed"
 
@@ -281,6 +281,7 @@ jobs:
         env:
           BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
           BAMANASHOP_VERSION: ${{ inputs.version }}
+          BAMANASHOP_ANDROID_VERSION_CODE: ${{ steps.version.outputs.android_version_code }}
         run: |
           set -euo pipefail
 
@@ -390,5 +391,5 @@ jobs:
 
             await core.summary
               .addHeading("Workflow history cleanup")
-              .addRaw("Deleted " + previousRuns.length + " previous completed repository workflow run(s). The current run and GitHub Pages system runs were kept.")
+              .addRaw("Deleted " + previousRuns.length + " previous completed repository workflow run(s). The current run and runs not associated with repository workflow files were kept.")
               .write();
