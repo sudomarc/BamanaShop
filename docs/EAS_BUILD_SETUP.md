@@ -61,17 +61,10 @@ EAS_PROJECT_ID="<project-uuid>" eas project:info
 3. Choose `build-android` for the task and `preview` for the profile.
 4. Start the workflow and wait for the EAS cloud build to finish. The workflow now waits for the finished APK, downloads it, validates the archive, and uploads it as a GitHub Actions artifact.
 
-### Option B: Via Git Push
-```bash
-git add .
-git commit -m "trigger eas build"
-git push origin main
-```
-
-### Option C: Local Build (for testing)
+### Option B: Via EAS CLI
 ```bash
 cd apps/customer
-EAS_PROJECT_ID="<project-uuid>" eas build --platform android --profile production
+EAS_PROJECT_ID="<project-uuid>" eas build --platform android --profile preview
 ```
 
 ## Step 4: Monitor Build Progress
