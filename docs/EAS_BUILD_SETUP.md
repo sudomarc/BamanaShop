@@ -24,6 +24,8 @@ eas project:init
 ```
 Record the Expo project UUID returned by the command. This repository resolves `extra.eas.projectId` dynamically from the `EAS_PROJECT_ID` environment variable; do not commit a placeholder project ID in `app.json`.
 
+EAS build profiles pin pnpm to `12.21.0`, matching the root `packageManager` field. This is required because pnpm 12 writes a two-document lockfile; older pnpm releases may reject it and ignore the lockfile.
+
 ### 1.3 Verify Configuration
 ```bash
 eas project:info
@@ -131,6 +133,8 @@ adb install -r ./apk/bamanashop-android.apk
 | Error | Solution |
 |-------|----------|
 | `EXPO_TOKEN` invalid | Regenerate token at expo.dev/settings/access-tokens |
+| `ERR_PNPM_BROKEN_LOCKFILE` / multiple YAML documents | Ensure the EAS build profile uses pnpm `12.21.0`, matching the root package manager pin |
+| `bob: not found` from `react-native-screens` postinstall | Its package build is denied in `pnpm-workspace.yaml`; the published package already includes its compiled `lib` output |
 | `EAS_PROJECT_ID` missing or invalid | Set the repository secret to the Expo project UUID and rerun the workflow |
 | Gradle build failed | Check `eas.json` build config, ensure `buildType: "apk"` for Android |
 | Out of memory | Use `preview` profile instead of `production` |
