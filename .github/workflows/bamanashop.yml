@@ -274,8 +274,8 @@ jobs:
               console.error("eas.json must set cli.appVersionSource to \"remote\".");
               process.exit(1);
             }
-            if (easConfig.cli?.owner !== "marcopolos-team") {
-              console.error("eas.json must set cli.owner to \"marcopolos-team\".");
+            if (Object.hasOwn(easConfig.cli ?? {}, "owner")) {
+              console.error("eas.json cli.owner is not supported; keep owner in app.json.");
               process.exit(1);
             }
           '
@@ -412,8 +412,8 @@ jobs:
               console.error("eas.json must set cli.appVersionSource to \"remote\".");
               process.exit(1);
             }
-            if (easConfig.cli?.owner !== "marcopolos-team") {
-              console.error("eas.json must set cli.owner to \"marcopolos-team\".");
+            if (Object.hasOwn(easConfig.cli ?? {}, "owner")) {
+              console.error("eas.json cli.owner is not supported; keep owner in app.json.");
               process.exit(1);
             }
           '
