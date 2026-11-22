@@ -16,7 +16,7 @@
     "@bamanashop/domain": "workspace:*",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "^2.45.0",
-    "next": "14.2.0",
+    "next": "15.5.29",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "zustand": "^4.5.0"
@@ -29,6 +29,6 @@
     "eslint-config-next": "14.2.0",
     "prettier": "^3.3.0",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "vitest": "^4.1.11"
   }
 }
