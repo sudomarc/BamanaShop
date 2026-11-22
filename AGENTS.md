@@ -2,8 +2,8 @@
 
 ## Product direction
 BamanaShop is becoming a general-purpose multi-vendor marketplace, launching in Conakry, Guinea. The product consists of exactly two mobile apps and one internal web console:
-- `apps/customer`: customer shopping app (React Native Community CLI (sans Expo) + React Navigation).
-- `apps/pro`: one Pro app for both sellers and delivery couriers, with role-specific access and navigation (React Native Community CLI (sans Expo) + React Navigation).
+- `apps/customer`: customer shopping app (React Native Community CLI + React Navigation).
+- `apps/pro`: one Pro app for both sellers and delivery couriers, with role-specific access and navigation (React Native Community CLI + React Navigation).
 - `apps/admin`: internal administration dashboard (Next.js).
 All three use one secured backend and one PostgreSQL database.
 
@@ -28,7 +28,7 @@ All three use one secured backend and one PostgreSQL database.
 - TypeScript monorepo with pnpm workspaces.
 - Mobile apps use the React Native Community CLI and React Navigation. Expo, Expo Router, EAS Build and Expo Prebuild are prohibited.
 - Android Gradle projects are versioned in each mobile app. Metro may bundle JavaScript during a build, but installed APKs must never require a Metro server at runtime.
-- React Native Community CLI (sans Expo) + React Navigation for both mobile apps; Next.js for Admin.
+- React Native Community CLI + React Navigation for both mobile apps; Next.js for Admin.
 - Supabase for PostgreSQL, Auth, Storage, Realtime and Edge Functions.
 - Shared contracts and domain rules belong in packages; trusted financial and authorization logic belongs server-side.
 - Enable and test RLS on every exposed table. Never put service-role keys or provider secrets in client bundles.
