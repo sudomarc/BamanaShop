@@ -34,7 +34,7 @@ const secureStorage = {
 };
 
 function createMockClient(): SupabaseClient<Database> {
-  const mockFrom = <T extends keyof Database["public"]["Tables"]>() => ({
+  const mockFrom = <T extends keyof Database["public"]["Tables"] = keyof Database["public"]["Tables"]>() => ({
     select: (): {
       data: Database["public"]["Tables"][T]["Row"][];
       error: null;
@@ -58,6 +58,23 @@ function createMockClient(): SupabaseClient<Database> {
       data: null,
       error: { message: "Mock mode" },
     }),
+    eq: () => mockFrom<T>(),
+    neq: () => mockFrom<T>(),
+    gt: () => mockFrom<T>(),
+    gte: () => mockFrom<T>(),
+    lt: () => mockFrom<T>(),
+    lte: () => mockFrom<T>(),
+    like: () => mockFrom<T>(),
+    ilike: () => mockFrom<T>(),
+    is: () => mockFrom<T>(),
+    in: () => mockFrom<T>(),
+    contains: () => mockFrom<T>(),
+    containedBy: () => mockFrom<T>(),
+    range: () => mockFrom<T>(),
+    limit: () => mockFrom<T>(),
+    order: () => mockFrom<T>(),
+    single: () => mockFrom<T>(),
+    maybeSingle: () => mockFrom<T>(),
   });
 
   return {
