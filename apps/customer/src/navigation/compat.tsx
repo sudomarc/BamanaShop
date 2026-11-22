@@ -1,13 +1,34 @@
-import { createNavigationContainerRef, StackActions, useRoute } from "@react-navigation/native";
+import {
+  createNavigationContainerRef,
+  StackActions,
+  useRoute,
+  type ParamListBase,
+  type RouteProp,
+} from "@react-navigation/native";
 
-export const navigationRef = createNavigationContainerRef<any>();
+type CustomerRootParamList = {
+  CustomerTabs: { screen?: "Home" | "Categories" | "Cart" | "Orders" | "Profile" } | undefined;
+  Login: Record<string, unknown> | undefined;
+  ProfileSetup: Record<string, unknown> | undefined;
+  CategoryDetail: { slug: string } | undefined;
+  ProductDetail: { id: string } | undefined;
+  StoreDetail: { id: string } | undefined;
+  OrderDetail: { id: string } | undefined;
+};
 
-type RouteTarget = { name: string; params?: Record<string, unknown> };
+export const navigationRef = createNavigationContainerRef<CustomerRootParamList>();
 
-function resolveTarget(href: string | { pathname: string; params?: Record<string, unknown> }): RouteTarget {
+type RouteTarget = {
+  name: keyof CustomerRootParamList;
+  params?: Record<string, unknown>;
+};
+
+function resolveTarget(
+  href: string | { pathname: string; params?: Record<string, unknown> },
+): RouteTarget {
   const pathname = typeof href === "string" ? href : href.pathname;
   const supplied = typeof href === "string" ? {} : href.params ?? {};
-  const path = pathname.replace(/^\/+|\/+$/g, "");
+  const path = pathname.replace(/^\\/+|\\/+$/g, "");
 
   if (path.includes("categories/")) {
     const slug = decodeURIComponent(path.split("categories/")[1].split("/")[0]);
@@ -31,11 +52,15 @@ export function useRouter() {
   return {
     push(href: string | { pathname: string; params?: Record<string, unknown> }) {
       const target = resolveTarget(href);
-      if (navigationRef.isReady()) navigationRef.navigate(target.name, target.params);
+      if (navigationRef.isReady()) {
+        navigationRef.navigate(target.name, target.params as never);
+      }
     },
     replace(href: string | { pathname: string; params?: Record<string, unknown> }) {
       const target = resolveTarget(href);
-      if (navigationRef.isReady()) navigationRef.dispatch(StackActions.replace(target.name, target.params));
+      if (navigationRef.isReady()) {
+        navigationRef.dispatch(StackActions.replace(target.name, target.params));
+      }
     },
     back() {
       if (navigationRef.isReady() && navigationRef.canGoBack()) navigationRef.goBack();
@@ -44,6 +69,6 @@ export function useRouter() {
 }
 
 export function useLocalSearchParams<T extends Record<string, unknown> = Record<string, unknown>>(): T {
-  const route = useRoute<any>();
+  const route = useRoute<RouteProp<ParamListBase, string>>();
   return (route.params ?? {}) as T;
 }
