@@ -28,17 +28,6 @@ const categoryIcons: Record<string, string> = {
   auto: "car",
 };
 
-const categoryLabels: Record<string, string> = {
-  alimentation: "Alimentation",
-  electronique: "Électronique",
-  mode: "Mode & Accessoires",
-  maison: "Maison & Jardin",
-  sante: "Santé & Beauté",
-  sport: "Sport & Loisirs",
-  beaute: "Beauté",
-  auto: "Auto & Moto",
-};
-
 export default function CategoryDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
