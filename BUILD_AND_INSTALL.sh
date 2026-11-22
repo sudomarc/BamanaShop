@@ -6,8 +6,7 @@ VERSION="${2:-1.0.0}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 case "$PROFILE" in
-  dev) GRADLE_TASK="assembleDebug"; APK_SOURCE="app/build/outputs/apk/debug/app-debug.apk" ;;
-  beta|production) GRADLE_TASK="assembleRelease"; APK_SOURCE="app/build/outputs/apk/release/app-release.apk" ;;
+  dev|beta|production) GRADLE_TASK="assembleRelease"; APK_SOURCE="app/build/outputs/apk/release/app-release.apk" ;;
   *)
     echo "Usage: $0 [dev|beta|production] [1.2.3|1.2.3-beta.1|dev.test-0.1]" >&2
     exit 2
@@ -38,6 +37,8 @@ BAMANASHOP_ANDROID_VERSION_CODE="$VERSION_CODE" \
 EXPO_NO_TELEMETRY=1 \
   pnpm exec expo prebuild --platform android --clean --no-install
 
+node "$ROOT_DIR/scripts/android-build-profile.cjs" "$PROFILE" "$ROOT_DIR/apps/customer/android/app/build.gradle"
+
 cd "$ROOT_DIR/apps/customer/android"
 ./gradlew --no-daemon --stacktrace ":app:$GRADLE_TASK"
 
@@ -50,6 +51,10 @@ mkdir -p "$ROOT_DIR/apk"
 APK_PATH="$ROOT_DIR/apk/BamanaShop-$PROFILE-v$VERSION.apk"
 cp "$APK_SOURCE" "$APK_PATH"
 unzip -t "$APK_PATH" >/dev/null
+if ! unzip -Z1 "$APK_PATH" | grep -Fxq "assets/index.android.bundle"; then
+  echo "The APK does not contain the embedded React Native JavaScript bundle." >&2
+  exit 1
+fi
 
 echo "APK created: $APK_PATH"
 
@@ -60,6 +65,4 @@ else
   echo "No authorized ADB device detected; APK was kept at $APK_PATH."
 fi
 
-if [ "$PROFILE" = "dev" ]; then
-  echo "Dev APK requires the Metro server: pnpm dev:customer"
-fi
+echo "All profiles are standalone APKs; Metro is not required at runtime."
