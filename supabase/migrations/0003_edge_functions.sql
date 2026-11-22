@@ -35,9 +35,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_store Store%ROWTYPE;
+  v_store stores%ROWTYPE;
   v_product Products%ROWTYPE;
-  v_commission CommissionRule%ROWTYPE;
+  v_commission commission_rules%ROWTYPE;
   v_total_subtotal BIGINT := 0;
   v_total_commission BIGINT := 0;
   v_total_delivery BIGINT := 0;
@@ -169,7 +169,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_payment Payment%ROWTYPE;
+  v_payment payments%ROWTYPE;
   v_existing_event payment_events%ROWTYPE;
 BEGIN
   -- Validate payment exists and belongs to valid order
@@ -266,8 +266,11 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_order orders%ROWTYPE;
-  v_partner DeliveryPartner%ROWTYPE;
+  v_partner delivery_partners%ROWTYPE;
   v_new_status delivery_status := 'assigned';
+  v_distance_km NUMERIC(10,2) := 5;
+  v_estimated_fee_gnf BIGINT;
+  v_is_cod BOOLEAN := TRUE;
 BEGIN
   -- Validate order exists and is in preparable state
   SELECT * INTO v_order FROM orders WHERE id = p_order_id;
@@ -297,15 +300,11 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Calculate estimated fee
-  DECLARE
-    v_distance_km NUMERIC(10,2) := 5; -- default estimate
-    v_is_cod BOOLEAN := TRUE; -- COD for MVP
-  BEGIN
-    -- Simple distance estimation based on store/customer communes
-    -- In production, would use proper geocoding
-    v_estimated_fee_gnf := v_partner.base_fee_gnf + (v_partner.per_km_fee_gnf * v_distance_km) + v_partner.cod_handling_fee_gnf;
-  END;
+  -- Calculate estimated fee using the configured partner tariff.
+  -- The MVP distance estimate remains explicitly fixed at 5 km until routing is integrated.
+  v_estimated_fee_gnf := v_partner.base_fee_gnf
+    + (v_partner.per_km_fee_gnf * v_distance_km)
+    + CASE WHEN v_is_cod THEN v_partner.cod_handling_fee_gnf ELSE 0 END;
 
   -- Create delivery job
   INSERT INTO delivery_jobs (
@@ -372,8 +371,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_store Store%ROWTYPE;
-  v_entries FinancialEntry%ROWTYPE;
+  v_store stores%ROWTYPE;
+  v_entries financial_entries%ROWTYPE;
   v_total_sales BIGINT := 0;
   v_total_commission BIGINT := 0;
   v_total_delivery BIGINT := 0;
