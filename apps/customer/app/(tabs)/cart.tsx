@@ -15,16 +15,16 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
-import { fetchAddresses, createOrder } from "@/api";
+import {
+  fetchAddresses,
+  createOrder,
+  fetchDeliveryPartners,
+  fetchCommissionRules,
+  fetchStore,
+} from "@/api";
 import { isSupabaseConfigured } from "@/utils/supabase";
 import { calculateOrderTotals } from "@bamanashop/domain";
-import {
-  GnfAmount,
-  PaymentMethod,
-  PhoneE164,
-  MOCK_STORE,
-  MOCK_DELIVERY_PARTNER,
-} from "@bamanashop/contracts";
+import { GnfAmount, PaymentMethod, PhoneE164 } from "@bamanashop/contracts";
 import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
@@ -99,21 +99,43 @@ export default function CartScreen() {
   const calculateTotals = async () => {
     if (items.length === 0) return;
     try {
+      // Get store from first item's product
+      const storeId = items[0].product.store_id;
+      const [store, partners, commissionRules] = await Promise.all([
+        fetchStore(storeId),
+        fetchDeliveryPartners(),
+        fetchCommissionRules(),
+      ]);
+
+      if (!store) throw new Error("Store not found");
+      if (partners.length === 0) throw new Error("No active delivery partners");
+
+      // Use the first (cheapest) active partner for MVP
+      const partner = partners[0];
+
+      // Estimate distance - for MVP use store commune vs delivery commune
+      // In a real app this would use geolocation/routing
+      const address = addresses.find((a) => a.id === selectedAddressId);
+      const sameCommune =
+        address?.commune?.toLowerCase() === store.commune?.toLowerCase();
+      const distanceKm = sameCommune ? 0 : 5;
+
       const result = await calculateOrderTotals({
         items: items.map((i) => ({
           unitPrice: i.product.price_gnf,
           quantity: i.quantity,
         })),
-        store: MOCK_STORE,
-        partner: MOCK_DELIVERY_PARTNER,
-        distanceKm: 5,
+        store,
+        partner,
+        distanceKm,
         paymentMethod,
-        commissionRules: [],
-        categoryId: "11111111-1111-1111-1111-111111111111",
+        commissionRules,
+        categoryId: items[0].product.category_id,
       });
       setTotals(result);
-    } catch {
-      console.error("Calculate totals error");
+    } catch (error) {
+      console.error("Calculate totals error:", error);
+      Alert.alert("Erreur", "Impossible de calculer les totaux");
     }
   };
 

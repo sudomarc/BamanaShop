@@ -21,11 +21,14 @@ import type {
   Uuid,
   PhoneE164,
   IsoDateTime,
+  DeliveryPartner,
+  CommissionRule,
 } from "@bamanashop/contracts";
 import {
   MOCK_CATEGORIES,
   MOCK_STORE,
   MOCK_PRODUCTS,
+  MOCK_DELIVERY_PARTNER,
 } from "@bamanashop/contracts";
 
 const supabase = createSupabaseClient();
@@ -43,6 +46,10 @@ type ProductRow = Database["public"]["Tables"]["products"]["Row"];
 type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 type AddressRow = Database["public"]["Tables"]["addresses"]["Row"];
+type DeliveryPartnerRow =
+  Database["public"]["Tables"]["delivery_partners"]["Row"];
+type CommissionRuleRow =
+  Database["public"]["Tables"]["commission_rules"]["Row"];
 
 function mapOrder(row: OrderRow): Order {
   return {
@@ -120,6 +127,34 @@ function mapAddress(row: AddressRow): Address {
     id: row.id as Uuid,
     user_id: row.user_id as Uuid,
     phone: row.phone as PhoneE164,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapDeliveryPartner(row: DeliveryPartnerRow): DeliveryPartner {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    contact_phone: row.contact_phone as PhoneE164,
+    base_fee_gnf: row.base_fee_gnf as GnfAmount,
+    per_km_fee_gnf: row.per_km_fee_gnf as GnfAmount,
+    cod_handling_fee_gnf: row.cod_handling_fee_gnf as GnfAmount,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapCommissionRule(row: CommissionRuleRow): CommissionRule {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    scope: row.scope as "global" | "category" | "store",
+    scope_id: row.scope_id as Uuid | null,
+    min_order_gnf: row.min_order_gnf as GnfAmount | null,
+    max_commission_gnf: row.max_commission_gnf as GnfAmount | null,
+    effective_from: row.effective_from as IsoDateTime,
+    effective_to: row.effective_to as IsoDateTime | null,
     created_at: row.created_at as IsoDateTime,
     updated_at: row.updated_at as IsoDateTime,
   };
@@ -262,6 +297,63 @@ export async function fetchStore(id: string): Promise<Store | null> {
 
   if (error) return null;
   return data ? mapStore(data) : null;
+}
+
+// ============================================================================
+// Delivery Partners
+// ============================================================================
+
+export async function fetchDeliveryPartners(): Promise<DeliveryPartner[]> {
+  if (isMockMode) return [MOCK_DELIVERY_PARTNER];
+
+  const { data, error } = await (
+    await from("delivery_partners")
+  )
+    .select("*")
+    .eq("is_active", true)
+    .order("base_fee_gnf");
+
+  if (error) throw error;
+  return (data ?? []).map(mapDeliveryPartner);
+}
+
+export async function fetchDeliveryPartner(
+  id: string,
+): Promise<DeliveryPartner | null> {
+  if (isMockMode)
+    return id === MOCK_DELIVERY_PARTNER.id ? MOCK_DELIVERY_PARTNER : null;
+
+  const { data, error } = await (
+    await from("delivery_partners")
+  )
+    .select("*")
+    .eq("id", id)
+    .eq("is_active", true)
+    .single();
+
+  if (error) return null;
+  return data ? mapDeliveryPartner(data) : null;
+}
+
+// ============================================================================
+// Commission Rules
+// ============================================================================
+
+export async function fetchCommissionRules(): Promise<CommissionRule[]> {
+  if (isMockMode) return [];
+
+  const now = new Date().toISOString();
+  const { data, error } = await (
+    await from("commission_rules")
+  )
+    .select("*")
+    .eq("is_active", true)
+    .lte("effective_from", now)
+    .or(`effective_to.is.null,effective_to.gte.${now}`)
+    .order("scope", { ascending: false }); // store > category > global
+
+  if (error) throw error;
+  return (data ?? []).map(mapCommissionRule);
 }
 
 export async function fetchStoreProducts(
