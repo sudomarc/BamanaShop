@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient, PostgrestResponse, PostgrestSingleResponse, PostgrestError } from "@supabase/supabase-js";
 import Config from "react-native-config";
 import * as Keychain from "react-native-keychain";
 import type { Database } from "@/types/database";
@@ -33,63 +33,76 @@ const secureStorage = {
   },
 };
 
-function createMockClient(): SupabaseClient<Database> {
-  // Use a simple mock query builder that returns `any` to bypass strict type checking in mock mode.
-  // This is acceptable because mock mode is only used during development when Supabase is not configured.
-  const mockQueryBuilder = {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    select: (..._columns: string[]) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    eq: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    neq: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    gt: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    gte: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    lt: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    lte: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    like: (_column: string, _pattern: string) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ilike: (_column: string, _pattern: string) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    is: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    in: (_column: string, _values: unknown[]) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    contains: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    containedBy: (_column: string, _value: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    range: (_from: number, _to: number) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    limit: (_count: number) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    order: (_column: string, _options?: { ascending?: boolean }) =>
-      mockQueryBuilder,
-    single: () =>
-      Promise.resolve({ data: null, error: { message: "Mock mode" } }),
-    maybeSingle: () =>
-      Promise.resolve({ data: null, error: { message: "Mock mode" } }),
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    insert: (_values: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    update: (_values: unknown) => mockQueryBuilder,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    upsert: (_values: unknown) => mockQueryBuilder,
-    delete: () => mockQueryBuilder,
-    then: <TResult>(
-      onFulfilled?: (value: { data: unknown[]; error: null }) => TResult,
-      onRejected?: (reason: unknown) => TResult,
-    ) =>
-      Promise.resolve({ data: [], error: null }).then(onFulfilled, onRejected),
-  } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+// Type helpers for mock query builder responses
+type MockPostgrestResponse<T> = PostgrestResponse<T>;
+type MockPostgrestSingleResponse<T> = PostgrestSingleResponse<T>;
 
-  const mockFrom = () => mockQueryBuilder;
+function createMockClient(): SupabaseClient<Database> {
+  // Create a properly typed mock query builder that returns Supabase-compatible response types
+  // This ensures TypeScript can properly infer types when chaining query methods
+
+  type MockQueryBuilder<T = Database["public"]["Tables"]["profiles"]["Row"]> = {
+    select: (...columns: string[]) => MockQueryBuilder<T>;
+    eq: (column: string, value: unknown) => MockQueryBuilder<T>;
+    neq: (column: string, value: unknown) => MockQueryBuilder<T>;
+    gt: (column: string, value: unknown) => MockQueryBuilder<T>;
+    gte: (column: string, value: unknown) => MockQueryBuilder<T>;
+    lt: (column: string, value: unknown) => MockQueryBuilder<T>;
+    lte: (column: string, value: unknown) => MockQueryBuilder<T>;
+    like: (column: string, pattern: string) => MockQueryBuilder<T>;
+    ilike: (column: string, pattern: string) => MockQueryBuilder<T>;
+    is: (column: string, value: unknown) => MockQueryBuilder<T>;
+    in: (column: string, values: unknown[]) => MockQueryBuilder<T>;
+    contains: (column: string, value: unknown) => MockQueryBuilder<T>;
+    containedBy: (column: string, value: unknown) => MockQueryBuilder<T>;
+    range: (from: number, to: number) => MockQueryBuilder<T>;
+    limit: (count: number) => MockQueryBuilder<T>;
+    order: (column: string, options?: { ascending?: boolean }) => MockQueryBuilder<T>;
+    single: () => Promise<MockPostgrestSingleResponse<T>>;
+    maybeSingle: () => Promise<MockPostgrestSingleResponse<T>>;
+    insert: (values: unknown) => MockQueryBuilder<T>;
+    update: (values: unknown) => MockQueryBuilder<T>;
+    upsert: (values: unknown) => MockQueryBuilder<T>;
+    delete: () => MockQueryBuilder<T>;
+    then<TResult>(
+      onFulfilled?: (value: MockPostgrestResponse<T>) => TResult,
+      onRejected?: (reason: unknown) => TResult
+    ): Promise<TResult>;
+  };
+
+  const createQueryBuilder = <T = Database["public"]["Tables"]["profiles"]["Row"]>(): MockQueryBuilder<T> => {
+    const builder: MockQueryBuilder<T> = {
+      select: (..._columns: string[]) => builder,
+      eq: (_column: string, _value: unknown) => builder,
+      neq: (_column: string, _value: unknown) => builder,
+      gt: (_column: string, _value: unknown) => builder,
+      gte: (_column: string, _value: unknown) => builder,
+      lt: (_column: string, _value: unknown) => builder,
+      lte: (_column: string, _value: unknown) => builder,
+      like: (_column: string, _pattern: string) => builder,
+      ilike: (_column: string, _pattern: string) => builder,
+      is: (_column: string, _value: unknown) => builder,
+      in: (_column: string, _values: unknown[]) => builder,
+      contains: (_column: string, _value: unknown) => builder,
+      containedBy: (_column: string, _value: unknown) => builder,
+      range: (_from: number, _to: number) => builder,
+      limit: (_count: number) => builder,
+      order: (_column: string, _options?: { ascending?: boolean }) => builder,
+      single: () => Promise.resolve({ data: null, error: null } as MockPostgrestSingleResponse<T>),
+      maybeSingle: () => Promise.resolve({ data: null, error: null } as MockPostgrestSingleResponse<T>),
+      insert: (_values: unknown) => builder,
+      update: (_values: unknown) => builder,
+      upsert: (_values: unknown) => builder,
+      delete: () => builder,
+      then: <TResult>(
+        onFulfilled?: (value: MockPostgrestResponse<T>) => TResult,
+        onRejected?: (reason: unknown) => TResult
+      ) => Promise.resolve({ data: [], error: null } as MockPostgrestResponse<T>).then(onFulfilled, onRejected),
+    };
+    return builder;
+  };
+
+  const mockFrom = <T extends keyof Database["public"]["Tables"]>() => createQueryBuilder<Database["public"]["Tables"][T]["Row"]>();
 
   return {
     auth: {
@@ -116,7 +129,7 @@ function createMockClient(): SupabaseClient<Database> {
       signOut: async () => ({ error: null }),
     },
     from: mockFrom,
-    rpc: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
+    rpc: <T = unknown>() => Promise.resolve({ data: null, error: { message: "Mock mode" } as PostgrestError }),
   } as unknown as SupabaseClient<Database>;
 }
 
