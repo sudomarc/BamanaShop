@@ -29,10 +29,7 @@ type OrderListItem = Order & {
   }>;
 };
 
-const statusConfig: Record<
-  OrderStatus,
-  { label: string; color: string; icon: string }
-> = {
+const statusConfig = {
   pending: { label: "En attente", color: "#F59E0B", icon: "time" },
   confirmed: { label: "Confirmée", color: "#3B82F6", icon: "checkmark-circle" },
   preparing: { label: "En préparation", color: "#8B5CF6", icon: "construct" },
@@ -41,7 +38,7 @@ const statusConfig: Record<
   delivered: { label: "Livrée", color: "#16A34A", icon: "checkmark-done" },
   cancelled: { label: "Annulée", color: "#DC2626", icon: "close-circle" },
   returned: { label: "Retournée", color: "#64748B", icon: "return-up-back" },
-};
+} as const;
 
 export default function OrdersScreen() {
   const router = useRouter();

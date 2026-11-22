@@ -13,6 +13,7 @@ import type {
   PaymentMethod,
   OrderStatus,
   PaymentStatus,
+  DeliveryStatus,
   GnfAmount,
   Uuid,
   PhoneE164,
@@ -22,6 +23,7 @@ import {
   MOCK_CATEGORIES,
   MOCK_STORE,
   MOCK_PRODUCTS,
+  MOCK_DELIVERY_PARTNER,
 } from "@bamanashop/contracts";
 
 const supabase = createSupabaseClient();

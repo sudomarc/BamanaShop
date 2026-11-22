@@ -12,6 +12,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { formatGnf } from "@bamanashop/domain";
+import { GnfAmount } from "@bamanashop/contracts";
 
 export default function SellerDashboardScreen() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function SellerDashboardScreen() {
     },
     {
       label: "CA aujourd'hui",
-      value: formatGnf(1250000),
+      value: formatGnf(1250000 as GnfAmount),
       icon: "cash",
       color: "#059669",
       trend: "+12%",

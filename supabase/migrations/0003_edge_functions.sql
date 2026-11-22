@@ -163,7 +163,7 @@ CREATE OR REPLACE FUNCTION confirm_payment(
   OUT o_payment_status payment_status,
   OUT o_amount_gnf BIGINT,
   OUT o_seller_payable_gnf BIGINT,
-  OUT o_refund_id UUID DEFAULT NULL
+  OUT o_refund_id UUID
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -259,7 +259,7 @@ CREATE OR REPLACE FUNCTION dispatch_delivery(
   OUT o_delivery_job_id UUID,
   OUT o_status delivery_status,
   OUT o_estimated_fee_gnf BIGINT,
-  OUT o_actual_fee_gnf BIGINT DEFAULT NULL
+  OUT o_actual_fee_gnf BIGINT
 )
 LANGUAGE plpgsql
 SECURITY DEFINER

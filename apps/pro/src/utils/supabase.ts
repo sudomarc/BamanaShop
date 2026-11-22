@@ -1,11 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import Config from "react-native-config";
 import * as Keychain from "react-native-keychain";
 
 const supabaseUrl = Config.SUPABASE_URL?.trim() ?? "";
 const supabaseAnonKey = Config.SUPABASE_ANON_KEY?.trim() ?? "";
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!isSupabaseConfigured) {
   console.warn(
     "[Supabase] Missing SUPABASE_URL or SUPABASE_ANON_KEY. Using mock client in development.",
   );
@@ -31,41 +32,47 @@ const secureStorage = {
   },
 };
 
-export const createSupabaseClient = (): ReturnType<typeof createClient> => {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return {
-      auth: {
-        getSession: async () => ({ data: { session: null }, error: null }),
-        onAuthStateChange: () => ({
-          data: { subscription: { unsubscribe: () => {} } },
-        }),
-        signInWithPassword: async () => ({
-          data: { user: null, session: null },
-          error: { message: "Mock mode" },
-        }),
-        signInWithOtp: async () => ({
-          data: { user: null, session: null },
-          error: { message: "Mock mode" },
-        }),
-        verifyOtp: async () => ({
-          data: { user: null, session: null },
-          error: { message: "Mock mode" },
-        }),
-        signUp: async () => ({
-          data: { user: null, session: null },
-          error: { message: "Mock mode" },
-        }),
-        signOut: async () => ({ error: null }),
-      },
-      from: () => ({
-        select: () => ({ data: [], error: null }),
-        insert: () => ({ data: null, error: { message: "Mock mode" } }),
-        upsert: () => ({ data: null, error: { message: "Mock mode" } }),
-        update: () => ({ data: null, error: { message: "Mock mode" } }),
-        delete: () => ({ data: null, error: { message: "Mock mode" } }),
+function createMockClient(): SupabaseClient {
+  const mockFrom = () => ({
+    select: () => ({ data: [], error: null }),
+    insert: () => ({ data: null, error: { message: "Mock mode" } }),
+    upsert: () => ({ data: null, error: { message: "Mock mode" } }),
+    update: () => ({ data: null, error: { message: "Mock mode" } }),
+    delete: () => ({ data: null, error: { message: "Mock mode" } }),
+  });
+
+  return {
+    auth: {
+      getSession: async () => ({ data: { session: null }, error: null }),
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: () => {} } },
       }),
-      rpc: () => ({ data: null, error: { message: "Mock mode" } }),
-    } as unknown as ReturnType<typeof createClient>;
+      signInWithPassword: async () => ({
+        data: { user: null, session: null },
+        error: { message: "Mock mode" },
+      }),
+      signInWithOtp: async () => ({
+        data: { user: null, session: null },
+        error: { message: "Mock mode" },
+      }),
+      verifyOtp: async () => ({
+        data: { user: null, session: null },
+        error: { message: "Mock mode" },
+      }),
+      signUp: async () => ({
+        data: { user: null, session: null },
+        error: { message: "Mock mode" },
+      }),
+      signOut: async () => ({ error: null }),
+    },
+    from: mockFrom,
+    rpc: () => ({ data: null, error: { message: "Mock mode" } }),
+  } as unknown as SupabaseClient;
+}
+
+export const createSupabaseClient = (): SupabaseClient => {
+  if (!isSupabaseConfigured) {
+    return createMockClient();
   }
 
   return createClient(supabaseUrl, supabaseAnonKey, {

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createSupabaseClient } from "@/utils/supabase";
+import { createSupabaseClient, isSupabaseConfigured } from "@/utils/supabase";
 import {
   Profile,
   UserRole,
@@ -33,12 +33,22 @@ interface AuthState {
 }
 
 const supabase = createSupabaseClient();
+const mockMode = !isSupabaseConfigured;
+
+const initialRoleStatuses: Record<UserRole, RoleStatus> = {
+  customer: "pending",
+  seller: "pending",
+  courier: "pending",
+  partner_manager: "pending",
+  admin: "pending",
+  staff: "pending",
+};
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   roles: [],
-  roleStatuses: {},
+  roleStatuses: initialRoleStatuses,
   sellerProfile: null,
   courierProfile: null,
   initialized: false,
@@ -93,17 +103,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
       if (data.user) {
-        await supabase.from("profiles").insert({
-          id: data.user.id,
-          phone,
-          full_name: fullName,
-        });
-        for (const role of roles) {
-          await supabase.from("role_memberships").insert({
-            user_id: data.user.id,
-            role,
-            status: role === "customer" ? "approved" : "pending",
+        if (!mockMode) {
+          await supabase.from("profiles").insert({
+            id: data.user.id,
+            phone,
+            full_name: fullName,
           });
+          for (const role of roles) {
+            await supabase.from("role_memberships").insert({
+              user_id: data.user.id,
+              role,
+              status: role === "customer" ? "approved" : "pending",
+            });
+          }
         }
         set({ user: { id: data.user.id, email: data.user.email } });
         await get().fetchProfiles();
@@ -122,7 +134,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user: null,
       profile: null,
       roles: [],
-      roleStatuses: {},
+      roleStatuses: initialRoleStatuses,
       sellerProfile: null,
       courierProfile: null,
       selectedRole: null,
@@ -151,14 +163,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       .select("role, status")
       .eq("user_id", user.id);
 
-    const roleStatuses: Record<UserRole, RoleStatus> = {} as Record<
-      UserRole,
-      RoleStatus
-    >;
+    const roleStatuses: Record<UserRole, RoleStatus> = { ...initialRoleStatuses };
     const roles: UserRole[] = [];
     memberships?.forEach((m) => {
-      roleStatuses[m.role] = m.status;
-      if (m.status === "approved") roles.push(m.role);
+      roleStatuses[m.role as UserRole] = m.status as RoleStatus;
+      if (m.status === "approved") roles.push(m.role as UserRole);
     });
 
     let sellerProfile: SellerProfile | null = null;
@@ -170,7 +179,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .select("*")
         .eq("user_id", user.id)
         .single();
-      sellerProfile = data as SellerProfile;
+      sellerProfile = data as SellerProfile | null;
     }
 
     if (roles.includes("courier")) {
@@ -179,11 +188,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .select("*")
         .eq("user_id", user.id)
         .single();
-      courierProfile = data as CourierProfile;
+      courierProfile = data as CourierProfile | null;
     }
 
     set({
-      profile: profile as Profile,
+      profile: profile as Profile | null,
       roles,
       roleStatuses,
       sellerProfile,
