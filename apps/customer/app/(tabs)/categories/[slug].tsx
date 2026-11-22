@@ -11,8 +11,8 @@ import {
   RefreshControl,
   FlatList,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { fetchCategoryWithProducts, Category, Product } from "@/api";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
