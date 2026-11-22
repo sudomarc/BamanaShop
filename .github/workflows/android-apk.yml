@@ -1,6 +1,8 @@
 name: Android APK
 
 on:
+  push:
+    branches: [refactor/remove-expo-native-android]
   pull_request:
     branches: [main]
   workflow_dispatch:
