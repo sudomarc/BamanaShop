@@ -1,0 +1,49 @@
+name: One-time Customer Prettier repair
+
+on:
+  push:
+    branches:
+      - refactor/remove-expo-native-android
+
+permissions:
+  contents: write
+
+jobs:
+  format-customer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/remove-expo-native-android
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install with frozen lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Format the three files reported by CI
+        run: |
+          pnpm exec prettier --write "apps/customer/app/(tabs)/cart.tsx" "apps/customer/app/(tabs)/profile.tsx" "apps/customer/app/orders/[id].tsx"
+
+      - name: Commit formatted files
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet -- "apps/customer/app/(tabs)/cart.tsx" "apps/customer/app/(tabs)/profile.tsx" "apps/customer/app/orders/[id].tsx"; then
+            echo "No formatting changes were necessary."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "apps/customer/app/(tabs)/cart.tsx" "apps/customer/app/(tabs)/profile.tsx" "apps/customer/app/orders/[id].tsx"
+          git commit -m "style: format Customer screens"
+          git push origin HEAD:refactor/remove-expo-native-android
