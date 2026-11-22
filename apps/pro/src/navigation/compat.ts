@@ -1,8 +1,13 @@
 import { createNavigationContainerRef } from "@react-navigation/native";
 
-export const navigationRef = createNavigationContainerRef<any>();
+type ProRootParamList = {
+  Seller: undefined;
+  Courier: undefined;
+};
 
-function targetFor(href: string | { pathname: string }): string {
+export const navigationRef = createNavigationContainerRef<ProRootParamList>();
+
+function targetFor(href: string | { pathname: string }): keyof ProRootParamList {
   const path = (typeof href === "string" ? href : href.pathname).toLowerCase();
   return path.includes("(courier)") || path.includes("mission") ? "Courier" : "Seller";
 }
