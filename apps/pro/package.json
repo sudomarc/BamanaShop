@@ -33,7 +33,8 @@
     "react-native-screens": "3.31.1",
     "react-native-vector-icons": "10.2.0",
     "zustand": "^4.5.0",
-    "react-native-gesture-handler": "2.16.1"
+    "react-native-gesture-handler": "2.16.1",
+    "@react-native/assets-registry": "0.74.87"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
@@ -46,6 +47,8 @@
     "prettier": "^3.3.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "vitest": "^2.0.0",
+    "@react-native/codegen": "0.74.87",
+    "@react-native/gradle-plugin": "0.74.87"
   }
 }
