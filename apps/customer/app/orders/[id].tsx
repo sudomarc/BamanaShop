@@ -267,11 +267,11 @@ export default function OrderDetailScreen() {
           renderItem={({ item }) => (
             <View style={styles.orderItem}>
               <View style={styles.orderItemImagePlaceholder}>
-                  <Ionicons
-                    name="image"
-                    size={24}
-                    color={SemanticColors.textTertiary}
-                  />
+                <Ionicons
+                  name="image"
+                  size={24}
+                  color={SemanticColors.textTertiary}
+                />
               </View>
               <View style={[styles.orderItemDetails, { flex: 1 }]}>
                 <Text style={styles.orderItemName} numberOfLines={1}>

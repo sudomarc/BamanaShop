@@ -158,11 +158,11 @@ export default function CartScreen() {
         renderItem={({ item }) => (
           <View style={styles.cartItem}>
             <View style={styles.productImagePlaceholder}>
-                <Ionicons
-                  name="image"
-                  size={32}
-                  color={SemanticColors.textTertiary}
-                />
+              <Ionicons
+                name="image"
+                size={32}
+                color={SemanticColors.textTertiary}
+              />
             </View>
             <View style={styles.productDetails}>
               <Text style={styles.productName} numberOfLines={1}>
@@ -346,7 +346,6 @@ export default function CartScreen() {
     </ScrollView>
   );
 }
-
 
 const styles = StyleSheet.create({
   scrollView: { flex: 1, backgroundColor: SemanticColors.screenBackground },
