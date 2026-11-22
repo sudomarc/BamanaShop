@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "start": "react-native start",
-    "android": "react-native run-android",
     "build:android:dev": "cd android && ./gradlew :app:assembleDebug",
     "build:android:beta": "cd android && ./gradlew :app:assembleRelease",
     "build:android:production": "cd android && ./gradlew :app:assembleRelease",
