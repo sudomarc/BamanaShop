@@ -1,6 +1,8 @@
 import "./global.css";
 import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -59,7 +61,7 @@ export default function App() {
     return <View style={styles.loading}><ActivityIndicator size="large" color="#2563EB" /></View>;
   }
 
-  return <Providers><AppNavigator /></Providers>;
+  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><Providers><AppNavigator /></Providers></SafeAreaProvider></GestureHandlerRootView>;
 }
 
 const styles = StyleSheet.create({
