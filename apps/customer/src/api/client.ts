@@ -37,6 +37,30 @@ async function from(table: string) {
   return supabase.from(table);
 }
 
+export type {
+  Category,
+  Product,
+  Store,
+  Address,
+  Order,
+  PaymentMethod,
+  OrderStatus,
+  PaymentStatus,
+  DeliveryStatus,
+  GnfAmount,
+  Uuid,
+  PhoneE164,
+  IsoDateTime,
+};
+
+export async function fetchFeaturedProducts(): Promise<Product[]> {
+  return fetchProducts({ featured: true, limit: 10 });
+}
+
+export async function fetchFeaturedStores(): Promise<Store[]> {
+  return fetchStores({ limit: 10 });
+}
+
 // ============================================================================
 // Categories
 // ============================================================================
