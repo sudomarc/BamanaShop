@@ -39,15 +39,15 @@ GitHub Actions compiles Android locally on its runner using Gradle. Android buil
 
 ## Build profiles
 
-- `dev`: standalone Gradle release APK with Android debugging enabled.
+- `dev`: standalone Gradle debug APK with Android debugging enabled.
 - `beta`: standalone Gradle release APK with Android debugging disabled.
 - `production`: standalone Gradle release APK with Android debugging disabled.
 
-All profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android-debuggable build, but it does not use Metro or React Native's development support at runtime.
+All profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android Debug variant for ADB/Logcat inspection; the build forces JavaScript bundling and disables React Native's Metro-based developer support.
 
 The Android `versionCode` is calculated from the semantic version, so increase the version when preparing an upgrade.
 
-**Signing note:** the workflow does not provision a private Google Play upload key. The generated APKs are for direct installation and testing; publishing to Google Play requires a persistent Android signing key configured in Gradle.
+**Signing note:** the current workflow uses the generated debug signing configuration. It does not provision a private Google Play upload key. These APKs are for controlled direct installation and testing; publishing to Google Play requires a persistent Android signing key configured in Gradle.
 
 ## Install a downloaded APK
 
