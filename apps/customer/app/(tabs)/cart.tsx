@@ -16,7 +16,8 @@ import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import { calculateOrderTotals } from "@bamanashop/domain";
-import { formatGnf, GnfAmount, PaymentMethod } from "@bamanashop/contracts";
+import { GnfAmount, PaymentMethod, MOCK_STORE } from "@bamanashop/contracts";
+import { formatGnf } from "@bamanashop/domain";
 import { MOCK_DELIVERY_PARTNER } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
@@ -73,16 +74,12 @@ export default function CartScreen() {
   const calculateTotals = async () => {
     if (items.length === 0) return;
     try {
-      const mockStore = {
-        id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-        commission_rate_bps: 1000,
-      };
       const result = await calculateOrderTotals({
         items: items.map((i) => ({
           unitPrice: i.product.price_gnf,
           quantity: i.quantity,
         })),
-        store: mockStore,
+        store: MOCK_STORE,
         partner: MOCK_DELIVERY_PARTNER,
         distanceKm: 5,
         paymentMethod,
@@ -116,7 +113,7 @@ export default function CartScreen() {
     setLoading(true);
     try {
       // Mock order creation
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise<void>((resolve) => setTimeout(resolve, 1000));
       clearCart();
       router.push("/(tabs)/orders");
     } catch {
@@ -160,21 +157,13 @@ export default function CartScreen() {
         keyExtractor={(item) => item.product.id}
         renderItem={({ item }) => (
           <View style={styles.cartItem}>
-            {item.product.images?.[0] ? (
-              <Image
-                source={{ uri: item.product.images[0] }}
-                style={styles.productImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.productImagePlaceholder}>
+            <View style={styles.productImagePlaceholder}>
                 <Ionicons
                   name="image"
                   size={32}
                   color={SemanticColors.textTertiary}
                 />
-              </View>
-            )}
+            </View>
             <View style={styles.productDetails}>
               <Text style={styles.productName} numberOfLines={1}>
                 {item.product.name}
@@ -212,7 +201,6 @@ export default function CartScreen() {
             </View>
           </View>
         )}
-        listKey="cartItems"
       />
 
       <View style={styles.deliverySection}>
