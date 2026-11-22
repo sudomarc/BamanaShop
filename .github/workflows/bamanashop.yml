@@ -258,6 +258,14 @@ jobs:
           EXPO_NO_TELEMETRY: "1"
         run: CI=1 pnpm exec expo prebuild --platform android --clean --no-install
 
+      - name: Configure Android debuggability for selected profile
+        env:
+          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
+        run: node scripts/android-build-profile.cjs "$BAMANASHOP_BUILD_PROFILE" apps/customer/android/app/build.gradle
+
+      - name: Test Android profile configuration
+        run: node --test scripts/android-build-profile.test.cjs
+
       - name: Verify React Native Gradle plugin resolution
         working-directory: apps/customer/android
         run: node --print "require.resolve('@react-native/gradle-plugin/package.json')"
@@ -271,11 +279,7 @@ jobs:
           set -euo pipefail
 
           case "$BAMANASHOP_BUILD_PROFILE" in
-            dev)
-              gradle_task="assembleDebug"
-              apk_source="app/build/outputs/apk/debug/app-debug.apk"
-              ;;
-            beta|production)
+            dev|beta|production)
               gradle_task="assembleRelease"
               apk_source="app/build/outputs/apk/release/app-release.apk"
               ;;
@@ -289,6 +293,22 @@ jobs:
           ./gradlew --no-daemon --stacktrace ":app:$gradle_task"
 
           test -s "$apk_source"
+
+          if ! unzip -Z1 "$apk_source" | grep -Fxq "assets/index.android.bundle"; then
+            echo "::error::The APK does not contain the embedded React Native JavaScript bundle."
+            exit 1
+          fi
+
+          expected_debuggable="false"
+          if [ "$BAMANASHOP_BUILD_PROFILE" = "dev" ]; then
+            expected_debuggable="true"
+          fi
+          actual_debuggable="$(apkanalyzer manifest debuggable "$apk_source")"
+          if [ "$actual_debuggable" != "$expected_debuggable" ]; then
+            echo "::error::Expected debuggable=$expected_debuggable, got $actual_debuggable."
+            exit 1
+          fi
+
           mkdir -p "$RUNNER_TEMP/bamanashop-apk"
           apk_name="BamanaShop-$BAMANASHOP_BUILD_PROFILE-v$BAMANASHOP_VERSION.apk"
           cp "$apk_source" "$RUNNER_TEMP/bamanashop-apk/$apk_name"
@@ -315,66 +335,12 @@ jobs:
             echo "- App version: $APP_VERSION"
             echo "- Android versionCode: $ANDROID_VERSION_CODE"
             echo "- Artifact: bamanashop-android-$PROFILE-v$APP_VERSION-${{ github.run_number }}"
+            echo "- Gradle variant: Release (JavaScript bundle embedded)"
             if [ "$PROFILE" = "dev" ]; then
-              echo "- Build type: Debug (requires the Metro development server to load the JavaScript bundle)."
+              echo "- Android debuggable: true"
             else
-              echo "- Build type: Release."
+              echo "- Android debuggable: false"
             fi
+            echo "- Metro required at runtime: no"
             echo "- Build engine: local Gradle on GitHub Actions; no EAS cloud build."
           } >> "$GITHUB_STEP_SUMMARY"
-
-  cleanup-history:
-    name: Delete previous workflow runs
-    needs: [verify, rls, build-android]
-    if: >-
-      always() &&
-      (
-        github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'push' && github.ref == 'refs/heads/main')
-      )
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-    steps:
-      - name: Remove previous completed workflow runs
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const runs = [];
-            let page = 1;
-
-            while (true) {
-              const response = await github.rest.actions.listWorkflowRunsForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100,
-                page,
-              });
-
-              runs.push(...response.data.workflow_runs);
-              if (
-                response.data.workflow_runs.length < 100 ||
-                runs.length >= response.data.total_count
-              ) break;
-              page += 1;
-            }
-
-            const previousRuns = runs.filter((run) =>
-              run.id !== context.runId &&
-              run.status === "completed" &&
-              run.path?.startsWith(".github/workflows/")
-            );
-
-            for (const run of previousRuns) {
-              await github.rest.actions.deleteWorkflowRun({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                run_id: run.id,
-              });
-              core.info("Deleted " + run.id + ": " + run.name + " (" + run.path + ")");
-            }
-
-            await core.summary
-              .addHeading("Workflow history cleanup")
-              .addRaw("Deleted " + previousRuns.length + " previous completed repository workflow run(s). The current run and runs not associated with repository workflow files were kept.")
-              .write();
