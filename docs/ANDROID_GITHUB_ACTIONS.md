@@ -34,7 +34,7 @@ Use higher numeric components for each upgrade. The code is deterministic; diffe
 | `beta` | `assembleRelease` | Standalone test APK; Android debugging disabled |
 | `production` | `assembleRelease` | Standalone release APK; Android debugging disabled |
 
-All three profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android Debug variant, but the build config forces the React Native Gradle plugin to bundle JavaScript for Debug and disables React Native's Metro-based developer support in `MainApplication`. The Android manifest remains debuggable for ADB inspection and Logcat.
+All three profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android Debug variant, but the build config forces the React Native Gradle plugin to bundle JavaScript for Debug and disables React Native's Metro-based developer support in `MainApplication`. The Android manifest remains debuggable for ADB inspection and Logcat. The Customer app uses a local `index.js` entry point matching the Expo SDK 51 Router bootstrap, with `@expo/metro-runtime` declared directly so PNPM can resolve the runtime from the app workspace.
 
 ## Install with ADB
 
