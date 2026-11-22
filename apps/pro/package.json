@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@babel/plugin-transform-react-jsx": "7.29.7",
     "@react-native/babel-preset": "0.74.87",
     "@react-native-community/cli": "13.6.9",
     "@react-native-community/cli-platform-android": "13.6.9",
