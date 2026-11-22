@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
-import * as ImagePicker from "expo-image-picker";
+import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import { useAuthStore } from "@/store/authStore";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
@@ -43,20 +43,18 @@ export default function ProfileScreen() {
   const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "ff">(profile?.preferred_language ?? "fr");
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission requise", "Accès aux photos nécessaire pour l'avatar");
+    const result = await launchImageLibrary({
+      mediaType: "photo",
+      selectionLimit: 1,
+      includeBase64: false,
+    });
+    if (result.didCancel) return;
+    if (result.errorCode) {
+      Alert.alert("Erreur", result.errorMessage ?? "Impossible d'ouvrir la galerie");
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setAvatar(result.assets[0].uri);
-    }
+    const uri = result.assets?.[0]?.uri;
+    if (uri) setAvatar(uri);
   };
 
   const handleSaveProfile = async () => {
