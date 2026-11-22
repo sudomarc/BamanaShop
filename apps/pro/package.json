@@ -6,9 +6,9 @@
   "scripts": {
     "start": "react-native start",
     "android": "react-native run-android",
-    "build:android:dev": "cd android && gradle :app:assembleDebug",
-    "build:android:beta": "cd android && gradle :app:assembleRelease",
-    "build:android:production": "cd android && gradle :app:assembleRelease",
+    "build:android:dev": "cd android && ./gradlew :app:assembleDebug",
+    "build:android:beta": "cd android && ./gradlew :app:assembleRelease",
+    "build:android:production": "cd android && ./gradlew :app:assembleRelease",
     "lint": "eslint . --ext .ts,.tsx",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
