@@ -31,4 +31,22 @@ for (const [name, file] of Object.entries(resolved)) {
   process.stdout.write(`${name}: ${file}\n`);
 }
 
+const metroConfig = require(path.join(customerRoot, "metro.config.js"));
+const expectedModulePaths = [
+  path.join(customerRoot, "node_modules"),
+  path.join(repositoryRoot, "node_modules"),
+];
+
+if (!metroConfig.watchFolders.includes(repositoryRoot)) {
+  throw new Error("Metro must watch the monorepo root for Expo SDK 51 workspace imports.");
+}
+
+for (const modulePath of expectedModulePaths) {
+  if (!metroConfig.resolver.nodeModulesPaths.includes(modulePath)) {
+    throw new Error(`Metro module lookup paths are missing: ${modulePath}`);
+  }
+}
+
+process.stdout.write("Metro monorepo configuration is valid.\\n");
+
 process.stdout.write("Expo Router custom entry dependencies are available.\n");
