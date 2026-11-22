@@ -110,7 +110,7 @@ jobs:
           {
             printf 'SUPABASE_URL=%s\n' "$SUPABASE_URL"
             printf 'SUPABASE_ANON_KEY=%s\n' "$SUPABASE_ANON_KEY"
-          } > "$GITHUB_WORKSPACE/.env"
+          } > "$GITHUB_WORKSPACE/.env.mobile"
 
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "::warning::Supabase credentials are not configured; this APK will use the app's mock mode."
