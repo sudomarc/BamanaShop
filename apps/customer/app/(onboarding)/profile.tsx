@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
-import * as ImagePicker from "expo-image-picker";
+import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import { useAuthStore } from "@/store/authStore";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing } from "@/constants/theme";
@@ -37,40 +37,34 @@ export default function ProfileSetupScreen() {
   ];
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission requise", "Accès aux photos nécessaire pour l'avatar");
+    const result = await launchImageLibrary({
+      mediaType: "photo",
+      selectionLimit: 1,
+      includeBase64: false,
+    });
+    if (result.didCancel) return;
+    if (result.errorCode) {
+      Alert.alert("Erreur", result.errorMessage ?? "Impossible d'ouvrir la galerie");
       return;
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setAvatar(result.assets[0].uri);
-    }
+    const uri = result.assets?.[0]?.uri;
+    if (uri) setAvatar(uri);
   };
 
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission requise", "Accès à la caméra nécessaire pour l'avatar");
+    const result = await launchCamera({
+      mediaType: "photo",
+      cameraType: "back",
+      saveToPhotos: false,
+      includeBase64: false,
+    });
+    if (result.didCancel) return;
+    if (result.errorCode) {
+      Alert.alert("Erreur", result.errorMessage ?? "Impossible d'ouvrir la caméra");
       return;
     }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setAvatar(result.assets[0].uri);
-    }
+    const uri = result.assets?.[0]?.uri;
+    if (uri) setAvatar(uri);
   };
 
   const handleSave = async () => {
