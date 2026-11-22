@@ -1,0 +1,17 @@
+name: Hello World
+
+on:
+  push:
+    branches: [refactor/remove-expo-native-android]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello World"
+      - run: echo "Node version: $(node --version)"
+      - run: echo "npm version: $(npm --version)"
