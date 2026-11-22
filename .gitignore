@@ -12,7 +12,6 @@ dist
 build
 .next
 .out
-.expo
 *.tsbuildinfo
 
 # Environment files (NEVER commit)
