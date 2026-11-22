@@ -199,7 +199,7 @@ jobs:
           APP_DIR="apps/$APPLICATION"
           cd "$APP_DIR/android"
 
-          gradle --no-daemon --stacktrace "$GRADLE_TASK" \
+          ./gradlew --no-daemon --stacktrace "$GRADLE_TASK" \
             "-PbamanashopVersionName=$APP_VERSION" \
             "-PbamanashopVersionCode=$VERSION_CODE"
 
