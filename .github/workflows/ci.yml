@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
+
+      - name: Build shared packages
+        run: pnpm run build:packages
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Check formatting
+        run: pnpm run format:check
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Unit tests
+        run: pnpm run test
+
+      - name: Validate PNG assets
+        run: pnpm run validate:png
+
+      - name: Validate legacy storefront SEO
+        run: node scripts/validate-seo.mjs
+
+      - name: Build Admin
+        run: pnpm --filter=@bamanashop/admin build
+
+  supabase:
+    name: Supabase migration verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
+
+      - name: Start local Supabase
+        working-directory: supabase
+        run: npx supabase start
+
+      - name: Reset database and apply migrations
+        working-directory: supabase
+        run: npx supabase db reset --linked=false
+
+      - name: Generate local database types
+        working-directory: supabase
+        run: npx supabase gen types typescript --local > "$RUNNER_TEMP/database.generated.ts"
+
+      - name: Verify generated database types are up to date
+        run: diff -u packages/contracts/src/database.generated.ts "$RUNNER_TEMP/database.generated.ts"
