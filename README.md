@@ -8,8 +8,8 @@
 ```
 BamanaShop/
 ├── apps/
-│   ├── customer/          # Expo / React Native - Buyer app
-│   ├── pro/               # Expo / React Native - Seller + Courier app
+│   ├── customer/          # React Native CLI / React Navigation - Buyer app
+│   ├── pro/               # React Native CLI / React Navigation - Seller + Courier app
 │   └── admin/             # Next.js - Internal admin dashboard
 ├── packages/
 │   ├── contracts/         # Zod schemas + TypeScript types (shared)
@@ -44,7 +44,7 @@ BamanaShop/
 cd /home/marco/DEV/BamanaShop
 
 # Install dependencies (all workspaces)
-export PATH="/home/marco/.npm-global/bin:$PATH"
+export PATH="$HOME/.npm-global/bin:$PATH"
 pnpm install
 
 # Configure environment
@@ -74,8 +74,8 @@ This starts:
 | Command | Description |
 |---------|-------------|
 | `pnpm dev` | Start all apps in parallel |
-| `pnpm dev:customer` | Start Customer Expo app |
-| `pnpm dev:pro` | Start Pro Expo app |
+| `pnpm dev:customer` | Start Customer React Native app |
+| `pnpm dev:pro` | Start Pro React Native app |
 | `pnpm dev:admin` | Start Admin Next.js app |
 | `pnpm build` | Build all apps & packages |
 | `pnpm build:packages` | Build shared packages only |
@@ -180,7 +180,7 @@ $$ LANGUAGE sql SECURITY DEFINER;
 
 ## 📱 App Features
 
-### Customer App (Expo)
+### Customer App (React Native CLI)
 - Home: categories, featured stores/products
 - Search & filters
 - Store & product details
@@ -190,7 +190,7 @@ $$ LANGUAGE sql SECURITY DEFINER;
 - Order history with status timeline
 - Profile & settings
 
-### Pro App (Expo) - Two Spaces
+### Pro App (React Native CLI) - Two Spaces
 **Seller Space:**
 - Dashboard: today's orders, revenue, low stock alerts
 - Products CRUD with images, stock, pricing
@@ -272,3 +272,7 @@ MIT License - see [LICENSE](LICENSE)
 ---
 
 *This monorepo replaces the legacy static HTML storefront. The static site remains at `index.html` et al. for historical reference.*
+
+## Android APKs
+
+Customer and Pro have checked-in native Android Gradle projects. Build APKs with `./BUILD_AND_INSTALL.sh customer dev 1.2.3` or `./BUILD_AND_INSTALL.sh pro beta 1.2.3`, or use the **Android APK** GitHub Actions workflow. The JavaScript bundle is embedded in each APK; an installed APK does not need a Metro server. See [Android build instructions](docs/ANDROID_GITHUB_ACTIONS.md).
