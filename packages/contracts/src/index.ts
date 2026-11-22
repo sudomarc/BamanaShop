@@ -373,6 +373,11 @@ export const OrderItem = z.object({
   quantity: z.number().int().positive(),
   line_total_gnf: GnfAmount,
   created_at: IsoDateTime,
+  // Optional relation loaded via Supabase joins
+  product: z.object({
+    name: z.string().nullable().optional(),
+    slug: z.string().nullable().optional(),
+  }).nullable().optional(),
 });
 export type OrderItem = z.infer<typeof OrderItem>;
 
@@ -441,6 +446,16 @@ export const DeliveryJob = z.object({
   failure_reason: z.string().max(500).nullable().optional(),
   created_at: IsoDateTime,
   updated_at: IsoDateTime,
+  // Optional relation loaded via Supabase joins
+  courier: z.object({
+    id: Uuid,
+    user: z.object({
+      full_name: z.string().nullable().optional(),
+      phone: PhoneE164.nullable().optional(),
+    }).nullable().optional(),
+    vehicle_type: z.string().nullable().optional(),
+    vehicle_plate: z.string().nullable().optional(),
+  }).nullable().optional(),
 });
 export type DeliveryJob = z.infer<typeof DeliveryJob>;
 
