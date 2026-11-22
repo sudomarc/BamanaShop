@@ -230,6 +230,7 @@ jobs:
       - name: Verify APK is autonomous (no Metro at runtime)
         run: |
           set -euo pipefail
+          export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"
           APPLICATION="${{ matrix.application }}"
           PROFILE="${{ inputs.profile || 'dev' }}"
           APP_VERSION="${{ inputs.version || '0.0.1' }}"
