@@ -31,9 +31,9 @@ for required in pnpm node java gradle adb; do
 done
 
 VERSION_CODE="$(node "$ROOT_DIR/scripts/app-version.cjs" "$VERSION")"
-if [ ! -f "$ROOT_DIR/.env" ]; then
-  printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "${SUPABASE_URL:-}" "${SUPABASE_ANON_KEY:-}" > "$ROOT_DIR/.env"
-  chmod 600 "$ROOT_DIR/.env"
+if [ ! -f "$ROOT_DIR/.env.mobile" ]; then
+  printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "${SUPABASE_URL:-}" "${SUPABASE_ANON_KEY:-}" > "$ROOT_DIR/.env.mobile"
+  chmod 600 "$ROOT_DIR/.env.mobile"
 fi
 
 cd "$ROOT_DIR"
