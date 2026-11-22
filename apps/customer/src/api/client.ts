@@ -23,7 +23,6 @@ import {
   MOCK_CATEGORIES,
   MOCK_STORE,
   MOCK_PRODUCTS,
-  MOCK_DELIVERY_PARTNER,
 } from "@bamanashop/contracts";
 
 const supabase = createSupabaseClient();
