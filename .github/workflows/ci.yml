@@ -22,6 +22,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug environment
+        run: |
+          echo "GITHUB_REF: ${{ github.ref }}"
+          echo "GITHUB_SHA: ${{ github.sha }}"
+          echo "RUNNER_OS: ${{ runner.os }}"
+          echo "PWD: $(pwd)"
+          ls -la
+
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
