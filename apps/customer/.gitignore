@@ -1,4 +1,8 @@
-
-# Expo prebuild generated
-android/
-ios/
+node_modules/
+android/.gradle/
+android/local.properties
+android/build/
+android/app/build/
+android/.cxx/
+ios/build/
+coverage/
