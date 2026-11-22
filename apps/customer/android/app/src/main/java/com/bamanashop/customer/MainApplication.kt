@@ -20,7 +20,7 @@ class MainApplication : Application(), ReactApplication {
         override val isHermesEnabled = BuildConfig.IS_HERMES_ENABLED
     }
 
-    override fun getReactNativeHost(): ReactNativeHost = host
+    override val reactNativeHost: ReactNativeHost = host
 
     override fun onCreate() {
         super.onCreate()
