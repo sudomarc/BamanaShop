@@ -30,11 +30,11 @@ Use higher numeric components for each upgrade. The code is deterministic; diffe
 
 | Profile | Gradle variant | Intended use |
 |---|---|---|
-| `dev` | `assembleRelease` | Standalone development APK; Android debugging enabled |
+| `dev` | `assembleDebug` | Standalone development APK; Android debugging enabled |
 | `beta` | `assembleRelease` | Standalone test APK; Android debugging disabled |
 | `production` | `assembleRelease` | Standalone release APK; Android debugging disabled |
 
-All three profiles embed the React Native JavaScript bundle and run without Metro. The DEV profile uses the Android Release variant with the manifest's `debuggable` flag enabled; it does not enable React Native's Metro-based development support.
+All three profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android Debug variant, but the build config forces the React Native Gradle plugin to bundle JavaScript for Debug and disables React Native's Metro-based developer support in `MainApplication`. The Android manifest remains debuggable for ADB inspection and Logcat.
 
 ## Install with ADB
 
