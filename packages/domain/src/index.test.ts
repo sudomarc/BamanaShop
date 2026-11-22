@@ -94,13 +94,29 @@ describe("Price & Commission Calculations", () => {
   });
 
   it("calculateDeliveryFee computes base + per km + COD", () => {
-    const fee = calculateDeliveryFee({ base_fee_gnf: 5000, per_km_fee_gnf: 1000, cod_handling_fee_gnf: 2000 } as any, 5, true);
+    const fee = calculateDeliveryFee(
+      {
+        base_fee_gnf: 5000,
+        per_km_fee_gnf: 1000,
+        cod_handling_fee_gnf: 2000,
+      } as any,
+      5,
+      true,
+    );
     // base 5000 + 5km * 1000 + COD 2000 = 12000
     expect(fee).toBe(12000);
   });
 
   it("calculateDeliveryFee computes base only for same commune COD", () => {
-    const fee = calculateDeliveryFee({ base_fee_gnf: 5000, per_km_fee_gnf: 1000, cod_handling_fee_gnf: 2000 } as any, 0, true);
+    const fee = calculateDeliveryFee(
+      {
+        base_fee_gnf: 5000,
+        per_km_fee_gnf: 1000,
+        cod_handling_fee_gnf: 2000,
+      } as any,
+      0,
+      true,
+    );
     // base 5000 + COD 2000 = 7000
     expect(fee).toBe(7000);
   });
@@ -110,8 +126,12 @@ describe("Price & Commission Calculations", () => {
   });
 
   it("calculatePaymentFee returns 1.5% capped at 5000 for Orange Money", () => {
-    expect(calculatePaymentFee("orange_money" as any, 100000 as any)).toBe(1500);
-    expect(calculatePaymentFee("orange_money" as any, 500000 as any)).toBe(5000); // capped
+    expect(calculatePaymentFee("orange_money" as any, 100000 as any)).toBe(
+      1500,
+    );
+    expect(calculatePaymentFee("orange_money" as any, 500000 as any)).toBe(
+      5000,
+    ); // capped
   });
 
   it("calculateCommission calculates basis points correctly", () => {
@@ -122,7 +142,11 @@ describe("Price & Commission Calculations", () => {
 
 describe("Order Totals", () => {
   const mockStore = { id: "store-1", commission_rate_bps: 1000 };
-  const mockPartner = { base_fee_gnf: 5000, per_km_fee_gnf: 1000, cod_handling_fee_gnf: 2000 };
+  const mockPartner = {
+    base_fee_gnf: 5000,
+    per_km_fee_gnf: 1000,
+    cod_handling_fee_gnf: 2000,
+  };
 
   it("calculateOrderTotals computes all amounts correctly", () => {
     const result = calculateOrderTotals({
@@ -131,7 +155,11 @@ describe("Order Totals", () => {
         { unitPrice: 15000 as any, quantity: 1 },
       ],
       store: mockStore as any,
-      partner: { base_fee_gnf: 5000, per_km_fee_gnf: 1000, cod_handling_fee_gnf: 2000 } as any,
+      partner: {
+        base_fee_gnf: 5000,
+        per_km_fee_gnf: 1000,
+        cod_handling_fee_gnf: 2000,
+      } as any,
       distanceKm: 5,
       paymentMethod: "cod" as any,
       commissionRules: [],
@@ -151,7 +179,11 @@ describe("Order Totals", () => {
     const result = calculateOrderTotals({
       items: [{ unitPrice: 100000 as any, quantity: 1 }],
       store: { id: "store-1", commission_rate_bps: 1000 } as any,
-      partner: { base_fee_gnf: 5000, per_km_fee_gnf: 1000, cod_handling_fee_gnf: 2000 } as any,
+      partner: {
+        base_fee_gnf: 5000,
+        per_km_fee_gnf: 1000,
+        cod_handling_fee_gnf: 2000,
+      } as any,
       distanceKm: 0,
       paymentMethod: "orange_money" as any,
       commissionRules: [],
@@ -172,13 +204,19 @@ describe("Cart Validation", () => {
   });
 
   it("validateCartItems accepts single store", () => {
-    const result = validateCartItems([{ storeId: "store-1" }, { storeId: "store-1" }]);
+    const result = validateCartItems([
+      { storeId: "store-1" },
+      { storeId: "store-1" },
+    ]);
     expect(result.valid).toBe(true);
     expect(result.storeId).toBe("store-1");
   });
 
   it("validateCartItems rejects multiple stores", () => {
-    const result = validateCartItems([{ storeId: "store-1" }, { storeId: "store-2" }]);
+    const result = validateCartItems([
+      { storeId: "store-1" },
+      { storeId: "store-2" },
+    ]);
     expect(result.valid).toBe(false);
     expect(result.error).toBe("MVP supports only one store per order");
   });
@@ -218,8 +256,18 @@ describe("Stock Validation", () => {
 describe("Seller Payout Calculation", () => {
   it("calculateSellerPayout computes net payable correctly", () => {
     const orders = [
-      { subtotal: 100000, commission: 10000, courierCost: 5000, refunds: 0 } as any,
-      { subtotal: 50000, commission: 5000, courierCost: 3000, refunds: 2000 } as any,
+      {
+        subtotal: 100000,
+        commission: 10000,
+        courierCost: 5000,
+        refunds: 0,
+      } as any,
+      {
+        subtotal: 50000,
+        commission: 5000,
+        courierCost: 3000,
+        refunds: 2000,
+      } as any,
     ];
     const result = calculateSellerPayout({ orders, adjustments: 1000 as any });
     expect(result.grossSales).toBe(150000);
@@ -280,33 +328,107 @@ describe("Order State Machine", () => {
   };
 
   it("canTransitionOrder allows customer to cancel pending", () => {
-    expect(canTransitionOrder("pending", "cancelled", "customer" as any, { id: "order-1", status: "pending", delivery_status: "unassigned" } as any)).toBe(true);
+    expect(
+      canTransitionOrder(
+        "pending",
+        "cancelled",
+        "customer" as any,
+        {
+          id: "order-1",
+          status: "pending",
+          delivery_status: "unassigned",
+        } as any,
+      ),
+    ).toBe(true);
   });
 
   it("canTransitionOrder denies customer confirming", () => {
-    expect(canTransitionOrder("pending", "confirmed", "customer" as any, { id: "order-1", status: "pending", delivery_status: "unassigned" } as any)).toBe(false);
+    expect(
+      canTransitionOrder(
+        "pending",
+        "confirmed",
+        "customer" as any,
+        {
+          id: "order-1",
+          status: "pending",
+          delivery_status: "unassigned",
+        } as any,
+      ),
+    ).toBe(false);
   });
 
   it("canTransitionOrder allows seller to confirm", () => {
-    expect(canTransitionOrder("pending", "confirmed", "seller" as any, { id: "order-1", status: "pending", delivery_status: "unassigned" } as any)).toBe(true);
+    expect(
+      canTransitionOrder(
+        "pending",
+        "confirmed",
+        "seller" as any,
+        {
+          id: "order-1",
+          status: "pending",
+          delivery_status: "unassigned",
+        } as any,
+      ),
+    ).toBe(true);
   });
 
   it("canTransitionOrder allows seller to prepare", () => {
-    expect(canTransitionOrder("confirmed", "preparing", "seller" as any, { id: "order-1", status: "confirmed", delivery_status: "unassigned" } as any)).toBe(true);
+    expect(
+      canTransitionOrder(
+        "confirmed",
+        "preparing",
+        "seller" as any,
+        {
+          id: "order-1",
+          status: "confirmed",
+          delivery_status: "unassigned",
+        } as any,
+      ),
+    ).toBe(true);
   });
 
   it("canTransitionOrder allows seller to ready_for_pickup", () => {
-    const preparingOrder = { id: "order-1", status: "preparing", delivery_status: "unassigned" };
-    expect(canTransitionOrder("preparing", "ready_for_pickup", "seller" as any, preparingOrder as any)).toBe(true);
+    const preparingOrder = {
+      id: "order-1",
+      status: "preparing",
+      delivery_status: "unassigned",
+    };
+    expect(
+      canTransitionOrder(
+        "preparing",
+        "ready_for_pickup",
+        "seller" as any,
+        preparingOrder as any,
+      ),
+    ).toBe(true);
   });
 
   it("canTransitionOrder denies seller ready_for_pickup when assigned", () => {
-    const assignedOrder = { id: "order-1", status: "ready_for_pickup", delivery_status: "assigned" };
-    expect(canTransitionOrder("ready_for_pickup", "cancelled", "seller" as any, assignedOrder as any)).toBe(false);
+    const assignedOrder = {
+      id: "order-1",
+      status: "ready_for_pickup",
+      delivery_status: "assigned",
+    };
+    expect(
+      canTransitionOrder(
+        "ready_for_pickup",
+        "cancelled",
+        "seller" as any,
+        assignedOrder as any,
+      ),
+    ).toBe(false);
   });
 
   it("getValidNextStatuses returns correct transitions for seller", () => {
-    const statuses = getValidNextStatuses("pending", "seller" as any, { id: "order-1", status: "pending", delivery_status: "unassigned" } as any);
+    const statuses = getValidNextStatuses(
+      "pending",
+      "seller" as any,
+      {
+        id: "order-1",
+        status: "pending",
+        delivery_status: "unassigned",
+      } as any,
+    );
     // Seller can confirm (cancel allowed for pending but only for customer/admin)
     expect(statuses).toContain("confirmed");
     expect(statuses).not.toContain("cancelled");

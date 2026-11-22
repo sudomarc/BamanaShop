@@ -10,26 +10,34 @@ import {
   ActivityIndicator,
   RefreshControl,
   FlatList,
-  Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { fetchOrders, Order, OrderStatus } from "@/api";
-import { formatGnf, GnfAmount } from "@bamanashop/contracts";
+import { GnfAmount } from "@bamanashop/contracts";
+import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
-const statusConfig: Record<OrderStatus, { label: string; color: string; icon: string }> = {
+type OrderListItem = Order & {
+  order_items?: Array<{
+    id: string;
+    product_name: string;
+    quantity: number;
+    product?: { name?: string | null } | null;
+  }>;
+};
+
+const statusConfig = {
   pending: { label: "En attente", color: "#F59E0B", icon: "time" },
   confirmed: { label: "Confirmée", color: "#3B82F6", icon: "checkmark-circle" },
   preparing: { label: "En préparation", color: "#8B5CF6", icon: "construct" },
   ready_for_pickup: { label: "Prête", color: "#06B6D4", icon: "bag-handle" },
-  in_transit: { label: "En livraison", color: "#3B82F6", icon: "bicycle" },
-  delivered: { label: "Livrée", color: "#16A34A", icon: "checkmark-done" },
+  completed: { label: "Terminée", color: "#16A34A", icon: "checkmark-done" },
   cancelled: { label: "Annulée", color: "#DC2626", icon: "close-circle" },
   returned: { label: "Retournée", color: "#64748B", icon: "return-up-back" },
-};
+} as const;
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -65,11 +73,12 @@ export default function OrdersScreen() {
     loadOrders();
   }, [user]);
 
+  const pastStatuses: OrderStatus[] = ["completed", "cancelled", "returned"];
   const filteredOrders = orders.filter((order) => {
     if (activeTab === "active") {
-      return !["delivered", "cancelled", "returned"].includes(order.status);
+      return !pastStatuses.includes(order.status);
     }
-    return ["delivered", "cancelled", "returned"].includes(order.status);
+    return pastStatuses.includes(order.status);
   });
 
   const getStatusConfig = (status: OrderStatus) => statusConfig[status];
@@ -85,7 +94,11 @@ export default function OrdersScreen() {
   if (!user) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="lock-closed" size={48} color={SemanticColors.textTertiary} />
+        <Ionicons
+          name="lock-closed"
+          size={48}
+          color={SemanticColors.textTertiary}
+        />
         <Text style={styles.emptyTitle}>Connexion requise</Text>
         <Text style={styles.emptySubtitle}>
           Connectez-vous pour voir vos commandes
@@ -121,11 +134,20 @@ export default function OrdersScreen() {
           ]}
           onPress={() => setActiveTab("active")}
         >
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === "active" && styles.tabButtonTextActive,
-          ]}>
-            En cours ({filteredOrders.filter(o => !["delivered", "cancelled", "returned"].includes(o.status)).length})
+          <Text
+            style={[
+              styles.tabButtonText,
+              activeTab === "active" && styles.tabButtonTextActive,
+            ]}
+          >
+            En cours (
+            {
+              filteredOrders.filter(
+                (o) =>
+                  !["delivered", "cancelled", "returned"].includes(o.status),
+              ).length
+            }
+            )
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -135,10 +157,12 @@ export default function OrdersScreen() {
           ]}
           onPress={() => setActiveTab("past")}
         >
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === "past" && styles.tabButtonTextActive,
-          ]}>
+          <Text
+            style={[
+              styles.tabButtonText,
+              activeTab === "past" && styles.tabButtonTextActive,
+            ]}
+          >
             Historique
           </Text>
         </TouchableOpacity>
@@ -147,12 +171,16 @@ export default function OrdersScreen() {
       {filteredOrders.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons
-            name={activeTab === "active" ? "bag-handle-outline" : "time-outline"}
+            name={
+              activeTab === "active" ? "bag-handle-outline" : "time-outline"
+            }
             size={48}
             color={SemanticColors.textTertiary}
           />
           <Text style={styles.emptyTitle}>
-            {activeTab === "active" ? "Aucune commande en cours" : "Aucun historique"}
+            {activeTab === "active"
+              ? "Aucune commande en cours"
+              : "Aucun historique"}
           </Text>
           <Text style={styles.emptySubtitle}>
             {activeTab === "active"
@@ -177,7 +205,9 @@ export default function OrdersScreen() {
             >
               <View style={styles.orderHeader}>
                 <View style={styles.orderInfo}>
-                  <Text style={styles.orderNumber}>Commande #{item.id.slice(0, 8).toUpperCase()}</Text>
+                  <Text style={styles.orderNumber}>
+                    Commande #{item.id.slice(0, 8).toUpperCase()}
+                  </Text>
                   <Text style={styles.orderDate}>
                     {new Date(item.created_at).toLocaleDateString("fr-FR", {
                       day: "numeric",
@@ -191,7 +221,9 @@ export default function OrdersScreen() {
                   <View
                     style={[
                       styles.statusBadge,
-                      { backgroundColor: `${getStatusConfig(item.status).color}15` },
+                      {
+                        backgroundColor: `${getStatusConfig(item.status).color}15`,
+                      },
                     ]}
                   >
                     <Ionicons
@@ -212,22 +244,30 @@ export default function OrdersScreen() {
               </View>
 
               <View style={styles.orderStore}>
-                <Ionicons name="storefront" size={16} color={SemanticColors.textSecondary} />
+                <Ionicons
+                  name="storefront"
+                  size={16}
+                  color={SemanticColors.textSecondary}
+                />
                 <Text style={styles.orderStoreName}>Boutique Demo Conakry</Text>
               </View>
 
               <View style={styles.orderItems}>
-                {item.order_items?.slice(0, 2).map((oi: any, idx: number) => (
-                  <View key={idx} style={styles.orderItemRow}>
+                {(item as OrderListItem).order_items?.slice(0, 2).map((oi) => (
+                  <View key={oi.id} style={styles.orderItemRow}>
                     <Text style={styles.orderItemName} numberOfLines={1}>
                       {oi.product?.name ?? oi.product_name}
                     </Text>
                     <Text style={styles.orderItemQty}>x{oi.quantity}</Text>
                   </View>
                 ))}
-                {(item.order_items?.length ?? 0) > 2 && (
+                {((item as OrderListItem).order_items?.length ?? 0) > 2 && (
                   <Text style={styles.orderItemMore}>
-                    +{(item.order_items.length - 2)} autre{item.order_items.length > 3 ? "s" : ""}
+                    +{((item as OrderListItem).order_items?.length ?? 0) - 2}{" "}
+                    autre
+                    {((item as OrderListItem).order_items?.length ?? 0) > 3
+                      ? "s"
+                      : ""}
                   </Text>
                 )}
               </View>
@@ -239,7 +279,9 @@ export default function OrdersScreen() {
                 </Text>
               </View>
 
-              {item.status === "in_transit" && (
+              {item.delivery_jobs?.some(
+                (job) => job.status === "in_transit",
+              ) && (
                 <TouchableOpacity
                   style={styles.trackButton}
                   onPress={(e) => {
@@ -247,8 +289,14 @@ export default function OrdersScreen() {
                     router.push(`/orders/${item.id}`);
                   }}
                 >
-                  <Ionicons name="map" size={16} color={SemanticColors.primaryAction} />
-                  <Text style={styles.trackButtonText}>Suivre la livraison</Text>
+                  <Ionicons
+                    name="map"
+                    size={16}
+                    color={SemanticColors.primaryAction}
+                  />
+                  <Text style={styles.trackButtonText}>
+                    Suivre la livraison
+                  </Text>
                 </TouchableOpacity>
               )}
             </TouchableOpacity>
@@ -261,6 +309,12 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.lg,
+  },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   scrollView: { flex: 1, backgroundColor: SemanticColors.screenBackground },
   contentContainer: { paddingBottom: Spacing.xl },
@@ -333,7 +387,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.base,
     fontWeight: FontWeight.semibold,
   },
-  listContent: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, gap: Spacing.md },
+  listContent: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+    gap: Spacing.md,
+  },
   orderCard: {
     backgroundColor: SemanticColors.cardBackground,
     borderRadius: BorderRadius.card,

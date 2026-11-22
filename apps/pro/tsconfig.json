@@ -16,6 +16,12 @@
       "@bamanashop/domain": ["../../packages/domain/src"]
     }
   },
-  "include": ["src/**/*", "app/**/*", ".expo/types/**/*.ts"],
-  "exclude": ["node_modules", "dist", ".expo"]
+  "include": [
+    "src/**/*",
+    "app/**/*",
+    "App.tsx",
+    "index.js",
+    "nativewind-env.d.ts"
+  ],
+  "exclude": ["node_modules", "dist", "android"]
 }

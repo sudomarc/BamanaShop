@@ -271,6 +271,7 @@ export const Product = z.object({
   weight_grams: z.number().int().nonnegative().nullable().optional(),
   status: ProductStatus,
   is_featured: z.boolean().default(false),
+  images: z.array(z.string().url()).default([]),
   created_at: IsoDateTime,
   updated_at: IsoDateTime,
 });
@@ -355,6 +356,9 @@ export const Order = z.object({
   cancellation_reason: z.string().max(500).nullable().optional(),
   created_at: IsoDateTime,
   updated_at: IsoDateTime,
+  // Optional relations loaded via Supabase joins
+  order_items: z.array(z.lazy(() => OrderItem)).optional(),
+  delivery_jobs: z.array(z.lazy(() => DeliveryJob)).optional(),
 });
 export type Order = z.infer<typeof Order>;
 
@@ -368,6 +372,14 @@ export const OrderItem = z.object({
   quantity: z.number().int().positive(),
   line_total_gnf: GnfAmount,
   created_at: IsoDateTime,
+  // Optional relation loaded via Supabase joins
+  product: z
+    .object({
+      name: z.string().nullable().optional(),
+      slug: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 export type OrderItem = z.infer<typeof OrderItem>;
 
@@ -436,6 +448,22 @@ export const DeliveryJob = z.object({
   failure_reason: z.string().max(500).nullable().optional(),
   created_at: IsoDateTime,
   updated_at: IsoDateTime,
+  // Optional relation loaded via Supabase joins
+  courier: z
+    .object({
+      id: Uuid,
+      user: z
+        .object({
+          full_name: z.string().nullable().optional(),
+          phone: PhoneE164.nullable().optional(),
+        })
+        .nullable()
+        .optional(),
+      vehicle_type: z.string().nullable().optional(),
+      vehicle_plate: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 export type DeliveryJob = z.infer<typeof DeliveryJob>;
 
@@ -709,6 +737,7 @@ export const MOCK_PRODUCTS: Product[] = [
     weight_grams: 5000,
     status: "active",
     is_featured: true,
+    images: [],
     created_at: "2026-01-01T00:00:00Z" as IsoDateTime,
     updated_at: "2026-01-01T00:00:00Z" as IsoDateTime,
   },
@@ -726,6 +755,7 @@ export const MOCK_PRODUCTS: Product[] = [
     weight_grams: 920,
     status: "active",
     is_featured: false,
+    images: [],
     created_at: "2026-01-01T00:00:00Z" as IsoDateTime,
     updated_at: "2026-01-01T00:00:00Z" as IsoDateTime,
   },
@@ -743,6 +773,7 @@ export const MOCK_PRODUCTS: Product[] = [
     weight_grams: 180,
     status: "active",
     is_featured: true,
+    images: [],
     created_at: "2026-01-01T00:00:00Z" as IsoDateTime,
     updated_at: "2026-01-01T00:00:00Z" as IsoDateTime,
   },

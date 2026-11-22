@@ -12,11 +12,11 @@ dist
 build
 .next
 .out
-.expo
 *.tsbuildinfo
 
 # Environment files (NEVER commit)
 .env
+.env.mobile
 .env.local
 .env.*.local
 .env.production

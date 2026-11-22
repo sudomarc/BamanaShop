@@ -1,11 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
-
-// Using React Native components for consistency, but in Next.js these would be HTML elements
-// This is a placeholder - actual implementation would use Next.js components
-
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("commissions");
 

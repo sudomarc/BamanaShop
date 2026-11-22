@@ -8,8 +8,8 @@
 ```
 BamanaShop/
 ├── apps/
-│   ├── customer/          # Expo / React Native - Buyer app
-│   ├── pro/               # Expo / React Native - Seller + Courier app
+│   ├── customer/          # React Native CLI / React Navigation - Buyer app
+│   ├── pro/               # React Native CLI / React Navigation - Seller + Courier app
 │   └── admin/             # Next.js - Internal admin dashboard
 ├── packages/
 │   ├── contracts/         # Zod schemas + TypeScript types (shared)
@@ -34,8 +34,6 @@ BamanaShop/
 
 - **Node.js** ≥ 20
 - **pnpm** ≥ 12 (`npm install -g pnpm@12.21.0`)
-- **Supabase CLI** (`npm install -g supabase`)
-- **Expo CLI** (`npm install -g @expo/cli`)
 
 ### Installation
 
@@ -44,20 +42,20 @@ BamanaShop/
 cd /home/marco/DEV/BamanaShop
 
 # Install dependencies (all workspaces)
-export PATH="/home/marco/.npm-global/bin:$PATH"
-pnpm install
+pnpm install --frozen-lockfile
 
 # Configure environment
 cp .env.example .env.local
-# Edit .env.local with your Supabase credentials
+# Edit .env.local for Admin/server tools. Never expose the service-role key to mobile apps.
+# Create .env.mobile containing only SUPABASE_URL and SUPABASE_ANON_KEY for Customer/Pro builds.
 
-# Start local Supabase
+# Start local Supabase with the workspace-pinned Supabase CLI (2.122.1)
 pnpm supabase:start
 
-# Run migrations & seed
+# Reset and migrate the local Supabase database only
 pnpm supabase:reset
 
-# Generate TypeScript types from DB
+# Generate TypeScript types from the local database
 pnpm supabase:types
 
 # Start all development servers
@@ -65,8 +63,8 @@ pnpm dev
 ```
 
 This starts:
-- **Customer app** (Expo) → `pnpm dev:customer`
-- **Pro app** (Expo) → `pnpm dev:pro`
+- **Customer app** (React Native CLI) → `pnpm dev:customer` (starts the development Metro bundler only)
+- **Pro app** (React Native CLI) → `pnpm dev:pro` (starts the development Metro bundler only)
 - **Admin dashboard** (Next.js) → `pnpm dev:admin` at http://localhost:3000
 
 ## 📦 Workspace Commands
@@ -74,11 +72,13 @@ This starts:
 | Command | Description |
 |---------|-------------|
 | `pnpm dev` | Start all apps in parallel |
-| `pnpm dev:customer` | Start Customer Expo app |
-| `pnpm dev:pro` | Start Pro Expo app |
+| `pnpm dev:customer` | Start Customer React Native app |
+| `pnpm dev:pro` | Start Pro React Native app |
 | `pnpm dev:admin` | Start Admin Next.js app |
-| `pnpm build` | Build all apps & packages |
+| `pnpm build` | Build shared packages and Admin web app |
 | `pnpm build:packages` | Build shared packages only |
+| `pnpm build:customer:android` | Build Customer production APK |
+| `pnpm build:pro:android` | Build Pro production APK |
 | `pnpm lint` | ESLint all workspaces |
 | `pnpm format:check` | Prettier check all workspaces |
 | `pnpm typecheck` | TypeScript strict check all workspaces |
@@ -180,7 +180,7 @@ $$ LANGUAGE sql SECURITY DEFINER;
 
 ## 📱 App Features
 
-### Customer App (Expo)
+### Customer App (React Native CLI)
 - Home: categories, featured stores/products
 - Search & filters
 - Store & product details
@@ -190,7 +190,7 @@ $$ LANGUAGE sql SECURITY DEFINER;
 - Order history with status timeline
 - Profile & settings
 
-### Pro App (Expo) - Two Spaces
+### Pro App (React Native CLI) - Two Spaces
 **Seller Space:**
 - Dashboard: today's orders, revenue, low stock alerts
 - Products CRUD with images, stock, pricing
@@ -272,3 +272,10 @@ MIT License - see [LICENSE](LICENSE)
 ---
 
 *This monorepo replaces the legacy static HTML storefront. The static site remains at `index.html` et al. for historical reference.*
+
+## Android APKs
+
+Customer and Pro have checked-in native Android Gradle projects. Build APKs with `./BUILD_AND_INSTALL.sh customer dev 1.2.3` or `./BUILD_AND_INSTALL.sh pro beta 1.2.3`, or use the **Android APK** GitHub Actions workflow. The JavaScript bundle is embedded in each APK; an installed APK does not need a Metro server. See [Android build instructions](docs/ANDROID_GITHUB_ACTIONS.md).
+
+
+> **Android runtime:** Metro is not required for installed APKs. The Android build embeds the JavaScript bundle in DEV, BETA and PRODUCTION. DEV keeps Android debuggable for ADB/Logcat while React Native developer support stays disabled.

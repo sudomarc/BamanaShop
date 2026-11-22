@@ -5,13 +5,14 @@
   "scripts": {
     "start": "supabase start",
     "stop": "supabase stop",
-    "reset": "supabase db reset",
+    "reset": "supabase db reset --local",
     "types": "supabase gen types typescript --local > ../../packages/contracts/src/database.generated.ts",
     "db:pull": "supabase db pull",
     "test:rls": "pnpm vitest run supabase/tests",
     "migration:new": "supabase migration new"
   },
   "devDependencies": {
+    "supabase": "2.122.1",
     "vitest": "^2.0.0",
     "@supabase/supabase-js": "^2.45.0"
   }

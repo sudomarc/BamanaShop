@@ -76,7 +76,7 @@ CREATE TABLE seller_profiles (
 CREATE TABLE courier_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
-  partner_id UUID REFERENCES delivery_partners(id) ON DELETE SET NULL,
+  partner_id UUID,
   vehicle_type VARCHAR(20) CHECK (vehicle_type IN ('motorcycle', 'bicycle', 'car', 'walking')),
   vehicle_plate VARCHAR(20),
   status role_status NOT NULL DEFAULT 'pending',
@@ -100,6 +100,12 @@ CREATE TABLE delivery_partners (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Add the courier partner relationship after both tables exist.
+ALTER TABLE courier_profiles
+  ADD CONSTRAINT courier_profiles_partner_id_fkey
+  FOREIGN KEY (partner_id) REFERENCES delivery_partners(id) ON DELETE SET NULL;
+
 
 -- Categories
 CREATE TABLE categories (

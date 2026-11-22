@@ -8,7 +8,7 @@
     "dev:pro": "pnpm --filter=@bamanashop/pro dev",
     "dev:admin": "pnpm --filter=@bamanashop/admin dev",
     "dev": "pnpm run --parallel dev:customer dev:pro dev:admin",
-    "build": "pnpm run --filter=@bamanashop/customer build && pnpm run --filter=@bamanashop/pro build && pnpm run --filter=@bamanashop/admin build",
+    "build": "pnpm run build:packages && pnpm --filter=@bamanashop/admin build",
     "build:packages": "pnpm run --filter=@bamanashop/contracts build && pnpm run --filter=@bamanashop/domain build",
     "lint": "pnpm run -r --filter=!@bamanashop/admin lint",
     "format:check": "pnpm run -r format:check",
@@ -21,7 +21,9 @@
     "supabase:types": "pnpm --filter=@bamanashop/supabase types",
     "supabase:db:pull": "pnpm --filter=@bamanashop/supabase db:pull",
     "verify:all": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test && pnpm run build",
-    "validate:png": "node scripts/validate-png-assets.js"
+    "validate:png": "node scripts/validate-png-assets.js",
+    "build:customer:android": "pnpm --filter=@bamanashop/customer build:android:production",
+    "build:pro:android": "pnpm --filter=@bamanashop/pro build:android:production"
   },
   "engines": {
     "node": ">=20.0.0"

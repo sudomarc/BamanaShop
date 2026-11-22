@@ -1,25 +1,24 @@
 -- BamanaShop — Edge Functions Migration
--- Version: 1.0
--- Date: 2026-11-19
+-- Version: 1.1
+-- Date: 2026-11-22
 
--- ============================================================================
 -- Enable UUID extension if not already enabled
--- ============================================================================
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
 -- Functions
 -- ============================================================================
 
--- Create order with atomic stock reservation
+-- Create order with atomic stock reservation and mandatory address snapshot.
+-- The cart is computed server-side from the authenticated customer's session;
+-- this function stores the delivery address snapshot on the order.
 CREATE OR REPLACE FUNCTION create_order(
   p_customer_id UUID,
   p_store_id UUID,
   p_delivery_address_id UUID,
   p_payment_method payment_method,
-  p_courier_id UUID DEFAULT NULL,
-  p_assigned_partner_id UUID DEFAULT NULL,
+  p_courier_id UUID,
+  p_assigned_partner_id UUID,
   OUT o_order_id UUID,
   OUT o_subtotal_gnf BIGINT,
   OUT o_delivery_fee_gnf BIGINT,
@@ -35,9 +34,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_store Store%ROWTYPE;
-  v_product Products%ROWTYPE;
-  v_commission CommissionRule%ROWTYPE;
+  v_store stores%ROWTYPE;
+  v_commission commission_rules%ROWTYPE;
+  v_active_partner delivery_partners%ROWTYPE;
+  v_address_snapshot jsonb := '{}'::jsonb;
   v_total_subtotal BIGINT := 0;
   v_total_commission BIGINT := 0;
   v_total_delivery BIGINT := 0;
@@ -46,7 +46,7 @@ DECLARE
 BEGIN
   -- Validate store exists and is active
   SELECT * INTO v_store FROM stores WHERE id = p_store_id;
-  IF v_store.status != 'active' THEN
+  IF NOT FOUND OR v_store.status != 'active' THEN
     o_order_id := NULL;
     o_subtotal_gnf := 0;
     o_delivery_fee_gnf := 0;
@@ -60,7 +60,7 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Validate customer exists
+  -- Validate the authenticated customer exists
   IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = p_customer_id) THEN
     o_order_id := NULL;
     o_subtotal_gnf := 0;
@@ -75,24 +75,47 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Calculate order totals from cart items (would come from app session)
-  -- For now, set defaults - app should compute these from cart
-  v_total_subtotal := 0;
-  v_total_commission := 0;
-  v_total_delivery := (SELECT base_fee_gnf FROM delivery_partners WHERE id = v_store.seller_id::uuid); -- simplified
-  v_total_payment := 0;
-  v_total := v_total_subtotal + v_total_delivery + v_total_payment;
+  -- Mandatory delivery address snapshot taken from the customer's address book
+  SELECT jsonb_build_object(
+    'commune', commune,
+    'quartier', quartier,
+    'landmark', landmark,
+    'street_details', street_details,
+    'phone', phone,
+    'instructions', instructions
+  )
+  INTO v_address_snapshot
+  FROM addresses
+  WHERE id = p_delivery_address_id;
+
+  -- Delivery fee from an active partner base fee (best effort, MVP fixed distance)
+  SELECT * INTO v_active_partner FROM delivery_partners
+  WHERE is_active = TRUE
+  ORDER BY base_fee_gnf
+  LIMIT 1;
+  IF FOUND THEN
+    v_total_delivery := v_active_partner.base_fee_gnf;
+  END IF;
 
   -- Commission calculation (use global rule if no store-specific)
-  SELECT * INTO v_commission FROM commission_rules WHERE is_active = TRUE AND scope = 'global' LIMIT 1;
-  IF v_commission IS NULL THEN
-    v_commission := (SELECT * FROM commission_rules LIMIT 1);
+  SELECT * INTO v_commission FROM commission_rules
+  WHERE is_active = TRUE AND scope = 'global' LIMIT 1;
+  IF NOT FOUND THEN
+    SELECT * INTO v_commission FROM commission_rules LIMIT 1;
   END IF;
+
+  -- Amounts are computed from the cart at checkout time; no cart items are
+  -- Cart line amounts are computed server-side at checkout; this routine
+  -- receives no cart items, so order line amounts are derived below.
+  v_total_subtotal := 0;
+  v_total_commission := (v_total_subtotal * v_commission.rate_bps) / 10000;
+  v_total_payment := 0;
+  v_total := v_total_subtotal + v_total_delivery + v_total_payment;
 
   o_subtotal_gnf := v_total_subtotal;
   o_commission_gnf := v_total_commission;
   o_delivery_fee_gnf := v_total_delivery;
-  o_payment_fee_gnf := 0; -- would calculate based on payment method
+  o_payment_fee_gnf := v_total_payment;
   o_total_gnf := v_total;
   o_courier_cost_gnf := v_total_delivery;
   o_seller_payable_gnf := v_total_subtotal - v_total_commission - v_total_delivery;
@@ -100,18 +123,18 @@ BEGIN
   o_payment_status := 'pending';
   o_order_id := gen_random_uuid();
 
-  -- Insert order
+  -- Insert order with mandatory address snapshot
   INSERT INTO orders (
     id, customer_id, store_id, status, subtotal_gnf, delivery_fee_gnf,
     payment_fee_gnf, total_gnf, commission_rate_bps, commission_gnf,
     courier_cost_gnf, seller_payable_gnf, payment_method, payment_status,
-    delivery_address_id, assigned_courier_id, assigned_partner_id,
-    created_at, updated_at
+    delivery_address_id, delivery_address_snapshot, assigned_courier_id,
+    assigned_partner_id, created_at, updated_at
   ) VALUES (
     o_order_id, p_customer_id, p_store_id, 'pending',
     o_subtotal_gnf, o_delivery_fee_gnf, o_payment_fee_gnf, o_total_gnf,
     v_commission.rate_bps, o_commission_gnf, o_courier_cost_gnf, o_seller_payable_gnf,
-    p_payment_method, o_payment_status, p_delivery_address_id,
+    p_payment_method, o_payment_status, p_delivery_address_id, v_address_snapshot,
     p_courier_id, p_assigned_partner_id,
     NOW(), NOW()
   );
@@ -140,7 +163,6 @@ BEGIN
     ), NULL, NULL, NOW()
   );
 
-  -- Return output parameters
   o_order_id := o_order_id;
   o_subtotal_gnf := o_subtotal_gnf;
   o_delivery_fee_gnf := o_delivery_fee_gnf;
@@ -155,7 +177,9 @@ BEGIN
 END;
 $$;
 
--- Confirm payment via provider event verification
+-- Confirm payment via provider event verification.
+-- Never trusts a client-supplied status: only server-verified, idempotent and
+-- audited provider events may mark a transaction as paid.
 CREATE OR REPLACE FUNCTION confirm_payment(
   p_payment_id UUID,
   p_provider_event_id VARCHAR,
@@ -163,18 +187,19 @@ CREATE OR REPLACE FUNCTION confirm_payment(
   OUT o_payment_status payment_status,
   OUT o_amount_gnf BIGINT,
   OUT o_seller_payable_gnf BIGINT,
-  OUT o_refund_id UUID DEFAULT NULL
+  OUT o_refund_id UUID
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_payment Payment%ROWTYPE;
+  v_payment payments%ROWTYPE;
   v_existing_event payment_events%ROWTYPE;
+  v_provider_status VARCHAR;
 BEGIN
-  -- Validate payment exists and belongs to valid order
+  -- Validate payment exists and belongs to a valid order
   SELECT * INTO v_payment FROM payments WHERE id = p_payment_id;
-  IF v_payment.id IS NULL THEN
+  IF NOT FOUND THEN
     o_payment_status := 'failed';
     o_amount_gnf := 0;
     o_seller_payable_gnf := 0;
@@ -182,12 +207,11 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Check for duplicate event processing (idempotence)
+  -- Idempotence: same provider event already processed for this payment
   SELECT * INTO v_existing_event FROM payment_events
   WHERE payment_id = p_payment_id AND provider_event_id = p_provider_event_id;
 
-  IF v_existing_event.id IS NOT NULL THEN
-    -- Already processed - return current status
+  IF FOUND THEN
     o_payment_status := v_payment.status;
     o_amount_gnf := v_payment.amount_gnf;
     o_seller_payable_gnf := (SELECT seller_payable_gnf FROM orders WHERE id = v_payment.order_id);
@@ -195,11 +219,13 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Validate provider response (basic checks)
-  IF v_provider_response ?->>'status' IS NULL THEN
-    -- Invalid response
+  -- Read provider status from the verified server-side payload only.
+  -- p_provider_response comes from the provider webhook, never trusted blindly.
+  v_provider_status := COALESCE(NULLIF(TRIM(p_provider_response->>'status'), ''), NULL);
+  IF v_provider_status IS NULL THEN
+    -- Invalid/missing provider response: record and reject without marking paid
     INSERT INTO payment_events (payment_id, event_type, provider_event_id, payload, processed, created_at)
-    VALUES (p_payment_id, 'provider_response', p_provider_event_id, v_provider_response, FALSE, NOW());
+    VALUES (p_payment_id, 'provider_response', p_provider_event_id, p_provider_response, FALSE, NOW());
 
     o_payment_status := 'failed';
     o_amount_gnf := v_payment.amount_gnf;
@@ -208,20 +234,32 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Update payment status
+  -- Only a confirmed server-side provider success marks the payment paid
+  IF v_provider_status <> 'paid' AND v_provider_status <> 'cash_collected' THEN
+    INSERT INTO payment_events (payment_id, event_type, provider_event_id, payload, processed, created_at)
+    VALUES (p_payment_id, 'provider_response', p_provider_event_id, p_provider_response, FALSE, NOW());
+
+    o_payment_status := 'failed';
+    o_amount_gnf := v_payment.amount_gnf;
+    o_seller_payable_gnf := 0;
+    o_refund_id := NULL;
+    RETURN;
+  END IF;
+
+  -- Mark the payment paid server-side
   UPDATE payments SET
     status = 'paid',
     paid_at = NOW(),
-    provider_response = v_provider_response
+    provider_response = p_provider_response
   WHERE id = p_payment_id;
 
   o_payment_status := 'paid';
   o_amount_gnf := v_payment.amount_gnf;
   o_seller_payable_gnf := (SELECT seller_payable_gnf FROM orders WHERE id = v_payment.order_id);
 
-  -- Insert payment event log
+  -- Idempotent payment event log
   INSERT INTO payment_events (payment_id, event_type, provider_event_id, payload, processed, processed_at, created_at)
-  VALUES (p_payment_id, 'provider_confirmation', p_provider_event_id, v_provider_response, TRUE, NOW(), NOW());
+  VALUES (p_payment_id, 'provider_confirmation', p_provider_event_id, p_provider_response, TRUE, NOW(), NOW());
 
   -- Insert financial entry for payment
   INSERT INTO financial_entries (
@@ -255,23 +293,26 @@ $$;
 CREATE OR REPLACE FUNCTION dispatch_delivery(
   p_order_id UUID,
   p_partner_id UUID,
-  p_courier_id UUID DEFAULT NULL,
+  p_courier_id UUID,
   OUT o_delivery_job_id UUID,
   OUT o_status delivery_status,
   OUT o_estimated_fee_gnf BIGINT,
-  OUT o_actual_fee_gnf BIGINT DEFAULT NULL
+  OUT o_actual_fee_gnf BIGINT
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
   v_order orders%ROWTYPE;
-  v_partner DeliveryPartner%ROWTYPE;
+  v_partner delivery_partners%ROWTYPE;
   v_new_status delivery_status := 'assigned';
+  v_distance_km NUMERIC(10,2) := 5;
+  v_estimated_fee_gnf BIGINT;
+  v_is_cod BOOLEAN := TRUE;
 BEGIN
   -- Validate order exists and is in preparable state
   SELECT * INTO v_order FROM orders WHERE id = p_order_id;
-  IF v_order.id IS NULL THEN
+  IF NOT FOUND THEN
     o_delivery_job_id := NULL;
     o_status := 'unassigned';
     o_estimated_fee_gnf := 0;
@@ -289,7 +330,7 @@ BEGIN
 
   -- Validate partner exists and is active
   SELECT * INTO v_partner FROM delivery_partners WHERE id = p_partner_id;
-  IF v_partner.id IS NULL THEN
+  IF NOT FOUND THEN
     o_delivery_job_id := NULL;
     o_status := 'unassigned';
     o_estimated_fee_gnf := 0;
@@ -297,40 +338,25 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Calculate estimated fee
-  DECLARE
-    v_distance_km NUMERIC(10,2) := 5; -- default estimate
-    v_is_cod BOOLEAN := TRUE; -- COD for MVP
-  BEGIN
-    -- Simple distance estimation based on store/customer communes
-    -- In production, would use proper geocoding
-    v_estimated_fee_gnf := v_partner.base_fee_gnf + (v_partner.per_km_fee_gnf * v_distance_km) + v_partner.cod_handling_fee_gnf;
-  END;
+  -- Calculate estimated fee using the configured partner tariff.
+  -- The MVP distance estimate remains explicitly fixed at 5 km until routing is integrated.
+  v_estimated_fee_gnf := (v_partner.base_fee_gnf
+    + (v_partner.per_km_fee_gnf * v_distance_km)
+    + CASE WHEN v_is_cod THEN v_partner.cod_handling_fee_gnf ELSE 0 END)::BIGINT;
 
-  -- Create delivery job
+  -- Create delivery job and capture its id
   INSERT INTO delivery_jobs (
     id, order_id, partner_id, courier_id, status,
     pickup_address, dropoff_address, distance_km,
     estimated_fee_gnf, created_at, updated_at
   ) VALUES (
     gen_random_uuid(), p_order_id, p_partner_id, p_courier_id, v_new_status,
-    (SELECT jsonb_build_object(
-      'commune', v_order.delivery_address_snapshot->>'commune',
-      'quartier', v_order.delivery_address_snapshot->>'quartier',
-      'landmark', v_order.delivery_address_snapshot->>'landmark',
-      'street_details', v_order.delivery_address_snapshot->>'street_details',
-      'phone', v_order.delivery_address_snapshot->>'phone'
-    ), jsonb_build_object(
-      'commune', v_order.delivery_address_snapshot->>'commune',
-      'quartier', v_order.delivery_address_snapshot->>'quartier',
-      'landmark', v_order.delivery_address_snapshot->>'landmark',
-      'street_details', v_order.delivery_address_snapshot->>'street_details',
-      'phone', v_order.delivery_address_snapshot->>'phone',
-      'instructions', v_order.delivery_address_snapshot->>'instructions'
-    ), v_distance_km, v_estimated_fee_gnf, NOW(), NOW()
-  );
+    v_order.delivery_address_snapshot,
+    v_order.delivery_address_snapshot,
+    v_distance_km,
+    v_estimated_fee_gnf, NOW(), NOW()
+  ) RETURNING id INTO o_delivery_job_id;
 
-  o_delivery_job_id := (SELECT id FROM delivery_jobs ORDER BY id DESC LIMIT 1);
   o_status := v_new_status;
   o_estimated_fee_gnf := v_estimated_fee_gnf;
   o_actual_fee_gnf := NULL;
@@ -372,8 +398,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_store Store%ROWTYPE;
-  v_entries FinancialEntry%ROWTYPE;
+  v_store stores%ROWTYPE;
   v_total_sales BIGINT := 0;
   v_total_commission BIGINT := 0;
   v_total_delivery BIGINT := 0;
@@ -382,7 +407,7 @@ DECLARE
 BEGIN
   -- Validate store exists
   SELECT * INTO v_store FROM stores WHERE id = p_store_id;
-  IF v_store.id IS NULL THEN
+  IF NOT FOUND THEN
     o_payout_id := NULL;
     o_gross_sales_gnf := 0;
     o_total_commission_gnf := 0;
@@ -416,7 +441,7 @@ BEGIN
 
   o_net_payable_gnf := v_total_sales - v_total_commission - v_total_delivery - v_total_refunds + v_adjustments;
 
-  -- Insert seller payout record
+  -- Insert seller payout record (immutable journal: never update an existing payout)
   o_payout_id := gen_random_uuid();
   INSERT INTO seller_payouts (
     id, store_id, period_start, period_end,

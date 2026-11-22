@@ -29,7 +29,7 @@ Ne pas modifier les applications, Admin, fichiers racine ou workflows CI.
 Périmètre exclusif : `apps/customer/**`.
 
 Livrables :
-- base Expo / React Native et navigation ;
+- base React Native Community CLI, React Navigation et Android Gradle ;
 - onboarding, connexion et profil ;
 - accueil, catégories, recherche, fiches produit et boutique ;
 - panier mono-vendeur et checkout ;
@@ -46,7 +46,7 @@ Consommer les contrats partagés de l'agent Platform. En attendant, utiliser des
 Périmètre exclusif : `apps/pro/**`.
 
 Livrables :
-- base Expo / React Native et navigation par rôles autorisés ;
+- base React Native Community CLI, React Navigation et Android Gradle par rôles autorisés ;
 - onboarding et sélection d'espace si compte multi-rôle ;
 - espace vendeur : boutique, produits, stocks, commandes, revenus et payables ;
 - espace livreur : missions assignées, collecte, livraison, preuve et incident ;

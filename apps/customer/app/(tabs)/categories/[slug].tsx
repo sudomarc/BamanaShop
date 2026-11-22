@@ -11,8 +11,8 @@ import {
   RefreshControl,
   FlatList,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { fetchCategoryWithProducts, Category, Product } from "@/api";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
@@ -26,17 +26,6 @@ const categoryIcons: Record<string, string> = {
   sport: "fitness",
   beaute: "sparkles",
   auto: "car",
-};
-
-const categoryLabels: Record<string, string> = {
-  alimentation: "Alimentation",
-  electronique: "Électronique",
-  mode: "Mode & Accessoires",
-  maison: "Maison & Jardin",
-  sante: "Santé & Beauté",
-  sport: "Sport & Loisirs",
-  beaute: "Beauté",
-  auto: "Auto & Moto",
 };
 
 export default function CategoryDetailScreen() {
@@ -81,7 +70,11 @@ export default function CategoryDetailScreen() {
   if (!category) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="warning" size={48} color={SemanticColors.textTertiary} />
+        <Ionicons
+          name="warning"
+          size={48}
+          color={SemanticColors.textTertiary}
+        />
         <Text style={styles.emptyTitle}>Catégorie introuvable</Text>
         <TouchableOpacity
           style={styles.backButton}
@@ -92,10 +85,6 @@ export default function CategoryDetailScreen() {
       </View>
     );
   }
-
-  const color = categoryLabels[category.slug]
-    ? SemanticColors.primaryAction
-    : SemanticColors.primaryAction;
 
   return (
     <ScrollView
@@ -143,7 +132,11 @@ export default function CategoryDetailScreen() {
 
         {products.length === 0 ? (
           <View style={styles.emptyProducts}>
-            <Ionicons name="cube" size={48} color={SemanticColors.textTertiary} />
+            <Ionicons
+              name="cube"
+              size={48}
+              color={SemanticColors.textTertiary}
+            />
             <Text style={styles.emptyProductsTitle}>Aucun produit</Text>
             <Text style={styles.emptyProductsSubtitle}>
               Cette catégorie est vide pour le moment
@@ -168,7 +161,11 @@ export default function CategoryDetailScreen() {
                   />
                 ) : (
                   <View style={styles.productImagePlaceholder}>
-                    <Ionicons name="image" size={32} color={SemanticColors.textTertiary} />
+                    <Ionicons
+                      name="image"
+                      size={32}
+                      color={SemanticColors.textTertiary}
+                    />
                   </View>
                 )}
                 {item.is_featured && (

@@ -10,8 +10,8 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter } from "@/navigation/compat";
 import { fetchCategories, Category } from "@/api";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
@@ -96,7 +96,8 @@ export default function CategoriesScreen() {
         contentContainerStyle={styles.categoryList}
       >
         {categories.map((cat) => {
-          const color = categoryColors[cat.slug] ?? SemanticColors.primaryAction;
+          const color =
+            categoryColors[cat.slug] ?? SemanticColors.primaryAction;
           return (
             <TouchableOpacity
               key={cat.id}
@@ -104,10 +105,7 @@ export default function CategoriesScreen() {
               onPress={() => router.push(`/(tabs)/categories/${cat.slug}`)}
             >
               <View
-                style={[
-                  styles.categoryIcon,
-                  { backgroundColor: `${color}15` },
-                ]}
+                style={[styles.categoryIcon, { backgroundColor: `${color}15` }]}
               >
                 <Ionicons
                   name={categoryIcons[cat.slug] ?? "cube"}
@@ -129,7 +127,8 @@ export default function CategoriesScreen() {
 
       <View style={styles.grid}>
         {categories.map((cat) => {
-          const color = categoryColors[cat.slug] ?? SemanticColors.primaryAction;
+          const color =
+            categoryColors[cat.slug] ?? SemanticColors.primaryAction;
           return (
             <TouchableOpacity
               key={cat.id}
@@ -137,10 +136,7 @@ export default function CategoriesScreen() {
               onPress={() => router.push(`/(tabs)/categories/${cat.slug}`)}
             >
               <View
-                style={[
-                  styles.gridIcon,
-                  { backgroundColor: `${color}15` },
-                ]}
+                style={[styles.gridIcon, { backgroundColor: `${color}15` }]}
               >
                 <Ionicons
                   name={categoryIcons[cat.slug] ?? "cube"}

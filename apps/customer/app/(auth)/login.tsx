@@ -11,11 +11,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
+import type { PhoneE164 } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
 
 export default function LoginScreen() {
@@ -27,7 +27,6 @@ export default function LoginScreen() {
   const [sentCode, setSentCode] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
-  const [focusedInput, setFocusedInput] = useState<"phone" | "code">("phone");
 
   // Check if coming from deep link with phone pre-filled
   useEffect(() => {
@@ -55,7 +54,8 @@ export default function LoginScreen() {
       return `+224 ${rest.slice(0, 2)} ${rest.slice(2, 9)}`;
     }
     if (digits.length <= 2) return `+224 ${digits}`;
-    if (digits.length <= 9) return `+224 ${digits.slice(0, 2)} ${digits.slice(2)}`;
+    if (digits.length <= 9)
+      return `+224 ${digits.slice(0, 2)} ${digits.slice(2)}`;
     return `+224 ${digits.slice(0, 2)} ${digits.slice(2, 9)}`;
   };
 
@@ -77,7 +77,9 @@ export default function LoginScreen() {
     }
     setError("");
 
-    const { error: sendError } = await sendOtp(phone.replace(/\D/g, "") as any);
+    const { error: sendError } = await sendOtp(
+      phone.replace(/\s/g, "") as PhoneE164,
+    );
     if (sendError) {
       setError(sendError.message);
       return;
@@ -85,7 +87,6 @@ export default function LoginScreen() {
 
     setSentCode(true);
     setCountdown(60);
-    setFocusedInput("code");
   };
 
   const handleVerifyOtp = async () => {
@@ -96,7 +97,7 @@ export default function LoginScreen() {
     setError("");
 
     const { error: verifyError } = await verifyOtp(
-      phone.replace(/\D/g, "") as any,
+      phone.replace(/\s/g, "") as PhoneE164,
       code,
     );
 
@@ -132,7 +133,11 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.logoContainer}>
-          <Ionicons name="storefront" size={60} color={SemanticColors.primaryAction} />
+          <Ionicons
+            name="storefront"
+            size={60}
+            color={SemanticColors.primaryAction}
+          />
           <Text style={styles.appName}>BamanaShop</Text>
           <Text style={styles.appTagline}>Vos courses livrées chez vous</Text>
         </View>
@@ -146,7 +151,11 @@ export default function LoginScreen() {
 
             {error && (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color={SemanticColors.error} />
+                <Ionicons
+                  name="alert-circle"
+                  size={20}
+                  color={SemanticColors.error}
+                />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
@@ -163,19 +172,15 @@ export default function LoginScreen() {
                   onChangeText={handlePhoneChange}
                   placeholder="XX XXXXXXX"
                   keyboardType="phone-pad"
-                  autoCompleteType="tel"
+                  autoComplete="tel"
                   maxLength={16}
-                  onFocus={() => setFocusedInput("phone")}
                   autoFocus
                 />
               </View>
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                loading && styles.buttonDisabled,
-              ]}
+              style={[styles.primaryButton, loading && styles.buttonDisabled]}
               onPress={handleSendOtp}
               disabled={loading || !validatePhone(phone)}
             >
@@ -194,7 +199,9 @@ export default function LoginScreen() {
                 En continuant, vous acceptez nos{" "}
                 <Text style={styles.termsLink}>Conditions d'utilisation</Text>
                 {" et notre "}
-                <Text style={styles.termsLink}>Politique de confidentialité</Text>
+                <Text style={styles.termsLink}>
+                  Politique de confidentialité
+                </Text>
               </Text>
             </TouchableOpacity>
           </>
@@ -208,7 +215,11 @@ export default function LoginScreen() {
 
             {error && (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color={SemanticColors.error} />
+                <Ionicons
+                  name="alert-circle"
+                  size={20}
+                  color={SemanticColors.error}
+                />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
@@ -232,20 +243,19 @@ export default function LoginScreen() {
                   keyboardType="number-pad"
                   textAlign="center"
                   autoComplete="one-time-code"
-                  onFocus={() => setFocusedInput("code")}
                   autoFocus={i === 0}
                 />
               ))}
             </View>
 
             <Text style={styles.resendText}>
-              {countdown > 0
-                ? `Renvoyer dans {countdown}s`
-                : (
-                  <TouchableOpacity onPress={handleResend}>
-                    <Text style={styles.resendLink}>Renvoyer le code</Text>
-                  </TouchableOpacity>
-                )}
+              {countdown > 0 ? (
+                `Renvoyer dans {countdown}s`
+              ) : (
+                <TouchableOpacity onPress={handleResend}>
+                  <Text style={styles.resendLink}>Renvoyer le code</Text>
+                </TouchableOpacity>
+              )}
             </Text>
 
             <TouchableOpacity
@@ -259,10 +269,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                loading && styles.buttonDisabled,
-              ]}
+              style={[styles.primaryButton, loading && styles.buttonDisabled]}
               onPress={handleVerifyOtp}
               disabled={loading || code.length !== 6}
             >

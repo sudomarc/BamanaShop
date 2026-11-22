@@ -1,63 +1,52 @@
-# Local Android APK Build
+# Build Android APKs locally
 
-This guide builds the Customer Android APK locally. It does not use EAS Build or require an Expo account.
+BamanaShop Customer and Pro are bare React Native applications. Their Android Gradle projects are maintained in `apps/customer/android` and `apps/pro/android`; the build does not generate Android projects.
 
-## Prerequisites
+## Requirements
 
 - Node.js 20+
 - pnpm 12.21.0
-- Java 17
-- Android SDK with platform 34 and build-tools 34.0.0
-- Android platform-tools / ADB (only needed for device installation)
+- JDK 17
+- Android SDK Platform 34 and Build Tools 34.0.0
+- Android NDK 26.1.10909125
+- Gradle 8.7
+- ADB (for installation)
 
-## Build
+## Build and optionally install
 
 From the repository root:
 
 ```bash
-./BUILD_AND_INSTALL.sh beta 1.0.0
+./BUILD_AND_INSTALL.sh customer dev 1.2.3
+./BUILD_AND_INSTALL.sh customer beta 1.2.3
+./BUILD_AND_INSTALL.sh pro production 1.2.3
 ```
 
-Arguments:
+Arguments: application (`customer|pro`), profile (`dev|beta|production`), version (SemVer such as `1.2.3`). The script installs dependencies, runs Gradle, verifies the embedded bundle and manifest debuggability, and installs the APK when an authorized ADB device is connected. APKs are saved under `apk/`.
 
-- Profile: `dev`, `beta`, or `production` (default: `beta`)
-- Version: `MAJOR.MINOR.PATCH` (default: `1.0.0`)
+## Supabase configuration
 
-The script installs workspace dependencies, runs Expo Prebuild to generate the native Android project, compiles it with Gradle, validates the APK, and installs it through ADB when a device is connected.
+Create a root `.env.mobile` file with only the two public mobile client values. Do not copy server-side keys into this file:
 
-The APK is saved in `apk/`.
+```dotenv
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+```
 
-## GitHub Actions build
+These are public client credentials. Never put a Supabase service-role key in a mobile app.
 
-1. Open the repository's **Actions** tab.
-2. Select **BamanaShop** and click **Run workflow**.
-3. Choose the profile: `dev`, `beta`, or `production`.
-4. Enter the app version, for example `1.2.3`.
-5. Start the run and download the APK from its **Artifacts** section.
+## Profiles and Metro
 
-GitHub Actions compiles Android locally on its runner using Gradle. Android builds require neither `EXPO_TOKEN` nor `EAS_PROJECT_ID`.
+- DEV uses Gradle Debug, keeps Android `debuggable=true`, embeds the JavaScript bundle, and disables React Native developer support.
+- BETA and PRODUCTION use Gradle Release and Android `debuggable=false`.
+- No installed APK requires a running Metro server. Metro only bundles JavaScript during the APK build.
 
-## Build profiles
-
-- `dev`: standalone Gradle debug APK with Android debugging enabled.
-- `beta`: standalone Gradle release APK with Android debugging disabled.
-- `production`: standalone Gradle release APK with Android debugging disabled.
-
-All profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android Debug variant for ADB/Logcat inspection; the build forces JavaScript bundling and disables React Native's Metro-based developer support.
-
-The Android `versionCode` is calculated from the semantic version, so increase the version when preparing an upgrade.
-
-**Signing note:** the current workflow uses the generated debug signing configuration. It does not provision a private Google Play upload key. These APKs are for controlled direct installation and testing; publishing to Google Play requires a persistent Android signing key configured in Gradle.
-
-## Install a downloaded APK
+## ADB
 
 ```bash
 adb devices
-bash ./scripts/install-apk.sh ./BamanaShop-beta-v1.0.0.apk
+adb install -r ./apk/BamanaShop-customer-dev-v1.2.3.apk
+adb logcat -s ReactNativeJS AndroidRuntime
 ```
 
-If Android reports a signature conflict with a previously installed build, uninstall the old app first:
-
-```bash
-adb uninstall com.bamanashop.customer
-```
+All profiles should be signed with the same private keystore when update installation is required. Local builds use the configured keystore when `BAMANASHOP_KEYSTORE_FILE`, `BAMANASHOP_KEYSTORE_PASSWORD`, `BAMANASHOP_KEY_ALIAS` and `BAMANASHOP_KEY_PASSWORD` are exported. Do not commit the keystore or passwords.

@@ -9,10 +9,12 @@ import {
   RefreshControl,
   SafeAreaView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { formatGnf } from "@bamanashop/domain";
+
+import { GnfAmount } from "@bamanashop/contracts";
 
 const mockMissions = [
   {
@@ -24,8 +26,8 @@ const mockMissions = [
     dropoff: "Matam, Hamdallaye",
     status: "assigned",
     distance: "4.2 km",
-    fee: 7000,
-    codAmount: 85000,
+    fee: 7000 as GnfAmount,
+    codAmount: 85000 as GnfAmount,
     assignedAt: "08:45",
   },
   {
@@ -37,8 +39,8 @@ const mockMissions = [
     dropoff: "Ratoma, Kipé",
     status: "assigned",
     distance: "6.8 km",
-    fee: 9800,
-    codAmount: 1250000,
+    fee: 9800 as GnfAmount,
+    codAmount: 1250000 as GnfAmount,
     assignedAt: "09:12",
   },
   {
@@ -50,8 +52,8 @@ const mockMissions = [
     dropoff: "Ratoma, Cosa",
     status: "accepted",
     distance: "3.1 km",
-    fee: 6100,
-    codAmount: 45000,
+    fee: 6100 as GnfAmount,
+    codAmount: 45000 as GnfAmount,
     assignedAt: "09:30",
   },
 ];
@@ -119,7 +121,9 @@ export default function CourierMissionsScreen() {
         </View>
         <View style={styles.earningsSummary}>
           <Text style={styles.earningsLabel}>Gains aujourd'hui</Text>
-          <Text style={styles.earningsAmount}>{formatGnf(24500)}</Text>
+          <Text style={styles.earningsAmount}>
+            {formatGnf(24500 as GnfAmount)}
+          </Text>
         </View>
       </View>
 

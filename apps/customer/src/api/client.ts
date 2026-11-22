@@ -3,20 +3,26 @@
  * Supabase-based API with fallback to mock data for development
  */
 
-import { createSupabaseClient } from "@/utils/supabase";
+import { createSupabaseClient, isSupabaseConfigured } from "@/utils/supabase";
+import type { Database } from "@/types/database";
 import type {
   Category,
   Product,
   Store,
   Address,
   Order,
-  OrderItem,
-  Profile,
-  DeliveryPartner,
   PaymentMethod,
   OrderStatus,
+  ProductStatus,
   PaymentStatus,
   DeliveryStatus,
+  StoreStatus,
+  GnfAmount,
+  Uuid,
+  PhoneE164,
+  IsoDateTime,
+  DeliveryPartner,
+  CommissionRule,
 } from "@bamanashop/contracts";
 import {
   MOCK_CATEGORIES,
@@ -28,23 +34,168 @@ import {
 const supabase = createSupabaseClient();
 
 // Check if we're in mock mode (no Supabase config)
-const isMockMode = !supabase || supabase.auth?.getSession?.toString().includes("Mock mode");
+const isMockMode = !isSupabaseConfigured;
+
+// ---------------------------------------------------------------------------
+// DB row -> contract entity mappers
+// database.ts rows carry plain `string`/`number` ids and amounts, while the
+// shared contracts brand them (Uuid, GnfAmount, PhoneE164). Map explicitly at
+// the boundary instead of casting through `any` or `unknown`.
+type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
+type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
+type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
+type AddressRow = Database["public"]["Tables"]["addresses"]["Row"];
+type DeliveryPartnerRow =
+  Database["public"]["Tables"]["delivery_partners"]["Row"];
+type CommissionRuleRow =
+  Database["public"]["Tables"]["commission_rules"]["Row"];
+
+function mapOrder(row: OrderRow): Order {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    customer_id: row.customer_id as Uuid,
+    store_id: row.store_id as Uuid,
+    delivery_address_id: row.delivery_address_id as Uuid,
+    assigned_courier_id: row.assigned_courier_id as Uuid | null,
+    assigned_partner_id: row.assigned_partner_id as Uuid | null,
+    status: row.status as OrderStatus,
+    payment_method: row.payment_method as PaymentMethod,
+    payment_status: row.payment_status as PaymentStatus,
+    delivery_status: row.delivery_status as DeliveryStatus,
+    subtotal_gnf: row.subtotal_gnf as GnfAmount,
+    delivery_fee_gnf: row.delivery_fee_gnf as GnfAmount,
+    payment_fee_gnf: row.payment_fee_gnf as GnfAmount,
+    total_gnf: row.total_gnf as GnfAmount,
+    commission_gnf: row.commission_gnf as GnfAmount,
+    courier_cost_gnf: row.courier_cost_gnf as GnfAmount,
+    delivery_address_snapshot:
+      row.delivery_address_snapshot as Order["delivery_address_snapshot"],
+    seller_payable_gnf: row.seller_payable_gnf as GnfAmount,
+    prepared_at: row.prepared_at as IsoDateTime | null,
+    ready_for_pickup_at: row.ready_for_pickup_at as IsoDateTime | null,
+    picked_up_at: row.picked_up_at as IsoDateTime | null,
+    delivered_at: row.delivered_at as IsoDateTime | null,
+    cancelled_at: row.cancelled_at as IsoDateTime | null,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapProduct(row: ProductRow): Product {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    store_id: row.store_id as Uuid,
+    category_id: row.category_id as Uuid,
+    price_gnf: row.price_gnf as GnfAmount,
+    compare_at_price_gnf: row.compare_at_price_gnf as GnfAmount | null,
+    status: row.status as ProductStatus,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+    images: [],
+  };
+}
+
+function mapStore(row: StoreRow): Store {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    seller_id: row.seller_id as Uuid,
+    phone: row.phone as PhoneE164,
+    status: row.status as StoreStatus,
+    opening_hours: row.opening_hours as Record<string, string>,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapCategory(row: CategoryRow): Category {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    parent_id: row.parent_id as Uuid | null,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapAddress(row: AddressRow): Address {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    user_id: row.user_id as Uuid,
+    phone: row.phone as PhoneE164,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapDeliveryPartner(row: DeliveryPartnerRow): DeliveryPartner {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    contact_phone: row.contact_phone as PhoneE164,
+    base_fee_gnf: row.base_fee_gnf as GnfAmount,
+    per_km_fee_gnf: row.per_km_fee_gnf as GnfAmount,
+    cod_handling_fee_gnf: row.cod_handling_fee_gnf as GnfAmount,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapCommissionRule(row: CommissionRuleRow): CommissionRule {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    scope: row.scope as "global" | "category" | "store",
+    scope_id: row.scope_id as Uuid | null,
+    min_order_gnf: row.min_order_gnf as GnfAmount | null,
+    max_commission_gnf: row.max_commission_gnf as GnfAmount | null,
+    effective_from: row.effective_from as IsoDateTime,
+    effective_to: row.effective_to as IsoDateTime | null,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
 
 // ============================================================================
 // Generic API Helpers
 // ============================================================================
 
-async function from<T>(table: string) {
-  if (isMockMode) {
-    return {
-      select: () => ({ data: [], error: null }),
-      insert: () => ({ data: null, error: { message: "Mock mode" } }),
-      update: () => ({ data: null, error: { message: "Mock mode" } }),
-      delete: () => ({ data: null, error: { message: "Mock mode" } }),
-      single: () => ({ data: null, error: { message: "Mock mode" } }),
-    } as any;
-  }
+// Preserve the table literal type so Supabase query builder methods resolve to
+// the correct row type instead of collapsing to `never`.
+type TableName = keyof Database["public"]["Tables"];
+
+async function from<Tables extends TableName>(table: Tables) {
   return supabase.from(table);
+}
+
+export type {
+  Category,
+  Product,
+  Store,
+  Address,
+  Order,
+  PaymentMethod,
+  OrderStatus,
+  ProductStatus,
+  PaymentStatus,
+  DeliveryStatus,
+  StoreStatus,
+  GnfAmount,
+  Uuid,
+  PhoneE164,
+  IsoDateTime,
+};
+
+export async function fetchFeaturedProducts(): Promise<Product[]> {
+  return fetchProducts({ featured: true, limit: 10 });
+}
+
+export async function fetchFeaturedStores(): Promise<Store[]> {
+  return fetchStores({ limit: 10 });
 }
 
 // ============================================================================
@@ -54,13 +205,15 @@ async function from<T>(table: string) {
 export async function fetchCategories(): Promise<Category[]> {
   if (isMockMode) return MOCK_CATEGORIES;
 
-  const { data, error } = await (await from("categories"))
+  const { data, error } = await (
+    await from("categories")
+  )
     .select("*")
     .eq("is_active", true)
     .order("display_order");
 
   if (error) throw error;
-  return data as Category[];
+  return (data ?? []).map(mapCategory);
 }
 
 export async function fetchCategoryWithProducts(
@@ -74,7 +227,9 @@ export async function fetchCategoryWithProducts(
     return { category, products };
   }
 
-  const { data: categoryData } = await (await from("categories"))
+  const { data: categoryData } = await (
+    await from("categories")
+  )
     .select("*")
     .eq("slug", slug)
     .eq("is_active", true)
@@ -82,13 +237,18 @@ export async function fetchCategoryWithProducts(
 
   if (!categoryData) return { category: null, products: [] };
 
-  const { data: products } = await (await from("products"))
+  const { data: products } = await (
+    await from("products")
+  )
     .select("*")
     .eq("category_id", categoryData.id)
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
-  return { category: categoryData as Category, products: (products ?? []) as Product[] };
+  return {
+    category: categoryData ? mapCategory(categoryData) : null,
+    products: (products ?? []).map(mapProduct),
+  };
 }
 
 // ============================================================================
@@ -113,25 +273,87 @@ export async function fetchStores(params?: {
     query = query.limit(params.limit);
   }
   if (params?.offset) {
-    query = query.range(params.offset, params.offset + (params.limit ?? 20) - 1);
+    query = query.range(
+      params.offset,
+      params.offset + (params.limit ?? 20) - 1,
+    );
   }
 
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
-  return data as Store[];
+  return (data ?? []).map(mapStore);
 }
 
 export async function fetchStore(id: string): Promise<Store | null> {
   if (isMockMode) return id === MOCK_STORE.id ? MOCK_STORE : null;
 
-  const { data, error } = await (await from("stores"))
+  const { data, error } = await (
+    await from("stores")
+  )
     .select("*")
     .eq("id", id)
     .eq("status", "active")
     .single();
 
   if (error) return null;
-  return data as Store;
+  return data ? mapStore(data) : null;
+}
+
+// ============================================================================
+// Delivery Partners
+// ============================================================================
+
+export async function fetchDeliveryPartners(): Promise<DeliveryPartner[]> {
+  if (isMockMode) return [MOCK_DELIVERY_PARTNER];
+
+  const { data, error } = await (
+    await from("delivery_partners")
+  )
+    .select("*")
+    .eq("is_active", true)
+    .order("base_fee_gnf");
+
+  if (error) throw error;
+  return (data ?? []).map(mapDeliveryPartner);
+}
+
+export async function fetchDeliveryPartner(
+  id: string,
+): Promise<DeliveryPartner | null> {
+  if (isMockMode)
+    return id === MOCK_DELIVERY_PARTNER.id ? MOCK_DELIVERY_PARTNER : null;
+
+  const { data, error } = await (
+    await from("delivery_partners")
+  )
+    .select("*")
+    .eq("id", id)
+    .eq("is_active", true)
+    .single();
+
+  if (error) return null;
+  return data ? mapDeliveryPartner(data) : null;
+}
+
+// ============================================================================
+// Commission Rules
+// ============================================================================
+
+export async function fetchCommissionRules(): Promise<CommissionRule[]> {
+  if (isMockMode) return [];
+
+  const now = new Date().toISOString();
+  const { data, error } = await (
+    await from("commission_rules")
+  )
+    .select("*")
+    .eq("is_active", true)
+    .lte("effective_from", now)
+    .or(`effective_to.is.null,effective_to.gte.${now}`)
+    .order("scope", { ascending: false }); // store > category > global
+
+  if (error) throw error;
+  return (data ?? []).map(mapCommissionRule);
 }
 
 export async function fetchStoreProducts(
@@ -140,7 +362,8 @@ export async function fetchStoreProducts(
 ): Promise<Product[]> {
   if (isMockMode)
     return MOCK_PRODUCTS.filter(
-      (p) => p.store_id === storeId && (!categoryId || p.category_id === categoryId),
+      (p) =>
+        p.store_id === storeId && (!categoryId || p.category_id === categoryId),
     );
 
   let query = (await from("products"))
@@ -152,9 +375,11 @@ export async function fetchStoreProducts(
     query = query.eq("category_id", categoryId);
   }
 
-  const { data, error } = await query.order("is_featured", { ascending: false });
+  const { data, error } = await query.order("is_featured", {
+    ascending: false,
+  });
   if (error) throw error;
-  return data as Product[];
+  return (data ?? []).map(mapProduct);
 }
 
 // ============================================================================
@@ -172,8 +397,10 @@ export async function fetchProducts(params?: {
   if (isMockMode)
     return MOCK_PRODUCTS.filter((p) => {
       if (params?.storeId && p.store_id !== params.storeId) return false;
-      if (params?.categoryId && p.category_id !== params.categoryId) return false;
-      if (params?.featured !== undefined && p.is_featured !== params.featured) return false;
+      if (params?.categoryId && p.category_id !== params.categoryId)
+        return false;
+      if (params?.featured !== undefined && p.is_featured !== params.featured)
+        return false;
       if (params?.search) {
         const search = params.search.toLowerCase();
         return p.name.toLowerCase().includes(search);
@@ -188,30 +415,38 @@ export async function fetchProducts(params?: {
   if (params?.featured) query = query.eq("is_featured", true);
   if (params?.search) query = query.ilike("name", `%${params.search}%`);
   if (params?.limit) query = query.limit(params.limit);
-  if (params?.offset) query = query.range(params.offset, params.offset + (params.limit ?? 20) - 1);
+  if (params?.offset)
+    query = query.range(
+      params.offset,
+      params.offset + (params.limit ?? 20) - 1,
+    );
 
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
-  return data as Product[];
+  return (data ?? []).map(mapProduct);
 }
 
 export async function fetchProduct(id: string): Promise<Product | null> {
   if (isMockMode) return MOCK_PRODUCTS.find((p) => p.id === id) ?? null;
 
-  const { data, error } = await (await from("products"))
+  const { data, error } = await (
+    await from("products")
+  )
     .select("*")
     .eq("id", id)
     .eq("status", "active")
     .single();
 
   if (error) return null;
-  return data as Product;
+  return data ? mapProduct(data) : null;
 }
 
 export async function fetchProductImages(productId: string): Promise<string[]> {
   if (isMockMode) return [];
 
-  const { data, error } = await (await from("product_images"))
+  const { data, error } = await (
+    await from("product_images")
+  )
     .select("url")
     .eq("product_id", productId)
     .order("display_order");
@@ -242,7 +477,10 @@ export async function getCart(): Promise<CartItem[]> {
   }
 }
 
-export async function addToCart(product: Product, quantity: number = 1): Promise<void> {
+export async function addToCart(
+  product: Product,
+  quantity: number = 1,
+): Promise<void> {
   const cart = await getCart();
   const existingIndex = cart.findIndex((i) => i.product.id === product.id);
 
@@ -255,11 +493,15 @@ export async function addToCart(product: Product, quantity: number = 1): Promise
   await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
 }
 
-export async function updateCartQuantity(productId: string, quantity: number): Promise<void> {
+export async function updateCartQuantity(
+  productId: string,
+  quantity: number,
+): Promise<void> {
   const cart = await getCart();
-  const updated = quantity <= 0
-    ? cart.filter((i) => i.product.id !== productId)
-    : cart.map((i) => (i.product.id === productId ? { ...i, quantity } : i));
+  const updated =
+    quantity <= 0
+      ? cart.filter((i) => i.product.id !== productId)
+      : cart.map((i) => (i.product.id === productId ? { ...i, quantity } : i));
 
   await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updated));
 }
@@ -282,39 +524,49 @@ export async function fetchAddresses(): Promise<Address[]> {
   if (isMockMode)
     return [
       {
-        id: "addr-1" as any,
-        user_id: "mock-user" as any,
+        id: "addr-1" as Uuid,
+        user_id: "mock-user" as Uuid,
         label: "Domicile",
         commune: "Matam",
         quartier: "Hamdallaye",
         landmark: "Près de la mosquée",
-        phone: "+224620000000" as any,
+        phone: "+224620000000" as PhoneE164,
         is_default: true,
-        created_at: new Date().toISOString() as any,
-        updated_at: new Date().toISOString() as any,
+        created_at: new Date().toISOString() as IsoDateTime,
+        updated_at: new Date().toISOString() as IsoDateTime,
       },
     ];
 
-  const { data, error } = await (await from("addresses"))
+  const { data, error } = await (
+    await from("addresses")
+  )
     .select("*")
     .order("is_default", { ascending: false });
 
   if (error) throw error;
-  return data as Address[];
+  return (data ?? []).map(mapAddress);
 }
 
 export async function createAddress(
   address: Omit<Address, "id" | "created_at" | "updated_at">,
 ): Promise<Address> {
-  if (isMockMode) return { ...address, id: "mock-new" as any, created_at: "" as any, updated_at: "" as any };
+  if (isMockMode)
+    return {
+      ...address,
+      id: "mock-new" as Uuid,
+      created_at: "" as IsoDateTime,
+      updated_at: "" as IsoDateTime,
+    };
 
-  const { data, error } = await (await from("addresses"))
+  const { data, error } = await (
+    await from("addresses")
+  )
     .insert(address)
     .select()
     .single();
 
   if (error) throw error;
-  return data as Address;
+  return mapAddress(data!);
 }
 
 export async function updateAddress(
@@ -323,14 +575,16 @@ export async function updateAddress(
 ): Promise<Address> {
   if (isMockMode) return { ...updates, id } as Address;
 
-  const { data, error } = await (await from("addresses"))
+  const { data, error } = await (
+    await from("addresses")
+  )
     .update(updates)
     .eq("id", id)
     .select()
     .single();
 
   if (error) throw error;
-  return data as Address;
+  return mapAddress(data!);
 }
 
 export async function deleteAddress(id: string): Promise<void> {
@@ -346,7 +600,11 @@ export async function setDefaultAddress(id: string): Promise<void> {
   // First unset all defaults
   await (await from("addresses")).update({ is_default: false }).neq("id", id);
   // Then set the new default
-  const { error } = await (await from("addresses")).update({ is_default: true }).eq("id", id);
+  const { error } = await (
+    await from("addresses")
+  )
+    .update({ is_default: true })
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -390,18 +648,25 @@ export async function fetchOrders(params?: {
   query = query.order("created_at", { ascending: false });
 
   if (params?.limit) query = query.limit(params.limit);
-  if (params?.offset) query = query.range(params.offset, params.offset + (params.limit ?? 20) - 1);
+  if (params?.offset)
+    query = query.range(
+      params.offset,
+      params.offset + (params.limit ?? 20) - 1,
+    );
 
   const { data, error } = await query;
   if (error) throw error;
-  return data as Order[];
+  return (data ?? []).map(mapOrder);
 }
 
 export async function fetchOrder(id: string): Promise<Order | null> {
   if (isMockMode) return null;
 
-  const { data, error } = await (await from("orders"))
-    .select(`
+  const { data, error } = await (
+    await from("orders")
+  )
+    .select(
+      `
       *,
       order_items (
         *,
@@ -424,18 +689,21 @@ export async function fetchOrder(id: string): Promise<Order | null> {
         delivery_events (*),
         delivery_proofs (*)
       )
-    `)
+    `,
+    )
     .eq("id", id)
     .single();
 
   if (error) return null;
-  return data as Order;
+  return data ? mapOrder(data) : null;
 }
 
 export async function createOrder(params: {
+  customerId: string;
   storeId: string;
   items: Array<{ productId: string; quantity: number; unitPrice: number }>;
   deliveryAddressId: string;
+  deliveryAddressSnapshot: Order["delivery_address_snapshot"];
   paymentMethod: PaymentMethod;
   subtotal: number;
   deliveryFee: number;
@@ -448,30 +716,58 @@ export async function createOrder(params: {
 }): Promise<Order> {
   if (isMockMode)
     return {
-      id: "mock-order" as any,
-      customer_id: "mock-user" as any,
-      store_id: params.storeId as any,
+      id: "mock-order" as Uuid,
+      customer_id: "mock-user" as Uuid,
+      store_id: params.storeId as Uuid,
       status: "pending",
-      subtotal_gnf: params.subtotal as any,
-      delivery_fee_gnf: params.deliveryFee as any,
-      payment_fee_gnf: params.paymentFee as any,
-      total_gnf: params.total as any,
+      subtotal_gnf: params.subtotal as GnfAmount,
+      delivery_fee_gnf: params.deliveryFee as GnfAmount,
+      payment_fee_gnf: params.paymentFee as GnfAmount,
+      total_gnf: params.total as GnfAmount,
       commission_rate_bps: params.commissionRateBps,
-      commission_gnf: params.commission as any,
-      courier_cost_gnf: params.courierCost as any,
-      seller_payable_gnf: params.sellerPayable as any,
+      commission_gnf: params.commission as GnfAmount,
+      courier_cost_gnf: params.courierCost as GnfAmount,
+      seller_payable_gnf: params.sellerPayable as GnfAmount,
       payment_method: params.paymentMethod,
       payment_status: "pending",
       delivery_status: "unassigned",
-      delivery_address_id: params.deliveryAddressId as any,
-      delivery_address_snapshot: {} as any,
-      created_at: new Date().toISOString() as any,
-      updated_at: new Date().toISOString() as any,
+      delivery_address_id: params.deliveryAddressId as Uuid,
+      delivery_address_snapshot: {
+        commune: "",
+        quartier: "",
+        phone: "+224620000000" as PhoneE164,
+      },
+      created_at: new Date().toISOString() as IsoDateTime,
+      updated_at: new Date().toISOString() as IsoDateTime,
     };
 
-  const { data, error } = await (await from("orders")).insert(params).select().single();
+  const { data, error } = await (
+    await from("orders")
+  )
+    .insert({
+      customer_id: params.customerId as Uuid,
+      store_id: params.storeId as Uuid,
+      status: "pending",
+      subtotal_gnf: params.subtotal as GnfAmount,
+      delivery_fee_gnf: params.deliveryFee as GnfAmount,
+      payment_fee_gnf: params.paymentFee as GnfAmount,
+      total_gnf: params.total as GnfAmount,
+      commission_rate_bps: params.commissionRateBps,
+      commission_gnf: params.commission as GnfAmount,
+      courier_cost_gnf: params.courierCost as GnfAmount,
+      seller_payable_gnf: params.sellerPayable as GnfAmount,
+      payment_method: params.paymentMethod,
+      payment_status: "pending",
+      delivery_address_id: params.deliveryAddressId as Uuid,
+      delivery_address_snapshot: params.deliveryAddressSnapshot,
+      created_at: new Date().toISOString() as IsoDateTime,
+      updated_at: new Date().toISOString() as IsoDateTime,
+    })
+    .select()
+    .single();
   if (error) throw error;
-  return data as Order;
+  if (!data) throw new Error("Order creation returned no row");
+  return mapOrder(data);
 }
 
 export async function cancelOrder(
@@ -480,7 +776,9 @@ export async function cancelOrder(
 ): Promise<void> {
   if (isMockMode) return;
 
-  const { error } = await (await from("orders"))
+  const { error } = await (
+    await from("orders")
+  )
     .update({
       status: "cancelled",
       cancellation_reason: reason,
@@ -498,8 +796,11 @@ export async function cancelOrder(
 export async function fetchDeliveryJob(jobId: string) {
   if (isMockMode) return null;
 
-  const { data, error } = await (await from("delivery_jobs"))
-    .select(`
+  const { data, error } = await (
+    await from("delivery_jobs")
+  )
+    .select(
+      `
       *,
       courier:courier_profiles (
         id,
@@ -517,7 +818,8 @@ export async function fetchDeliveryJob(jobId: string) {
         )
       ),
       delivery_proofs (*)
-    `)
+    `,
+    )
     .eq("id", jobId)
     .single();
 
@@ -527,7 +829,7 @@ export async function fetchDeliveryJob(jobId: string) {
 
 export async function subscribeToDeliveryJob(
   jobId: string,
-  callback: (job: any) => void,
+  callback: (job: Record<string, unknown>) => void,
 ) {
   if (isMockMode) return () => {};
 
@@ -568,8 +870,7 @@ export async function initiatePayment(params: {
   amount: number;
   phone: string;
 }): Promise<{ paymentId: string; actionUrl?: string }> {
-  if (isMockMode)
-    return { paymentId: "mock-payment", actionUrl: undefined };
+  if (isMockMode) return { paymentId: "mock-payment", actionUrl: undefined };
 
   const { data, error } = await supabase.functions.invoke("initiate-payment", {
     body: params,
@@ -585,13 +886,18 @@ export async function checkPaymentStatus(paymentId: string): Promise<{
 }> {
   if (isMockMode) return { status: "pending" };
 
-  const { data, error } = await (await from("payments"))
+  const { data, error } = await (
+    await from("payments")
+  )
     .select("status, paid_at")
     .eq("id", paymentId)
     .single();
 
   if (error) throw error;
-  return { status: data.status, paidAt: data.paid_at };
+  return {
+    status: data.status as PaymentStatus,
+    paidAt: data.paid_at ?? undefined,
+  };
 }
 
 // ============================================================================
@@ -601,14 +907,16 @@ export async function checkPaymentStatus(paymentId: string): Promise<{
 export async function fetchNotifications(params?: {
   unreadOnly?: boolean;
   limit?: number;
-}): Promise<Array<{
-  id: string;
-  title: string;
-  body: string;
-  data: Record<string, unknown>;
-  read: boolean;
-  created_at: string;
-}>> {
+}): Promise<
+  Array<{
+    id: string;
+    title: string;
+    body: string;
+    data: Record<string, unknown>;
+    read: boolean;
+    created_at: string;
+  }>
+> {
   if (isMockMode) return [];
 
   let query = (await from("notifications"))
@@ -620,13 +928,22 @@ export async function fetchNotifications(params?: {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data as any[];
+  return (data ?? []).map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    data: n.data as Record<string, unknown>,
+    read: n.read,
+    created_at: n.created_at,
+  }));
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
   if (isMockMode) return;
 
-  const { error } = await (await from("notifications"))
+  const { error } = await (
+    await from("notifications")
+  )
     .update({ read: true })
     .eq("id", id);
 
@@ -639,8 +956,9 @@ export async function registerPushToken(
 ): Promise<void> {
   if (isMockMode) return;
 
-  const { error } = await (await from("push_tokens"))
-    .upsert({ token, platform, updated_at: new Date().toISOString() });
+  const { error } = await (
+    await from("push_tokens")
+  ).upsert({ token, platform, updated_at: new Date().toISOString() });
 
   if (error) throw error;
 }
@@ -655,14 +973,16 @@ export async function searchProducts(query: string): Promise<Product[]> {
       p.name.toLowerCase().includes(query.toLowerCase()),
     );
 
-  const { data, error } = await (await from("products"))
+  const { data, error } = await (
+    await from("products")
+  )
     .select("*")
     .eq("status", "active")
     .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
     .limit(20);
 
   if (error) throw error;
-  return data as Product[];
+  return (data ?? []).map(mapProduct);
 }
 
 export async function searchStores(query: string): Promise<Store[]> {
@@ -671,12 +991,14 @@ export async function searchStores(query: string): Promise<Store[]> {
       s.name.toLowerCase().includes(query.toLowerCase()),
     );
 
-  const { data, error } = await (await from("stores"))
+  const { data, error } = await (
+    await from("stores")
+  )
     .select("*")
     .eq("status", "active")
     .ilike("name", `%${query}%`)
     .limit(20);
 
   if (error) throw error;
-  return data as Store[];
+  return (data ?? []).map(mapStore);
 }

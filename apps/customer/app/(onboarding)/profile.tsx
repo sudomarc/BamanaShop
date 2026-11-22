@@ -14,19 +14,21 @@ import {
   Alert,
   Image,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter } from "@/navigation/compat";
+import { launchImageLibrary } from "react-native-image-picker";
 import { useAuthStore } from "@/store/authStore";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing } from "@/constants/theme";
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
-  const { user, updateProfile, loading } = useAuthStore();
+  const { updateProfile } = useAuthStore();
   const [fullName, setFullName] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "ff">("fr");
+  const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "ff">(
+    "fr",
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -37,40 +39,21 @@ export default function ProfileSetupScreen() {
   ];
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission requise", "Accès aux photos nécessaire pour l'avatar");
+    const result = await launchImageLibrary({
+      mediaType: "photo",
+      selectionLimit: 1,
+      includeBase64: false,
+    });
+    if (result.didCancel) return;
+    if (result.errorCode) {
+      Alert.alert(
+        "Erreur",
+        result.errorMessage ?? "Impossible d'ouvrir la galerie",
+      );
       return;
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setAvatar(result.assets[0].uri);
-    }
-  };
-
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission requise", "Accès à la caméra nécessaire pour l'avatar");
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setAvatar(result.assets[0].uri);
-    }
+    const uri = result.assets?.[0]?.uri;
+    if (uri) setAvatar(uri);
   };
 
   const handleSave = async () => {
@@ -102,7 +85,7 @@ export default function ProfileSetupScreen() {
 
       // Mark onboarding complete
       router.replace("/(tabs)");
-    } catch (error) {
+    } catch {
       setError("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
@@ -136,7 +119,11 @@ export default function ProfileSetupScreen() {
             {avatar ? (
               <Image source={{ uri: avatar }} style={styles.avatarImage} />
             ) : (
-              <Ionicons name="camera" size={32} color={SemanticColors.textTertiary} />
+              <Ionicons
+                name="camera"
+                size={32}
+                color={SemanticColors.textTertiary}
+              />
             )}
             <View style={styles.avatarOverlay}>
               <Ionicons name="add" size={24} color="#FFFFFF" />
@@ -160,7 +147,7 @@ export default function ProfileSetupScreen() {
               onChangeText={setFullName}
               placeholder="Votre nom complet"
               autoCapitalize="words"
-              autoCompleteType="name"
+              autoComplete="name"
             />
           </View>
         </View>
@@ -173,7 +160,8 @@ export default function ProfileSetupScreen() {
                 key={lang.code}
                 style={[
                   styles.languageOption,
-                  selectedLanguage === lang.code && styles.languageOptionSelected,
+                  selectedLanguage === lang.code &&
+                    styles.languageOptionSelected,
                 ]}
                 onPress={() => setSelectedLanguage(lang.code)}
               >
@@ -201,7 +189,11 @@ export default function ProfileSetupScreen() {
 
         {error && (
           <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={20} color={SemanticColors.error} />
+            <Ionicons
+              name="alert-circle"
+              size={20}
+              color={SemanticColors.error}
+            />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}

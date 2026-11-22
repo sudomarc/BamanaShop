@@ -7,7 +7,10 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
-    "noEmit": true,
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declarationDir": "dist",
     "isolatedModules": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -17,10 +20,10 @@
     "baseUrl": ".",
     "paths": {
       "@bamanashop/contracts": [
-        "../contracts/src"
+        "../contracts/dist"
       ],
       "@bamanashop/contracts/*": [
-        "../contracts/src/*"
+        "../contracts/dist/*"
       ]
     },
     "declaration": true
