@@ -163,7 +163,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       .select("role, status")
       .eq("user_id", user.id);
 
-    const roleStatuses: Record<UserRole, RoleStatus> = { ...initialRoleStatuses };
+    const roleStatuses: Record<UserRole, RoleStatus> = {
+      ...initialRoleStatuses,
+    };
     const roles: UserRole[] = [];
     memberships?.forEach((m) => {
       roleStatuses[m.role as UserRole] = m.status as RoleStatus;

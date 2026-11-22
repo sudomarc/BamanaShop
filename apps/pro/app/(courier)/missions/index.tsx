@@ -121,7 +121,9 @@ export default function CourierMissionsScreen() {
         </View>
         <View style={styles.earningsSummary}>
           <Text style={styles.earningsLabel}>Gains aujourd'hui</Text>
-          <Text style={styles.earningsAmount}>{formatGnf(24500 as GnfAmount)}</Text>
+          <Text style={styles.earningsAmount}>
+            {formatGnf(24500 as GnfAmount)}
+          </Text>
         </View>
       </View>
 
