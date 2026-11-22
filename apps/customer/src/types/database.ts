@@ -1379,7 +1379,7 @@ export type Database = {
         Relationships: []
       }
     }
-    Views: {}
+    Views: Record<string, never>
     Functions: {
       create_order: {
         Args: {
