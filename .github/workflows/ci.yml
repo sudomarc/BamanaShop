@@ -42,6 +42,11 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: Normalize domain test with workspace Prettier for diagnosis
+        run: |
+          pnpm --filter=@bamanashop/domain exec prettier --write src/index.test.ts
+          cat packages/domain/src/index.test.ts
+
       - name: Check formatting
         run: pnpm run format:check
 
