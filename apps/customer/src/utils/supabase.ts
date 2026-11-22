@@ -34,51 +34,63 @@ const secureStorage = {
 };
 
 function createMockClient(): SupabaseClient<Database> {
-  const mockFrom = <
-    T extends keyof Database["public"]["Tables"] =
-      keyof Database["public"]["Tables"],
-  >() => ({
-    select: (): {
-      data: Database["public"]["Tables"][T]["Row"][];
-      error: null;
-    } => ({
-      data: [],
-      error: null,
-    }),
-    insert: (): { data: null; error: { message: string } } => ({
-      data: null,
-      error: { message: "Mock mode" },
-    }),
-    upsert: (): { data: null; error: { message: string } } => ({
-      data: null,
-      error: { message: "Mock mode" },
-    }),
-    update: (): { data: null; error: { message: string } } => ({
-      data: null,
-      error: { message: "Mock mode" },
-    }),
-    delete: (): { data: null; error: { message: string } } => ({
-      data: null,
-      error: { message: "Mock mode" },
-    }),
-    eq: () => mockFrom<T>(),
-    neq: () => mockFrom<T>(),
-    gt: () => mockFrom<T>(),
-    gte: () => mockFrom<T>(),
-    lt: () => mockFrom<T>(),
-    lte: () => mockFrom<T>(),
-    like: () => mockFrom<T>(),
-    ilike: () => mockFrom<T>(),
-    is: () => mockFrom<T>(),
-    in: () => mockFrom<T>(),
-    contains: () => mockFrom<T>(),
-    containedBy: () => mockFrom<T>(),
-    range: () => mockFrom<T>(),
-    limit: () => mockFrom<T>(),
-    order: () => mockFrom<T>(),
-    single: () => mockFrom<T>(),
-    maybeSingle: () => mockFrom<T>(),
-  });
+  const mockQueryBuilder: {
+    select: (...columns: string[]) => typeof mockQueryBuilder;
+    eq: (column: string, value: unknown) => typeof mockQueryBuilder;
+    neq: (column: string, value: unknown) => typeof mockQueryBuilder;
+    gt: (column: string, value: unknown) => typeof mockQueryBuilder;
+    gte: (column: string, value: unknown) => typeof mockQueryBuilder;
+    lt: (column: string, value: unknown) => typeof mockQueryBuilder;
+    lte: (column: string, value: unknown) => typeof mockQueryBuilder;
+    like: (column: string, pattern: string) => typeof mockQueryBuilder;
+    ilike: (column: string, pattern: string) => typeof mockQueryBuilder;
+    is: (column: string, value: unknown) => typeof mockQueryBuilder;
+    in: (column: string, values: unknown[]) => typeof mockQueryBuilder;
+    contains: (column: string, value: unknown) => typeof mockQueryBuilder;
+    containedBy: (column: string, value: unknown) => typeof mockQueryBuilder;
+    range: (from: number, to: number) => typeof mockQueryBuilder;
+    limit: (count: number) => typeof mockQueryBuilder;
+    order: (column: string, options?: { ascending?: boolean }) => typeof mockQueryBuilder;
+    single: () => Promise<{ data: null; error: { message: string } }>;
+    maybeSingle: () => Promise<{ data: null; error: { message: string } }>;
+    insert: (values: unknown) => typeof mockQueryBuilder;
+    update: (values: unknown) => typeof mockQueryBuilder;
+    upsert: (values: unknown) => typeof mockQueryBuilder;
+    delete: () => typeof mockQueryBuilder;
+    then: <TResult>(
+      onFulfilled?: (value: { data: unknown[]; error: null }) => TResult,
+      onRejected?: (reason: unknown) => TResult,
+    ) => Promise<TResult>;
+  } = {
+    select: (..._columns: string[]) => mockQueryBuilder,
+    eq: (_column: string, _value: unknown) => mockQueryBuilder,
+    neq: (_column: string, _value: unknown) => mockQueryBuilder,
+    gt: (_column: string, _value: unknown) => mockQueryBuilder,
+    gte: (_column: string, _value: unknown) => mockQueryBuilder,
+    lt: (_column: string, _value: unknown) => mockQueryBuilder,
+    lte: (_column: string, _value: unknown) => mockQueryBuilder,
+    like: (_column: string, _pattern: string) => mockQueryBuilder,
+    ilike: (_column: string, _pattern: string) => mockQueryBuilder,
+    is: (_column: string, _value: unknown) => mockQueryBuilder,
+    in: (_column: string, _values: unknown[]) => mockQueryBuilder,
+    contains: (_column: string, _value: unknown) => mockQueryBuilder,
+    containedBy: (_column: string, _value: unknown) => mockQueryBuilder,
+    range: (_from: number, _to: number) => mockQueryBuilder,
+    limit: (_count: number) => mockQueryBuilder,
+    order: (_column: string, _options?: { ascending?: boolean }) => mockQueryBuilder,
+    single: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
+    maybeSingle: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
+    insert: (_values: unknown) => mockQueryBuilder,
+    update: (_values: unknown) => mockQueryBuilder,
+    upsert: (_values: unknown) => mockQueryBuilder,
+    delete: () => mockQueryBuilder,
+    then: <TResult>(
+      onFulfilled?: (value: { data: unknown[]; error: null }) => TResult,
+      onRejected?: (reason: unknown) => TResult,
+    ) => Promise.resolve({ data: [], error: null }).then(onFulfilled, onRejected),
+  };
+
+  const mockFrom = () => mockQueryBuilder;
 
   return {
     auth: {
@@ -105,7 +117,7 @@ function createMockClient(): SupabaseClient<Database> {
       signOut: async () => ({ error: null }),
     },
     from: mockFrom,
-    rpc: () => ({ data: null, error: { message: "Mock mode" } }),
+    rpc: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
   } as unknown as SupabaseClient<Database>;
 }
 
