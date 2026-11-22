@@ -172,7 +172,7 @@ export default function LoginScreen() {
                   onChangeText={handlePhoneChange}
                   placeholder="XX XXXXXXX"
                   keyboardType="phone-pad"
-                  autoCompleteType="tel"
+                  autoComplete="tel"
                   maxLength={16}
                   autoFocus
                 />
