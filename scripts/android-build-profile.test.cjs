@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { configureReleaseDebuggable } = require("./android-build-profile.cjs");
+const { configureAndroidBuild } = require("./android-build-profile.cjs");
 
 const gradleFixture = `android {
     buildTypes {
@@ -11,30 +11,44 @@ const gradleFixture = `android {
         }
         release {
             minifyEnabled false
+            debuggable true
         }
     }
 }
+react {
+    debuggableVariants = ["debug"]
+    entryFile = file("index.js")
+}
 `;
 
-test("dev keeps the release variant debuggable", () => {
-  const result = configureReleaseDebuggable(gradleFixture, "dev");
-  assert.match(result, /release\s*\{\s*debuggable true\s*minifyEnabled false/s);
+const kotlinFixture = `class MainApplication : Application(), ReactApplication {
+    override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
+}
+`;
+
+test("all profiles bundle JavaScript instead of delegating to Metro", () => {
+  for (const profile of ["dev", "beta", "production"]) {
+    const result = configureAndroidBuild(profile, gradleFixture, kotlinFixture);
+    assert.match(result.gradle, /debuggableVariants = \[\]/);
+    assert.match(result.application, /getUseDeveloperSupport\(\): Boolean = false/);
+  }
 });
 
-test("beta and production disable release debugging", () => {
-  for (const profile of ["beta", "production"]) {
-    const result = configureReleaseDebuggable(gradleFixture, profile);
-    assert.match(result, /release\s*\{\s*debuggable false\s*minifyEnabled false/s);
+test("release remains non-debuggable for every profile", () => {
+  for (const profile of ["dev", "beta", "production"]) {
+    const result = configureAndroidBuild(profile, gradleFixture, kotlinFixture);
+    assert.match(result.gradle, /release\s*\{[\s\S]*?debuggable false/);
   }
 });
 
 test("configuration is idempotent", () => {
-  const once = configureReleaseDebuggable(gradleFixture, "dev");
-  const twice = configureReleaseDebuggable(once, "dev");
-  assert.equal(twice, once);
+  const once = configureAndroidBuild("dev", gradleFixture, kotlinFixture);
+  const twice = configureAndroidBuild("dev", once.gradle, once.application);
+  assert.deepEqual(twice, once);
 });
 
-test("rejects an unknown profile or missing release block", () => {
-  assert.throws(() => configureReleaseDebuggable(gradleFixture, "staging"), /Profile must be/);
-  assert.throws(() => configureReleaseDebuggable("android { buildTypes { debug {} } }", "dev"), /release build type/);
+test("rejects unknown profiles and unexpected generated templates", () => {
+  assert.throws(() => configureAndroidBuild("staging", gradleFixture, kotlinFixture), /Profile must be/);
+  assert.throws(() => configureAndroidBuild("dev", "android { buildTypes { release {} } }", kotlinFixture), /React Native Gradle react block/);
+  assert.throws(() => configureAndroidBuild("dev", gradleFixture, "class MainApplication {}"), /Could not safely disable Metro support/);
 });
