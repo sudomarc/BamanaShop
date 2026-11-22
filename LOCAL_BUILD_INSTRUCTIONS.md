@@ -39,9 +39,11 @@ GitHub Actions compiles Android locally on its runner using Gradle. Android buil
 
 ## Build profiles
 
-- `dev`: Gradle debug APK. A Metro development server is needed to load the JavaScript bundle.
-- `beta`: Gradle release APK for testing.
-- `production`: Gradle release APK.
+- `dev`: standalone Gradle release APK with Android debugging enabled.
+- `beta`: standalone Gradle release APK with Android debugging disabled.
+- `production`: standalone Gradle release APK with Android debugging disabled.
+
+All profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android-debuggable build, but it does not use Metro or React Native's development support at runtime.
 
 The Android `versionCode` is calculated from the semantic version, so increase the version when preparing an upgrade.
 
