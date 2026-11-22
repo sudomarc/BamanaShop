@@ -15,7 +15,8 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { fetchStore, fetchStoreProducts, Store, Product } from "@/api";
-import { formatGnf, GnfAmount } from "@bamanashop/contracts";
+import { GnfAmount } from "@bamanashop/contracts";
+import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
