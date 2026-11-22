@@ -15,10 +15,10 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
+import { fetchAddresses, createOrder, isSupabaseConfigured } from "@/api";
 import { calculateOrderTotals } from "@bamanashop/domain";
 import { GnfAmount, PaymentMethod, MOCK_STORE } from "@bamanashop/contracts";
 import { formatGnf } from "@bamanashop/domain";
-import { MOCK_DELIVERY_PARTNER } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
@@ -58,17 +58,22 @@ export default function CartScreen() {
   }, [items, paymentMethod, deliveryCommune]);
 
   const loadAddresses = async () => {
-    const mockAddresses = [
-      {
-        id: "addr-1",
-        label: "Domicile",
-        commune: "Matam",
-        quartier: "Hamdallaye",
-      },
-      { id: "addr-2", label: "Travail", commune: "Kaloum", quartier: "Centre" },
-    ];
-    setAddresses(mockAddresses);
-    setSelectedAddressId("addr-1");
+    try {
+      const addresses = await fetchAddresses();
+      setAddresses(
+        addresses.map((a) => ({
+          id: a.id,
+          label: a.label ?? "",
+          commune: a.commune,
+          quartier: a.quartier,
+        }))
+      );
+      setSelectedAddressId(
+        addresses.find((a) => a.is_default)?.id ?? addresses[0]?.id ?? ""
+      );
+    } catch {
+      Alert.alert("Erreur", "Impossible de charger les adresses");
+    }
   };
 
   const calculateTotals = async () => {
@@ -112,12 +117,54 @@ export default function CartScreen() {
 
     setLoading(true);
     try {
-      // Mock order creation
-      await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+      if (!isSupabaseConfigured) {
+        Alert.alert(
+          "Backend non configuré",
+          "Cette commande ne peut pas être créée : les variables d'environnement Supabase (SUPABASE_URL / SUPABASE_ANON_KEY) sont manquantes. BamanaShop ne simule aucun succès de commande sans backend réel."
+        );
+        return;
+      }
+
+      const address = addresses.find((a) => a.id === selectedAddressId);
+      if (!address) throw new Error("Adresse de livraison introuvable");
+      if (!totals) throw new Error("Totaux de commande indisponibles");
+
+      const order = await createOrder({
+        customerId: user.id,
+        storeId: items[0].product.store_id,
+        items: items.map((i) => ({
+          productId: i.product.id,
+          quantity: i.quantity,
+          unitPrice: i.product.price_gnf,
+        })),
+        deliveryAddressId: selectedAddressId,
+        deliveryAddressSnapshot: {
+          commune: address.commune,
+          quartier: address.quartier,
+          landmark: address.landmark ?? null,
+          street_details: address.street_details ?? null,
+          phone: address.phone,
+          instructions: address.instructions ?? null,
+        },
+        paymentMethod,
+        subtotal: totals.subtotal,
+        deliveryFee: totals.deliveryFee,
+        paymentFee: totals.paymentFee,
+        total: totals.total,
+        // eslint-disable-next-line no-magic-numbers
+        commissionRateBps: 1000,
+        commission: totals.commission,
+        courierCost: totals.courierCost,
+        sellerPayable: totals.sellerPayable,
+      });
+
       clearCart();
-      router.push("/(tabs)/orders");
-    } catch {
-      Alert.alert("Erreur", "Impossible de créer la commande");
+      router.push(`/orders/${order.id}`);
+    } catch (error) {
+      Alert.alert(
+        "Erreur",
+        error instanceof Error ? error.message : "Impossible de créer la commande"
+      );
     } finally {
       setLoading(false);
     }
