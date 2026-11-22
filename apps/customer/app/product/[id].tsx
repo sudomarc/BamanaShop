@@ -17,7 +17,8 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { useCartStore } from "@/store/cartStore";
 import { fetchProduct, fetchProductImages, Product } from "@/api";
-import { formatGnf, GnfAmount } from "@bamanashop/contracts";
+import { GnfAmount } from "@bamanashop/contracts";
+import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
@@ -40,7 +41,7 @@ export default function ProductDetailScreen() {
         fetchProductImages(id),
       ]);
       setProduct(prod);
-      setImages(imgs.length > 0 ? imgs : (prod?.images ?? []));
+      setImages(imgs);
     } catch (error) {
       console.error("Failed to load product:", error);
     } finally {
@@ -98,8 +99,7 @@ export default function ProductDetailScreen() {
     );
   }
 
-  const allImages =
-    images.length > 0 ? images : [product.images?.[0]].filter(Boolean);
+  const allImages = images;
 
   return (
     <ScrollView
