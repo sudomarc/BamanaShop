@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "rm -rf dist && tsc && tsc -m ESNext --outDir dist/esm --declarationDir dist/esm && mv dist/esm/* dist/",
+    "build": "rm -rf dist && tsc && tsc -m ESNext --outDir dist/esm --declarationDir dist/esm && mv dist/esm/* dist/ && cp dist/index.js dist/index.mjs",
     "lint": "eslint src --ext .ts",
     "format:check": "prettier --check src",
     "typecheck": "tsc --noEmit",
