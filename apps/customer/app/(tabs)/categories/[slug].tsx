@@ -70,7 +70,11 @@ export default function CategoryDetailScreen() {
   if (!category) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="warning" size={48} color={SemanticColors.textTertiary} />
+        <Ionicons
+          name="warning"
+          size={48}
+          color={SemanticColors.textTertiary}
+        />
         <Text style={styles.emptyTitle}>Catégorie introuvable</Text>
         <TouchableOpacity
           style={styles.backButton}
@@ -81,7 +85,6 @@ export default function CategoryDetailScreen() {
       </View>
     );
   }
-
 
   return (
     <ScrollView
@@ -129,7 +132,11 @@ export default function CategoryDetailScreen() {
 
         {products.length === 0 ? (
           <View style={styles.emptyProducts}>
-            <Ionicons name="cube" size={48} color={SemanticColors.textTertiary} />
+            <Ionicons
+              name="cube"
+              size={48}
+              color={SemanticColors.textTertiary}
+            />
             <Text style={styles.emptyProductsTitle}>Aucun produit</Text>
             <Text style={styles.emptyProductsSubtitle}>
               Cette catégorie est vide pour le moment
@@ -154,7 +161,11 @@ export default function CategoryDetailScreen() {
                   />
                 ) : (
                   <View style={styles.productImagePlaceholder}>
-                    <Ionicons name="image" size={32} color={SemanticColors.textTertiary} />
+                    <Ionicons
+                      name="image"
+                      size={32}
+                      color={SemanticColors.textTertiary}
+                    />
                   </View>
                 )}
                 {item.is_featured && (

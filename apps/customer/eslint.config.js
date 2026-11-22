@@ -3,7 +3,14 @@ const typescriptParser = require("@typescript-eslint/parser");
 
 module.exports = [
   {
-    files: ["App.tsx", "nativewind-env.d.ts", "src/**/*.ts", "src/**/*.tsx", "app/**/*.ts", "app/**/*.tsx"],
+    files: [
+      "App.tsx",
+      "nativewind-env.d.ts",
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "app/**/*.ts",
+      "app/**/*.tsx",
+    ],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {

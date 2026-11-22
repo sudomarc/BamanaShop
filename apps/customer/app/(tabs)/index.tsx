@@ -97,9 +97,17 @@ export default function HomeScreen() {
       {/* Header with location and search */}
       <View style={styles.header}>
         <View style={styles.locationRow}>
-          <Ionicons name="location" size={20} color={SemanticColors.primaryAction} />
+          <Ionicons
+            name="location"
+            size={20}
+            color={SemanticColors.primaryAction}
+          />
           <Text style={styles.locationText}>Conakry, Matam</Text>
-          <Ionicons name="chevron-down" size={18} color={SemanticColors.textTertiary} />
+          <Ionicons
+            name="chevron-down"
+            size={18}
+            color={SemanticColors.textTertiary}
+          />
         </View>
         <Text style={styles.greeting}>Bonjour !</Text>
         <Text style={styles.subtitle}>Que cherchez-vous aujourd'hui ?</Text>
@@ -130,7 +138,11 @@ export default function HomeScreen() {
             onPress={() => router.push("/(tabs)/categories")}
           >
             <Text style={styles.seeAllText}>Voir tout</Text>
-            <Ionicons name="chevron-forward" size={16} color={SemanticColors.textTertiary} />
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={SemanticColors.textTertiary}
+            />
           </TouchableOpacity>
         </View>
         <ScrollView
@@ -168,7 +180,11 @@ export default function HomeScreen() {
             onPress={() => router.push("/(tabs)/stores")}
           >
             <Text style={styles.seeAllText}>Voir tout</Text>
-            <Ionicons name="chevron-forward" size={16} color={SemanticColors.textTertiary} />
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={SemanticColors.textTertiary}
+            />
           </TouchableOpacity>
         </View>
         <ScrollView
@@ -190,7 +206,11 @@ export default function HomeScreen() {
                 />
               ) : (
                 <View style={styles.storeImagePlaceholder}>
-                  <Ionicons name="storefront" size={32} color={SemanticColors.textTertiary} />
+                  <Ionicons
+                    name="storefront"
+                    size={32}
+                    color={SemanticColors.textTertiary}
+                  />
                 </View>
               )}
               <Text style={styles.storeName} numberOfLines={1}>
@@ -218,7 +238,11 @@ export default function HomeScreen() {
             onPress={() => router.push("/(tabs)/products")}
           >
             <Text style={styles.seeAllText}>Voir tout</Text>
-            <Ionicons name="chevron-forward" size={16} color={SemanticColors.textTertiary} />
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={SemanticColors.textTertiary}
+            />
           </TouchableOpacity>
         </View>
         <View style={styles.productGrid}>
@@ -236,7 +260,11 @@ export default function HomeScreen() {
                 />
               ) : (
                 <View style={styles.productImagePlaceholder}>
-                  <Ionicons name="image" size={32} color={SemanticColors.textTertiary} />
+                  <Ionicons
+                    name="image"
+                    size={32}
+                    color={SemanticColors.textTertiary}
+                  />
                 </View>
               )}
               {product.is_featured && (
@@ -387,14 +415,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: SemanticColors.textPrimary,
   },
-  storeLocation: { fontSize: FontSize.xs, textAlign: "center", color: SemanticColors.textTertiary },
+  storeLocation: {
+    fontSize: FontSize.xs,
+    textAlign: "center",
+    color: SemanticColors.textTertiary,
+  },
   storeMeta: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.xs,
     marginTop: 4,
   },
-  storeRating: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold, color: "#F59E0B" },
+  storeRating: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+    color: "#F59E0B",
+  },
   storeDistance: { fontSize: FontSize.xs, color: SemanticColors.textTertiary },
   productGrid: {
     flexDirection: "row",

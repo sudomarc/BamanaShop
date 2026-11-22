@@ -50,15 +50,41 @@ function CustomerTabs() {
             Orders: focused ? "bag-handle" : "bag-handle-outline",
             Profile: focused ? "person" : "person-outline",
           };
-          return <Ionicons name={icons[route.name] ?? "ellipse-outline"} size={size} color={color} />;
+          return (
+            <Ionicons
+              name={icons[route.name] ?? "ellipse-outline"}
+              size={size}
+              color={color}
+            />
+          );
         },
       })}
     >
-      <Tabs.Screen name="Home" component={HomeScreen} options={{ title: "Accueil" }} />
-      <Tabs.Screen name="Categories" component={CategoriesScreen} options={{ title: "Catégories" }} />
-      <Tabs.Screen name="Cart" component={CartScreen} options={{ title: "Panier" }} />
-      <Tabs.Screen name="Orders" component={OrdersScreen} options={{ title: "Commandes" }} />
-      <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: "Profil" }} />
+      <Tabs.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ title: "Accueil" }}
+      />
+      <Tabs.Screen
+        name="Categories"
+        component={CategoriesScreen}
+        options={{ title: "Catégories" }}
+      />
+      <Tabs.Screen
+        name="Cart"
+        component={CartScreen}
+        options={{ title: "Panier" }}
+      />
+      <Tabs.Screen
+        name="Orders"
+        component={OrdersScreen}
+        options={{ title: "Commandes" }}
+      />
+      <Tabs.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ title: "Profil" }}
+      />
     </Tabs.Navigator>
   );
 }
@@ -66,9 +92,16 @@ function CustomerTabs() {
 function AppNavigator() {
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator initialRouteName="CustomerTabs" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        initialRouteName="CustomerTabs"
+        screenOptions={{ headerShown: false }}
+      >
         <Stack.Screen name="CustomerTabs" component={CustomerTabs} />
-        <Stack.Screen name="Login" component={LoginScreen} options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ presentation: "modal" }}
+        />
         <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
         <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
         <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
@@ -83,7 +116,9 @@ export default function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
   const initialized = useAuthStore((state) => state.initialized);
 
-  useEffect(() => { void initAuth(); }, [initAuth]);
+  useEffect(() => {
+    void initAuth();
+  }, [initAuth]);
 
   if (!initialized) {
     return (
@@ -93,9 +128,22 @@ export default function App() {
     );
   }
 
-  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><Providers><AppNavigator /></Providers></SafeAreaProvider></GestureHandlerRootView>;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <Providers>
+          <AppNavigator />
+        </Providers>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
 }
 
 const styles = StyleSheet.create({
-  loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: SemanticColors.screenBackground },
+  loading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: SemanticColors.screenBackground,
+  },
 });

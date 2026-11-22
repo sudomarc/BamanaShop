@@ -69,9 +69,16 @@ export default function StoreDetailScreen() {
   if (!store) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="warning" size={48} color={SemanticColors.textTertiary} />
+        <Ionicons
+          name="warning"
+          size={48}
+          color={SemanticColors.textTertiary}
+        />
         <Text style={styles.emptyTitle}>Boutique introuvable</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <Text style={styles.backButtonText}>Retour</Text>
         </TouchableOpacity>
       </View>
@@ -95,24 +102,44 @@ export default function StoreDetailScreen() {
       {/* Store Header */}
       <View style={styles.storeHeader}>
         {store.banner_url ? (
-          <Image source={{ uri: store.banner_url }} style={styles.bannerImage} resizeMode="cover" />
+          <Image
+            source={{ uri: store.banner_url }}
+            style={styles.bannerImage}
+            resizeMode="cover"
+          />
         ) : (
           <View style={styles.bannerPlaceholder}>
-            <Ionicons name="storefront" size={48} color={SemanticColors.textTertiary} />
+            <Ionicons
+              name="storefront"
+              size={48}
+              color={SemanticColors.textTertiary}
+            />
           </View>
         )}
         <View style={styles.storeInfo}>
           {store.logo_url ? (
-            <Image source={{ uri: store.logo_url }} style={styles.logoImage} resizeMode="cover" />
+            <Image
+              source={{ uri: store.logo_url }}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
           ) : (
             <View style={styles.logoPlaceholder}>
-              <Ionicons name="storefront" size={32} color={SemanticColors.textTertiary} />
+              <Ionicons
+                name="storefront"
+                size={32}
+                color={SemanticColors.textTertiary}
+              />
             </View>
           )}
           <View style={styles.storeMeta}>
             <Text style={styles.storeName}>{store.name}</Text>
             <View style={styles.storeLocation}>
-              <Ionicons name="location" size={14} color={SemanticColors.textTertiary} />
+              <Ionicons
+                name="location"
+                size={14}
+                color={SemanticColors.textTertiary}
+              />
               <Text style={styles.storeLocationText}>
                 {store.commune}, {store.quartier}
               </Text>
@@ -138,17 +165,29 @@ export default function StoreDetailScreen() {
         <View style={styles.detailCard}>
           <Text style={styles.detailTitle}>Informations</Text>
           <View style={styles.detailRow}>
-            <Ionicons name="call" size={18} color={SemanticColors.primaryAction} />
+            <Ionicons
+              name="call"
+              size={18}
+              color={SemanticColors.primaryAction}
+            />
             <Text style={styles.detailValue}>{store.phone}</Text>
           </View>
           {store.email && (
             <View style={styles.detailRow}>
-              <Ionicons name="mail" size={18} color={SemanticColors.primaryAction} />
+              <Ionicons
+                name="mail"
+                size={18}
+                color={SemanticColors.primaryAction}
+              />
               <Text style={styles.detailValue}>{store.email}</Text>
             </View>
           )}
           <View style={styles.detailRow}>
-            <Ionicons name="time" size={18} color={SemanticColors.primaryAction} />
+            <Ionicons
+              name="time"
+              size={18}
+              color={SemanticColors.primaryAction}
+            />
             <Text style={styles.detailValue}>
               {Object.entries(store.opening_hours)
                 .map(([day, hours]) => `${day}: ${hours}`)
@@ -156,7 +195,11 @@ export default function StoreDetailScreen() {
             </Text>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="location" size={18} color={SemanticColors.primaryAction} />
+            <Ionicons
+              name="location"
+              size={18}
+              color={SemanticColors.primaryAction}
+            />
             <Text style={styles.detailValue}>
               {store.address_line}, {store.landmark ?? ""}
             </Text>
@@ -173,10 +216,12 @@ export default function StoreDetailScreen() {
           ]}
           onPress={() => setSelectedCategory(null)}
         >
-          <Text style={[
-            styles.categoryChipText,
-            !selectedCategory && styles.categoryChipTextActive,
-          ]}>
+          <Text
+            style={[
+              styles.categoryChipText,
+              !selectedCategory && styles.categoryChipTextActive,
+            ]}
+          >
             Tout
           </Text>
         </TouchableOpacity>
@@ -189,10 +234,12 @@ export default function StoreDetailScreen() {
             ]}
             onPress={() => setSelectedCategory(catId)}
           >
-            <Text style={[
-              styles.categoryChipText,
-              selectedCategory === catId && styles.categoryChipTextActive,
-            ]}>
+            <Text
+              style={[
+                styles.categoryChipText,
+                selectedCategory === catId && styles.categoryChipTextActive,
+              ]}
+            >
               Catégorie {catId.slice(0, 4)}
             </Text>
           </TouchableOpacity>
@@ -202,14 +249,21 @@ export default function StoreDetailScreen() {
       {/* Products */}
       <View style={styles.productsSection}>
         <Text style={styles.sectionTitle}>
-          {filteredProducts.length} produit{filteredProducts.length > 1 ? "s" : ""}
+          {filteredProducts.length} produit
+          {filteredProducts.length > 1 ? "s" : ""}
         </Text>
 
         {filteredProducts.length === 0 ? (
           <View style={styles.emptyProducts}>
-            <Ionicons name="bag-handle-outline" size={48} color={SemanticColors.textTertiary} />
+            <Ionicons
+              name="bag-handle-outline"
+              size={48}
+              color={SemanticColors.textTertiary}
+            />
             <Text style={styles.emptyProductsTitle}>
-              {selectedCategory ? "Aucun produit dans cette catégorie" : "Aucun produit disponible"}
+              {selectedCategory
+                ? "Aucun produit dans cette catégorie"
+                : "Aucun produit disponible"}
             </Text>
           </View>
         ) : (
@@ -231,7 +285,11 @@ export default function StoreDetailScreen() {
                   />
                 ) : (
                   <View style={styles.productImagePlaceholder}>
-                    <Ionicons name="image" size={32} color={SemanticColors.textTertiary} />
+                    <Ionicons
+                      name="image"
+                      size={32}
+                      color={SemanticColors.textTertiary}
+                    />
                   </View>
                 )}
                 {item.is_featured && (
@@ -249,7 +307,9 @@ export default function StoreDetailScreen() {
                     </Text>
                     {item.compare_at_price_gnf && (
                       <Text style={styles.productOldPrice}>
-                        {formatGnf(item.compare_at_price_gnf as unknown as GnfAmount)}
+                        {formatGnf(
+                          item.compare_at_price_gnf as unknown as GnfAmount,
+                        )}
                       </Text>
                     )}
                   </View>
@@ -398,7 +458,11 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginBottom: Spacing.sm,
   },
-  detailValue: { fontSize: FontSize.base, color: SemanticColors.textPrimary, flex: 1 },
+  detailValue: {
+    fontSize: FontSize.base,
+    color: SemanticColors.textPrimary,
+    flex: 1,
+  },
   categoryFilter: {
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,

@@ -40,7 +40,7 @@ export default function ProductDetailScreen() {
         fetchProductImages(id),
       ]);
       setProduct(prod);
-      setImages(imgs.length > 0 ? imgs : prod?.images ?? []);
+      setImages(imgs.length > 0 ? imgs : (prod?.images ?? []));
     } catch (error) {
       console.error("Failed to load product:", error);
     } finally {
@@ -82,7 +82,11 @@ export default function ProductDetailScreen() {
   if (!product) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="warning" size={48} color={SemanticColors.textTertiary} />
+        <Ionicons
+          name="warning"
+          size={48}
+          color={SemanticColors.textTertiary}
+        />
         <Text style={styles.emptyTitle}>Produit introuvable</Text>
         <TouchableOpacity
           style={styles.backButton}
@@ -94,7 +98,8 @@ export default function ProductDetailScreen() {
     );
   }
 
-  const allImages = images.length > 0 ? images : [product.images?.[0]].filter(Boolean);
+  const allImages =
+    images.length > 0 ? images : [product.images?.[0]].filter(Boolean);
 
   return (
     <ScrollView
@@ -150,7 +155,11 @@ export default function ProductDetailScreen() {
       <View style={styles.productInfo}>
         <View style={styles.productHeader}>
           <View style={styles.storeInfo}>
-            <Ionicons name="storefront" size={16} color={SemanticColors.textSecondary} />
+            <Ionicons
+              name="storefront"
+              size={16}
+              color={SemanticColors.textSecondary}
+            />
             <Text style={styles.storeName}>Boutique Demo Conakry</Text>
           </View>
           <TouchableOpacity style={styles.favoriteButton}>
@@ -176,11 +185,13 @@ export default function ProductDetailScreen() {
           {product.compare_at_price_gnf && (
             <View style={styles.discountBadge}>
               <Text style={styles.discountText}>
-                -{Math.round(
+                -
+                {Math.round(
                   ((product.compare_at_price_gnf - product.price_gnf) /
                     product.compare_at_price_gnf) *
                     100,
-                )}%
+                )}
+                %
               </Text>
             </View>
           )}
@@ -205,7 +216,11 @@ export default function ProductDetailScreen() {
               <Ionicons
                 name="remove"
                 size={20}
-                color={quantity <= 1 ? SemanticColors.textTertiary : SemanticColors.primaryAction}
+                color={
+                  quantity <= 1
+                    ? SemanticColors.textTertiary
+                    : SemanticColors.primaryAction
+                }
               />
             </TouchableOpacity>
             <Text style={styles.qtyText}>{quantity}</Text>
@@ -223,31 +238,54 @@ export default function ProductDetailScreen() {
         </View>
 
         {/* Add to Cart Button */}
-        <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
-          <Ionicons name="cart" size={22} color="#FFFFFF" style={{ marginRight: 8 }} />
+        <TouchableOpacity
+          style={styles.addToCartButton}
+          onPress={handleAddToCart}
+        >
+          <Ionicons
+            name="cart"
+            size={22}
+            color="#FFFFFF"
+            style={{ marginRight: 8 }}
+          />
           <Text style={styles.addToCartText}>
-            Ajouter au panier - {formatGnf(product.price_gnf as unknown as GnfAmount)}
+            Ajouter au panier -{" "}
+            {formatGnf(product.price_gnf as unknown as GnfAmount)}
           </Text>
         </TouchableOpacity>
 
         {/* Features */}
         <View style={styles.features}>
           <View style={styles.featureItem}>
-            <Ionicons name="truck" size={20} color={SemanticColors.primaryAction} />
+            <Ionicons
+              name="truck"
+              size={20}
+              color={SemanticColors.primaryAction}
+            />
             <View style={styles.featureText}>
               <Text style={styles.featureTitle}>Livraison rapide</Text>
               <Text style={styles.featureDesc}>Dans votre quartier</Text>
             </View>
           </View>
           <View style={styles.featureItem}>
-            <Ionicons name="shield" size={20} color={SemanticColors.primaryAction} />
+            <Ionicons
+              name="shield"
+              size={20}
+              color={SemanticColors.primaryAction}
+            />
             <View style={styles.featureText}>
               <Text style={styles.featureTitle}>Paiement sécurisé</Text>
-              <Text style={styles.featureDesc}>À la livraison ou Orange Money</Text>
+              <Text style={styles.featureDesc}>
+                À la livraison ou Orange Money
+              </Text>
             </View>
           </View>
           <View style={styles.featureItem}>
-            <Ionicons name="refresh" size={20} color={SemanticColors.primaryAction} />
+            <Ionicons
+              name="refresh"
+              size={20}
+              color={SemanticColors.primaryAction}
+            />
             <View style={styles.featureText}>
               <Text style={styles.featureTitle}>Retour facile</Text>
               <Text style={styles.featureDesc}>Sous 7 jours</Text>

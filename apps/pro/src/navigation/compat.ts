@@ -7,9 +7,13 @@ type ProRootParamList = {
 
 export const navigationRef = createNavigationContainerRef<ProRootParamList>();
 
-function targetFor(href: string | { pathname: string }): keyof ProRootParamList {
+function targetFor(
+  href: string | { pathname: string },
+): keyof ProRootParamList {
   const path = (typeof href === "string" ? href : href.pathname).toLowerCase();
-  return path.includes("(courier)") || path.includes("mission") ? "Courier" : "Seller";
+  return path.includes("(courier)") || path.includes("mission")
+    ? "Courier"
+    : "Seller";
 }
 
 export function useRouter() {
@@ -21,7 +25,8 @@ export function useRouter() {
       if (navigationRef.isReady()) navigationRef.navigate(targetFor(href));
     },
     back() {
-      if (navigationRef.isReady() && navigationRef.canGoBack()) navigationRef.goBack();
+      if (navigationRef.isReady() && navigationRef.canGoBack())
+        navigationRef.goBack();
     },
   };
 }

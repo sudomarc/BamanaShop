@@ -6,14 +6,18 @@ const supabaseUrl = Config.SUPABASE_URL?.trim() ?? "";
 const supabaseAnonKey = Config.SUPABASE_ANON_KEY?.trim() ?? "";
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("[Supabase] Missing SUPABASE_URL or SUPABASE_ANON_KEY. Using mock client in development.");
+  console.warn(
+    "[Supabase] Missing SUPABASE_URL or SUPABASE_ANON_KEY. Using mock client in development.",
+  );
 }
 
 const keychainService = (key: string) => `com.bamanashop.supabase.${key}`;
 
 const secureStorage = {
   getItem: async (key: string): Promise<string | null> => {
-    const credentials = await Keychain.getGenericPassword({ service: keychainService(key) });
+    const credentials = await Keychain.getGenericPassword({
+      service: keychainService(key),
+    });
     return credentials ? credentials.password : null;
   },
   setItem: async (key: string, value: string): Promise<void> => {
@@ -32,11 +36,25 @@ export const createSupabaseClient = () => {
     return {
       auth: {
         getSession: async () => ({ data: { session: null }, error: null }),
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-        signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: "Mock mode" } }),
-        signInWithOtp: async () => ({ data: { user: null, session: null }, error: { message: "Mock mode" } }),
-        verifyOtp: async () => ({ data: { user: null, session: null }, error: { message: "Mock mode" } }),
-        signUp: async () => ({ data: { user: null, session: null }, error: { message: "Mock mode" } }),
+        onAuthStateChange: () => ({
+          data: { subscription: { unsubscribe: () => {} } },
+        }),
+        signInWithPassword: async () => ({
+          data: { user: null, session: null },
+          error: { message: "Mock mode" },
+        }),
+        signInWithOtp: async () => ({
+          data: { user: null, session: null },
+          error: { message: "Mock mode" },
+        }),
+        verifyOtp: async () => ({
+          data: { user: null, session: null },
+          error: { message: "Mock mode" },
+        }),
+        signUp: async () => ({
+          data: { user: null, session: null },
+          error: { message: "Mock mode" },
+        }),
         signOut: async () => ({ error: null }),
       },
       from: () => ({
@@ -47,7 +65,11 @@ export const createSupabaseClient = () => {
         delete: () => ({ data: null, error: { message: "Mock mode" } }),
       }),
       rpc: () => ({ data: null, error: { message: "Mock mode" } }),
-    } as import("@supabase/supabase-js").SupabaseClient<unknown, "public", unknown>;
+    } as import("@supabase/supabase-js").SupabaseClient<
+      unknown,
+      "public",
+      unknown
+    >;
   }
 
   return createClient(supabaseUrl, supabaseAnonKey, {

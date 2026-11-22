@@ -44,7 +44,9 @@ async function from(table: string) {
 export async function fetchCategories(): Promise<Category[]> {
   if (isMockMode) return MOCK_CATEGORIES;
 
-  const { data, error } = await (await from("categories"))
+  const { data, error } = await (
+    await from("categories")
+  )
     .select("*")
     .eq("is_active", true)
     .order("display_order");
@@ -64,7 +66,9 @@ export async function fetchCategoryWithProducts(
     return { category, products };
   }
 
-  const { data: categoryData } = await (await from("categories"))
+  const { data: categoryData } = await (
+    await from("categories")
+  )
     .select("*")
     .eq("slug", slug)
     .eq("is_active", true)
@@ -72,13 +76,18 @@ export async function fetchCategoryWithProducts(
 
   if (!categoryData) return { category: null, products: [] };
 
-  const { data: products } = await (await from("products"))
+  const { data: products } = await (
+    await from("products")
+  )
     .select("*")
     .eq("category_id", categoryData.id)
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
-  return { category: categoryData as Category, products: (products ?? []) as Product[] };
+  return {
+    category: categoryData as Category,
+    products: (products ?? []) as Product[],
+  };
 }
 
 // ============================================================================
@@ -103,7 +112,10 @@ export async function fetchStores(params?: {
     query = query.limit(params.limit);
   }
   if (params?.offset) {
-    query = query.range(params.offset, params.offset + (params.limit ?? 20) - 1);
+    query = query.range(
+      params.offset,
+      params.offset + (params.limit ?? 20) - 1,
+    );
   }
 
   const { data, error } = await query.order("created_at", { ascending: false });
@@ -114,7 +126,9 @@ export async function fetchStores(params?: {
 export async function fetchStore(id: string): Promise<Store | null> {
   if (isMockMode) return id === MOCK_STORE.id ? MOCK_STORE : null;
 
-  const { data, error } = await (await from("stores"))
+  const { data, error } = await (
+    await from("stores")
+  )
     .select("*")
     .eq("id", id)
     .eq("status", "active")
@@ -130,7 +144,8 @@ export async function fetchStoreProducts(
 ): Promise<Product[]> {
   if (isMockMode)
     return MOCK_PRODUCTS.filter(
-      (p) => p.store_id === storeId && (!categoryId || p.category_id === categoryId),
+      (p) =>
+        p.store_id === storeId && (!categoryId || p.category_id === categoryId),
     );
 
   let query = (await from("products"))
@@ -142,7 +157,9 @@ export async function fetchStoreProducts(
     query = query.eq("category_id", categoryId);
   }
 
-  const { data, error } = await query.order("is_featured", { ascending: false });
+  const { data, error } = await query.order("is_featured", {
+    ascending: false,
+  });
   if (error) throw error;
   return data as Product[];
 }
@@ -162,8 +179,10 @@ export async function fetchProducts(params?: {
   if (isMockMode)
     return MOCK_PRODUCTS.filter((p) => {
       if (params?.storeId && p.store_id !== params.storeId) return false;
-      if (params?.categoryId && p.category_id !== params.categoryId) return false;
-      if (params?.featured !== undefined && p.is_featured !== params.featured) return false;
+      if (params?.categoryId && p.category_id !== params.categoryId)
+        return false;
+      if (params?.featured !== undefined && p.is_featured !== params.featured)
+        return false;
       if (params?.search) {
         const search = params.search.toLowerCase();
         return p.name.toLowerCase().includes(search);
@@ -178,7 +197,11 @@ export async function fetchProducts(params?: {
   if (params?.featured) query = query.eq("is_featured", true);
   if (params?.search) query = query.ilike("name", `%${params.search}%`);
   if (params?.limit) query = query.limit(params.limit);
-  if (params?.offset) query = query.range(params.offset, params.offset + (params.limit ?? 20) - 1);
+  if (params?.offset)
+    query = query.range(
+      params.offset,
+      params.offset + (params.limit ?? 20) - 1,
+    );
 
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
@@ -188,7 +211,9 @@ export async function fetchProducts(params?: {
 export async function fetchProduct(id: string): Promise<Product | null> {
   if (isMockMode) return MOCK_PRODUCTS.find((p) => p.id === id) ?? null;
 
-  const { data, error } = await (await from("products"))
+  const { data, error } = await (
+    await from("products")
+  )
     .select("*")
     .eq("id", id)
     .eq("status", "active")
@@ -201,7 +226,9 @@ export async function fetchProduct(id: string): Promise<Product | null> {
 export async function fetchProductImages(productId: string): Promise<string[]> {
   if (isMockMode) return [];
 
-  const { data, error } = await (await from("product_images"))
+  const { data, error } = await (
+    await from("product_images")
+  )
     .select("url")
     .eq("product_id", productId)
     .order("display_order");
@@ -232,7 +259,10 @@ export async function getCart(): Promise<CartItem[]> {
   }
 }
 
-export async function addToCart(product: Product, quantity: number = 1): Promise<void> {
+export async function addToCart(
+  product: Product,
+  quantity: number = 1,
+): Promise<void> {
   const cart = await getCart();
   const existingIndex = cart.findIndex((i) => i.product.id === product.id);
 
@@ -245,11 +275,15 @@ export async function addToCart(product: Product, quantity: number = 1): Promise
   await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
 }
 
-export async function updateCartQuantity(productId: string, quantity: number): Promise<void> {
+export async function updateCartQuantity(
+  productId: string,
+  quantity: number,
+): Promise<void> {
   const cart = await getCart();
-  const updated = quantity <= 0
-    ? cart.filter((i) => i.product.id !== productId)
-    : cart.map((i) => (i.product.id === productId ? { ...i, quantity } : i));
+  const updated =
+    quantity <= 0
+      ? cart.filter((i) => i.product.id !== productId)
+      : cart.map((i) => (i.product.id === productId ? { ...i, quantity } : i));
 
   await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updated));
 }
@@ -285,7 +319,9 @@ export async function fetchAddresses(): Promise<Address[]> {
       },
     ];
 
-  const { data, error } = await (await from("addresses"))
+  const { data, error } = await (
+    await from("addresses")
+  )
     .select("*")
     .order("is_default", { ascending: false });
 
@@ -296,9 +332,17 @@ export async function fetchAddresses(): Promise<Address[]> {
 export async function createAddress(
   address: Omit<Address, "id" | "created_at" | "updated_at">,
 ): Promise<Address> {
-  if (isMockMode) return { ...address, id: "mock-new" as Uuid, created_at: "" as IsoDateTime, updated_at: "" as IsoDateTime };
+  if (isMockMode)
+    return {
+      ...address,
+      id: "mock-new" as Uuid,
+      created_at: "" as IsoDateTime,
+      updated_at: "" as IsoDateTime,
+    };
 
-  const { data, error } = await (await from("addresses"))
+  const { data, error } = await (
+    await from("addresses")
+  )
     .insert(address)
     .select()
     .single();
@@ -313,7 +357,9 @@ export async function updateAddress(
 ): Promise<Address> {
   if (isMockMode) return { ...updates, id } as Address;
 
-  const { data, error } = await (await from("addresses"))
+  const { data, error } = await (
+    await from("addresses")
+  )
     .update(updates)
     .eq("id", id)
     .select()
@@ -336,7 +382,11 @@ export async function setDefaultAddress(id: string): Promise<void> {
   // First unset all defaults
   await (await from("addresses")).update({ is_default: false }).neq("id", id);
   // Then set the new default
-  const { error } = await (await from("addresses")).update({ is_default: true }).eq("id", id);
+  const { error } = await (
+    await from("addresses")
+  )
+    .update({ is_default: true })
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -380,7 +430,11 @@ export async function fetchOrders(params?: {
   query = query.order("created_at", { ascending: false });
 
   if (params?.limit) query = query.limit(params.limit);
-  if (params?.offset) query = query.range(params.offset, params.offset + (params.limit ?? 20) - 1);
+  if (params?.offset)
+    query = query.range(
+      params.offset,
+      params.offset + (params.limit ?? 20) - 1,
+    );
 
   const { data, error } = await query;
   if (error) throw error;
@@ -390,8 +444,11 @@ export async function fetchOrders(params?: {
 export async function fetchOrder(id: string): Promise<Order | null> {
   if (isMockMode) return null;
 
-  const { data, error } = await (await from("orders"))
-    .select(`
+  const { data, error } = await (
+    await from("orders")
+  )
+    .select(
+      `
       *,
       order_items (
         *,
@@ -414,7 +471,8 @@ export async function fetchOrder(id: string): Promise<Order | null> {
         delivery_events (*),
         delivery_proofs (*)
       )
-    `)
+    `,
+    )
     .eq("id", id)
     .single();
 
@@ -463,7 +521,12 @@ export async function createOrder(params: {
       updated_at: new Date().toISOString() as IsoDateTime,
     };
 
-  const { data, error } = await (await from("orders")).insert(params).select().single();
+  const { data, error } = await (
+    await from("orders")
+  )
+    .insert(params)
+    .select()
+    .single();
   if (error) throw error;
   return data as Order;
 }
@@ -474,7 +537,9 @@ export async function cancelOrder(
 ): Promise<void> {
   if (isMockMode) return;
 
-  const { error } = await (await from("orders"))
+  const { error } = await (
+    await from("orders")
+  )
     .update({
       status: "cancelled",
       cancellation_reason: reason,
@@ -492,8 +557,11 @@ export async function cancelOrder(
 export async function fetchDeliveryJob(jobId: string) {
   if (isMockMode) return null;
 
-  const { data, error } = await (await from("delivery_jobs"))
-    .select(`
+  const { data, error } = await (
+    await from("delivery_jobs")
+  )
+    .select(
+      `
       *,
       courier:courier_profiles (
         id,
@@ -511,7 +579,8 @@ export async function fetchDeliveryJob(jobId: string) {
         )
       ),
       delivery_proofs (*)
-    `)
+    `,
+    )
     .eq("id", jobId)
     .single();
 
@@ -562,8 +631,7 @@ export async function initiatePayment(params: {
   amount: number;
   phone: string;
 }): Promise<{ paymentId: string; actionUrl?: string }> {
-  if (isMockMode)
-    return { paymentId: "mock-payment", actionUrl: undefined };
+  if (isMockMode) return { paymentId: "mock-payment", actionUrl: undefined };
 
   const { data, error } = await supabase.functions.invoke("initiate-payment", {
     body: params,
@@ -579,7 +647,9 @@ export async function checkPaymentStatus(paymentId: string): Promise<{
 }> {
   if (isMockMode) return { status: "pending" };
 
-  const { data, error } = await (await from("payments"))
+  const { data, error } = await (
+    await from("payments")
+  )
     .select("status, paid_at")
     .eq("id", paymentId)
     .single();
@@ -595,14 +665,16 @@ export async function checkPaymentStatus(paymentId: string): Promise<{
 export async function fetchNotifications(params?: {
   unreadOnly?: boolean;
   limit?: number;
-}): Promise<Array<{
-  id: string;
-  title: string;
-  body: string;
-  data: Record<string, unknown>;
-  read: boolean;
-  created_at: string;
-}>> {
+}): Promise<
+  Array<{
+    id: string;
+    title: string;
+    body: string;
+    data: Record<string, unknown>;
+    read: boolean;
+    created_at: string;
+  }>
+> {
   if (isMockMode) return [];
 
   let query = (await from("notifications"))
@@ -627,7 +699,9 @@ export async function fetchNotifications(params?: {
 export async function markNotificationRead(id: string): Promise<void> {
   if (isMockMode) return;
 
-  const { error } = await (await from("notifications"))
+  const { error } = await (
+    await from("notifications")
+  )
     .update({ read: true })
     .eq("id", id);
 
@@ -640,8 +714,9 @@ export async function registerPushToken(
 ): Promise<void> {
   if (isMockMode) return;
 
-  const { error } = await (await from("push_tokens"))
-    .upsert({ token, platform, updated_at: new Date().toISOString() });
+  const { error } = await (
+    await from("push_tokens")
+  ).upsert({ token, platform, updated_at: new Date().toISOString() });
 
   if (error) throw error;
 }
@@ -656,7 +731,9 @@ export async function searchProducts(query: string): Promise<Product[]> {
       p.name.toLowerCase().includes(query.toLowerCase()),
     );
 
-  const { data, error } = await (await from("products"))
+  const { data, error } = await (
+    await from("products")
+  )
     .select("*")
     .eq("status", "active")
     .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
@@ -672,7 +749,9 @@ export async function searchStores(query: string): Promise<Store[]> {
       s.name.toLowerCase().includes(query.toLowerCase()),
     );
 
-  const { data, error } = await (await from("stores"))
+  const { data, error } = await (
+    await from("stores")
+  )
     .select("*")
     .eq("status", "active")
     .ilike("name", `%${query}%`)

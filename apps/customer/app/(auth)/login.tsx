@@ -54,7 +54,8 @@ export default function LoginScreen() {
       return `+224 ${rest.slice(0, 2)} ${rest.slice(2, 9)}`;
     }
     if (digits.length <= 2) return `+224 ${digits}`;
-    if (digits.length <= 9) return `+224 ${digits.slice(0, 2)} ${digits.slice(2)}`;
+    if (digits.length <= 9)
+      return `+224 ${digits.slice(0, 2)} ${digits.slice(2)}`;
     return `+224 ${digits.slice(0, 2)} ${digits.slice(2, 9)}`;
   };
 
@@ -76,7 +77,9 @@ export default function LoginScreen() {
     }
     setError("");
 
-    const { error: sendError } = await sendOtp(phone.replace(/\s/g, "") as PhoneE164);
+    const { error: sendError } = await sendOtp(
+      phone.replace(/\s/g, "") as PhoneE164,
+    );
     if (sendError) {
       setError(sendError.message);
       return;
@@ -130,7 +133,11 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.logoContainer}>
-          <Ionicons name="storefront" size={60} color={SemanticColors.primaryAction} />
+          <Ionicons
+            name="storefront"
+            size={60}
+            color={SemanticColors.primaryAction}
+          />
           <Text style={styles.appName}>BamanaShop</Text>
           <Text style={styles.appTagline}>Vos courses livrées chez vous</Text>
         </View>
@@ -144,7 +151,11 @@ export default function LoginScreen() {
 
             {error && (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color={SemanticColors.error} />
+                <Ionicons
+                  name="alert-circle"
+                  size={20}
+                  color={SemanticColors.error}
+                />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
@@ -169,10 +180,7 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                loading && styles.buttonDisabled,
-              ]}
+              style={[styles.primaryButton, loading && styles.buttonDisabled]}
               onPress={handleSendOtp}
               disabled={loading || !validatePhone(phone)}
             >
@@ -191,7 +199,9 @@ export default function LoginScreen() {
                 En continuant, vous acceptez nos{" "}
                 <Text style={styles.termsLink}>Conditions d'utilisation</Text>
                 {" et notre "}
-                <Text style={styles.termsLink}>Politique de confidentialité</Text>
+                <Text style={styles.termsLink}>
+                  Politique de confidentialité
+                </Text>
               </Text>
             </TouchableOpacity>
           </>
@@ -205,7 +215,11 @@ export default function LoginScreen() {
 
             {error && (
               <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color={SemanticColors.error} />
+                <Ionicons
+                  name="alert-circle"
+                  size={20}
+                  color={SemanticColors.error}
+                />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
@@ -235,13 +249,13 @@ export default function LoginScreen() {
             </View>
 
             <Text style={styles.resendText}>
-              {countdown > 0
-                ? `Renvoyer dans {countdown}s`
-                : (
-                  <TouchableOpacity onPress={handleResend}>
-                    <Text style={styles.resendLink}>Renvoyer le code</Text>
-                  </TouchableOpacity>
-                )}
+              {countdown > 0 ? (
+                `Renvoyer dans {countdown}s`
+              ) : (
+                <TouchableOpacity onPress={handleResend}>
+                  <Text style={styles.resendLink}>Renvoyer le code</Text>
+                </TouchableOpacity>
+              )}
             </Text>
 
             <TouchableOpacity
@@ -255,10 +269,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                loading && styles.buttonDisabled,
-              ]}
+              style={[styles.primaryButton, loading && styles.buttonDisabled]}
               onPress={handleVerifyOtp}
               disabled={loading || code.length !== 6}
             >

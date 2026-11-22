@@ -22,7 +22,10 @@ interface AuthState {
   biometricEnabled: boolean;
   initAuth: () => Promise<void>;
   sendOtp: (phone: PhoneE164) => Promise<{ error: Error | null }>;
-  verifyOtp: (phone: PhoneE164, code: string) => Promise<{ error: Error | null }>;
+  verifyOtp: (
+    phone: PhoneE164,
+    code: string,
+  ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (profile: Partial<Profile>) => Promise<void>;
   enableBiometric: () => Promise<void>;
@@ -177,11 +180,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const sensor = await biometrics.isSensorAvailable();
     if (!sensor.available) {
-      throw new Error(sensor.error ?? "Biometric authentication is not available on this device");
+      throw new Error(
+        sensor.error ??
+          "Biometric authentication is not available on this device",
+      );
     }
 
     const prompt = await biometrics.simplePrompt({
-      promptMessage: "Confirmez votre identité pour activer la connexion biométrique",
+      promptMessage:
+        "Confirmez votre identité pour activer la connexion biométrique",
       cancelButtonText: "Annuler",
     });
     if (!prompt.success) {

@@ -13,11 +13,18 @@ const config = {
     ],
     resolveRequest(context, moduleName, platform) {
       if (moduleName.startsWith("@/")) {
-        return context.resolveRequest(context, path.resolve(projectRoot, "src", moduleName.slice(2)), platform);
+        return context.resolveRequest(
+          context,
+          path.resolve(projectRoot, "src", moduleName.slice(2)),
+          platform,
+        );
       }
       return context.resolveRequest(context, moduleName, platform);
     },
   },
 };
 
-module.exports = withNativeWind(mergeConfig(getDefaultConfig(projectRoot), config), { input: "./global.css" });
+module.exports = withNativeWind(
+  mergeConfig(getDefaultConfig(projectRoot), config),
+  { input: "./global.css" },
+);

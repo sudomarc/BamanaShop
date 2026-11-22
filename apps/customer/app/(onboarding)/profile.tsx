@@ -26,7 +26,9 @@ export default function ProfileSetupScreen() {
   const { updateProfile } = useAuthStore();
   const [fullName, setFullName] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "ff">("fr");
+  const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "ff">(
+    "fr",
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -44,7 +46,10 @@ export default function ProfileSetupScreen() {
     });
     if (result.didCancel) return;
     if (result.errorCode) {
-      Alert.alert("Erreur", result.errorMessage ?? "Impossible d'ouvrir la galerie");
+      Alert.alert(
+        "Erreur",
+        result.errorMessage ?? "Impossible d'ouvrir la galerie",
+      );
       return;
     }
     const uri = result.assets?.[0]?.uri;
@@ -114,7 +119,11 @@ export default function ProfileSetupScreen() {
             {avatar ? (
               <Image source={{ uri: avatar }} style={styles.avatarImage} />
             ) : (
-              <Ionicons name="camera" size={32} color={SemanticColors.textTertiary} />
+              <Ionicons
+                name="camera"
+                size={32}
+                color={SemanticColors.textTertiary}
+              />
             )}
             <View style={styles.avatarOverlay}>
               <Ionicons name="add" size={24} color="#FFFFFF" />
@@ -151,7 +160,8 @@ export default function ProfileSetupScreen() {
                 key={lang.code}
                 style={[
                   styles.languageOption,
-                  selectedLanguage === lang.code && styles.languageOptionSelected,
+                  selectedLanguage === lang.code &&
+                    styles.languageOptionSelected,
                 ]}
                 onPress={() => setSelectedLanguage(lang.code)}
               >
@@ -179,7 +189,11 @@ export default function ProfileSetupScreen() {
 
         {error && (
           <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={20} color={SemanticColors.error} />
+            <Ionicons
+              name="alert-circle"
+              size={20}
+              color={SemanticColors.error}
+            />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}

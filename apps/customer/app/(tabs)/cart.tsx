@@ -16,11 +16,7 @@ import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import { calculateOrderTotals } from "@bamanashop/domain";
-import {
-  formatGnf,
-  GnfAmount,
-  PaymentMethod,
-} from "@bamanashop/contracts";
+import { formatGnf, GnfAmount, PaymentMethod } from "@bamanashop/contracts";
 import { MOCK_DELIVERY_PARTNER } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
@@ -45,7 +41,8 @@ export default function CartScreen() {
     sellerPayable: GnfAmount;
   } | null>(null);
   const deliveryCommune =
-    addresses.find((address) => address.id === selectedAddressId)?.commune ?? "Matam";
+    addresses.find((address) => address.id === selectedAddressId)?.commune ??
+    "Matam";
 
   useEffect(() => {
     loadAddresses();
@@ -61,7 +58,12 @@ export default function CartScreen() {
 
   const loadAddresses = async () => {
     const mockAddresses = [
-      { id: "addr-1", label: "Domicile", commune: "Matam", quartier: "Hamdallaye" },
+      {
+        id: "addr-1",
+        label: "Domicile",
+        commune: "Matam",
+        quartier: "Hamdallaye",
+      },
       { id: "addr-2", label: "Travail", commune: "Kaloum", quartier: "Centre" },
     ];
     setAddresses(mockAddresses);
@@ -127,7 +129,11 @@ export default function CartScreen() {
   if (items.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="cart-outline" size={64} color={SemanticColors.textTertiary} />
+        <Ionicons
+          name="cart-outline"
+          size={64}
+          color={SemanticColors.textTertiary}
+        />
         <Text style={styles.emptyTitle}>Votre panier est vide</Text>
         <Text style={styles.emptySubtitle}>
           Ajoutez des produits pour commencer
@@ -162,7 +168,11 @@ export default function CartScreen() {
               />
             ) : (
               <View style={styles.productImagePlaceholder}>
-                <Ionicons name="image" size={32} color={SemanticColors.textTertiary} />
+                <Ionicons
+                  name="image"
+                  size={32}
+                  color={SemanticColors.textTertiary}
+                />
               </View>
             )}
             <View style={styles.productDetails}>
@@ -176,16 +186,28 @@ export default function CartScreen() {
             <View style={styles.quantityControls}>
               <TouchableOpacity
                 style={styles.qtyButton}
-                onPress={() => updateQuantity(item.product.id, item.quantity - 1)}
+                onPress={() =>
+                  updateQuantity(item.product.id, item.quantity - 1)
+                }
               >
-                <Ionicons name="remove" size={20} color={SemanticColors.primaryAction} />
+                <Ionicons
+                  name="remove"
+                  size={20}
+                  color={SemanticColors.primaryAction}
+                />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{item.quantity}</Text>
               <TouchableOpacity
                 style={styles.qtyButton}
-                onPress={() => updateQuantity(item.product.id, item.quantity + 1)}
+                onPress={() =>
+                  updateQuantity(item.product.id, item.quantity + 1)
+                }
               >
-                <Ionicons name="add" size={20} color={SemanticColors.primaryAction} />
+                <Ionicons
+                  name="add"
+                  size={20}
+                  color={SemanticColors.primaryAction}
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -399,7 +421,11 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   productDetails: { flex: 1, justifyContent: "center" },
-  productName: { fontSize: FontSize.base, fontWeight: FontWeight.medium, color: SemanticColors.textPrimary },
+  productName: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.medium,
+    color: SemanticColors.textPrimary,
+  },
   productPrice: {
     fontSize: FontSize.base,
     fontWeight: FontWeight.semibold,
@@ -414,7 +440,10 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     overflow: "hidden",
   },
-  qtyButton: { padding: 12, backgroundColor: SemanticColors.backgroundSecondary },
+  qtyButton: {
+    padding: 12,
+    backgroundColor: SemanticColors.backgroundSecondary,
+  },
   qtyText: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
@@ -455,10 +484,21 @@ const styles = StyleSheet.create({
     borderColor: SemanticColors.borderDefault,
     borderRadius: BorderRadius.md,
   },
-  addressOptionSelected: { borderColor: SemanticColors.primaryAction, backgroundColor: SemanticColors.primaryBackground },
+  addressOptionSelected: {
+    borderColor: SemanticColors.primaryAction,
+    backgroundColor: SemanticColors.primaryBackground,
+  },
   addressOptionContent: { flex: 1 },
-  addressLabel: { fontSize: FontSize.base, fontWeight: FontWeight.medium, color: SemanticColors.textPrimary },
-  addressCommune: { fontSize: FontSize.sm, color: SemanticColors.textSecondary, marginTop: 2 },
+  addressLabel: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.medium,
+    color: SemanticColors.textPrimary,
+  },
+  addressCommune: {
+    fontSize: FontSize.sm,
+    color: SemanticColors.textSecondary,
+    marginTop: 2,
+  },
   radioOuter: {
     width: 20,
     height: 20,
@@ -486,10 +526,21 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.sm,
   },
-  paymentOptionSelected: { borderColor: SemanticColors.primaryAction, backgroundColor: SemanticColors.primaryBackground },
+  paymentOptionSelected: {
+    borderColor: SemanticColors.primaryAction,
+    backgroundColor: SemanticColors.primaryBackground,
+  },
   paymentOptionContent: { flexDirection: "row", alignItems: "center", flex: 1 },
-  paymentOptionLabel: { fontSize: FontSize.base, fontWeight: FontWeight.medium, color: SemanticColors.textPrimary },
-  paymentOptionDesc: { fontSize: FontSize.sm, color: SemanticColors.textSecondary, marginTop: 2 },
+  paymentOptionLabel: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.medium,
+    color: SemanticColors.textPrimary,
+  },
+  paymentOptionDesc: {
+    fontSize: FontSize.sm,
+    color: SemanticColors.textSecondary,
+    marginTop: 2,
+  },
   summarySection: {
     margin: Spacing.md,
     backgroundColor: SemanticColors.cardBackground,
@@ -503,16 +554,31 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: Spacing.xs,
   },
-  summaryLabel: { fontSize: FontSize.base, color: SemanticColors.textSecondary },
-  summaryValue: { fontSize: FontSize.base, fontWeight: FontWeight.semibold, color: SemanticColors.textPrimary },
+  summaryLabel: {
+    fontSize: FontSize.base,
+    color: SemanticColors.textSecondary,
+  },
+  summaryValue: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
+    color: SemanticColors.textPrimary,
+  },
   summaryTotal: {
     borderTopWidth: 1,
     borderTopColor: SemanticColors.borderDefault,
     marginTop: Spacing.sm,
     paddingTop: Spacing.md,
   },
-  summaryTotalLabel: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: SemanticColors.textPrimary },
-  summaryTotalValue: { fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: SemanticColors.primaryAction },
+  summaryTotalLabel: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    color: SemanticColors.textPrimary,
+  },
+  summaryTotalValue: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: SemanticColors.primaryAction,
+  },
   checkoutButton: {
     margin: Spacing.md,
     height: 56,
@@ -521,6 +587,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  checkoutButtonText: { color: "#FFFFFF", fontSize: FontSize.base, fontWeight: FontWeight.semibold },
+  checkoutButtonText: {
+    color: "#FFFFFF",
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
+  },
   buttonDisabled: { opacity: 0.6 },
 });

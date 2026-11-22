@@ -19,18 +19,28 @@ import { formatGnf, GnfAmount } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
-const statusConfig: Record<OrderStatus, { label: string; color: string; icon: string }> = {
+const statusConfig: Record<
+  OrderStatus,
+  { label: string; color: string; icon: string }
+> = {
   pending: { label: "En attente", color: "#F59E0B", icon: "time" },
   confirmed: { label: "Confirmée", color: "#3B82F6", icon: "checkmark-circle" },
   preparing: { label: "En préparation", color: "#8B5CF6", icon: "construct" },
-  ready_for_pickup: { label: "Prête pour retrait", color: "#06B6D4", icon: "bag-handle" },
+  ready_for_pickup: {
+    label: "Prête pour retrait",
+    color: "#06B6D4",
+    icon: "bag-handle",
+  },
   in_transit: { label: "En livraison", color: "#3B82F6", icon: "bicycle" },
   delivered: { label: "Livrée", color: "#16A34A", icon: "checkmark-done" },
   cancelled: { label: "Annulée", color: "#DC2626", icon: "close-circle" },
   returned: { label: "Retournée", color: "#64748B", icon: "return-up-back" },
 };
 
-const deliveryStatusConfig: Record<DeliveryStatus, { label: string; color: string; icon: string }> = {
+const deliveryStatusConfig: Record<
+  DeliveryStatus,
+  { label: string; color: string; icon: string }
+> = {
   unassigned: { label: "Non assignée", color: "#94A3B8", icon: "help-circle" },
   assigned: { label: "Assignée", color: "#3B82F6", icon: "person-add" },
   accepted: { label: "Acceptée", color: "#8B5CF6", icon: "checkmark-circle" },
@@ -65,7 +75,8 @@ export default function OrderDetailScreen() {
   }, [id]);
 
   const handleCancel = async () => {
-    if (!order || order.status === "cancelled" || order.status === "delivered") return;
+    if (!order || order.status === "cancelled" || order.status === "delivered")
+      return;
 
     Alert.alert(
       "Annuler la commande",
@@ -104,9 +115,16 @@ export default function OrderDetailScreen() {
   if (!order) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="warning" size={48} color={SemanticColors.textTertiary} />
+        <Ionicons
+          name="warning"
+          size={48}
+          color={SemanticColors.textTertiary}
+        />
         <Text style={styles.emptyTitle}>Commande introuvable</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <Text style={styles.backButtonText}>Retour</Text>
         </TouchableOpacity>
       </View>
@@ -114,23 +132,67 @@ export default function OrderDetailScreen() {
   }
 
   const getStatusConfig = (status: OrderStatus) => statusConfig[status];
-  const getDeliveryConfig = (status: DeliveryStatus) => deliveryStatusConfig[status];
+  const getDeliveryConfig = (status: DeliveryStatus) =>
+    deliveryStatusConfig[status];
 
   const timeline = [
-    { key: "pending", label: "Commandée", time: order.created_at, completed: true },
-    { key: "confirmed", label: "Confirmée", time: order.prepared_at, completed: order.status !== "pending" },
-    { key: "preparing", label: "En préparation", time: order.prepared_at, completed: ["confirmed", "preparing", "ready_for_pickup", "in_transit", "delivered"].includes(order.status) },
-    { key: "ready_for_pickup", label: "Prête", time: order.ready_for_pickup_at, completed: ["ready_for_pickup", "in_transit", "delivered"].includes(order.status) },
-    { key: "in_transit", label: "En livraison", time: order.picked_up_at, completed: ["in_transit", "delivered"].includes(order.status) },
-    { key: "delivered", label: "Livrée", time: order.delivered_at, completed: order.status === "delivered" },
+    {
+      key: "pending",
+      label: "Commandée",
+      time: order.created_at,
+      completed: true,
+    },
+    {
+      key: "confirmed",
+      label: "Confirmée",
+      time: order.prepared_at,
+      completed: order.status !== "pending",
+    },
+    {
+      key: "preparing",
+      label: "En préparation",
+      time: order.prepared_at,
+      completed: [
+        "confirmed",
+        "preparing",
+        "ready_for_pickup",
+        "in_transit",
+        "delivered",
+      ].includes(order.status),
+    },
+    {
+      key: "ready_for_pickup",
+      label: "Prête",
+      time: order.ready_for_pickup_at,
+      completed: ["ready_for_pickup", "in_transit", "delivered"].includes(
+        order.status,
+      ),
+    },
+    {
+      key: "in_transit",
+      label: "En livraison",
+      time: order.picked_up_at,
+      completed: ["in_transit", "delivered"].includes(order.status),
+    },
+    {
+      key: "delivered",
+      label: "Livrée",
+      time: order.delivered_at,
+      completed: order.status === "delivered",
+    },
   ];
 
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.contentContainer}
+    >
       {/* Status Header */}
       <View style={styles.statusHeader}>
         <View style={styles.statusRow}>
-          <Text style={styles.orderNumber}>Commande #{order.id.slice(0, 8).toUpperCase()}</Text>
+          <Text style={styles.orderNumber}>
+            Commande #{order.id.slice(0, 8).toUpperCase()}
+          </Text>
           <View
             style={[
               styles.statusBadge,
@@ -162,7 +224,9 @@ export default function OrderDetailScreen() {
                 style={[
                   styles.timelineDot,
                   step.completed && { backgroundColor: SemanticColors.success },
-                  step.key === order.status && { backgroundColor: SemanticColors.primaryAction },
+                  step.key === order.status && {
+                    backgroundColor: SemanticColors.primaryAction,
+                  },
                 ]}
               />
               <View style={styles.timelineContent}>
@@ -210,16 +274,23 @@ export default function OrderDetailScreen() {
                 />
               ) : (
                 <View style={styles.orderItemImagePlaceholder}>
-                  <Ionicons name="image" size={24} color={SemanticColors.textTertiary} />
+                  <Ionicons
+                    name="image"
+                    size={24}
+                    color={SemanticColors.textTertiary}
+                  />
                 </View>
               )}
               <View style={styles.orderItemDetails} style={{ flex: 1 }}>
                 <Text style={styles.orderItemName} numberOfLines={1}>
                   {item.product?.name ?? item.product_name}
                 </Text>
-                <Text style={styles.orderItemQty}>Quantité: {item.quantity}</Text>
+                <Text style={styles.orderItemQty}>
+                  Quantité: {item.quantity}
+                </Text>
                 <Text style={styles.orderItemPrice}>
-                  {formatGnf(item.unit_price_gnf as unknown as GnfAmount)} × {item.quantity}
+                  {formatGnf(item.unit_price_gnf as unknown as GnfAmount)} ×{" "}
+                  {item.quantity}
                 </Text>
               </View>
               <Text style={styles.orderItemTotal}>
@@ -235,17 +306,28 @@ export default function OrderDetailScreen() {
       {order.delivery_jobs?.[0] && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Livraison</Text>
-          <TouchableOpacity style={styles.deliveryCard} onPress={() => router.push(`/orders/${id}/tracking`)}>
+          <TouchableOpacity
+            style={styles.deliveryCard}
+            onPress={() => router.push(`/orders/${id}/tracking`)}
+          >
             <View style={styles.deliveryCardRow}>
               <View style={styles.deliveryIcon}>
-                <Ionicons name="truck" size={20} color={SemanticColors.primaryAction} />
+                <Ionicons
+                  name="truck"
+                  size={20}
+                  color={SemanticColors.primaryAction}
+                />
               </View>
               <View style={styles.deliveryInfo}>
                 <Text style={styles.deliveryLabel}>Statut de livraison</Text>
-                <View style={[
-                  styles.deliveryStatusBadge,
-                  { backgroundColor: `${getDeliveryConfig(order.delivery_status).color}15` },
-                ]}>
+                <View
+                  style={[
+                    styles.deliveryStatusBadge,
+                    {
+                      backgroundColor: `${getDeliveryConfig(order.delivery_status).color}15`,
+                    },
+                  ]}
+                >
                   <Ionicons
                     name={getDeliveryConfig(order.delivery_status).icon}
                     size={12}
@@ -261,13 +343,22 @@ export default function OrderDetailScreen() {
                   </Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={SemanticColors.textTertiary} />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={SemanticColors.textTertiary}
+              />
             </View>
             {order.delivery_jobs[0].courier && (
               <View style={styles.courierInfo}>
-                <Ionicons name="person" size={16} color={SemanticColors.textSecondary} />
+                <Ionicons
+                  name="person"
+                  size={16}
+                  color={SemanticColors.textSecondary}
+                />
                 <Text style={styles.courierName}>
-                  Livreur: {order.delivery_jobs[0].courier.user?.full_name ?? "Assigné"}
+                  Livreur:{" "}
+                  {order.delivery_jobs[0].courier.user?.full_name ?? "Assigné"}
                 </Text>
                 {order.delivery_jobs[0].courier.phone && (
                   <Text style={styles.courierPhone}>
@@ -290,7 +381,8 @@ export default function OrderDetailScreen() {
             </Text>
           )}
           <Text style={styles.addressLine}>
-            {order.delivery_address_snapshot.quarter}, {order.delivery_address_snapshot.commune}
+            {order.delivery_address_snapshot.quarter},{" "}
+            {order.delivery_address_snapshot.commune}
           </Text>
           <Text style={styles.addressPhone}>
             {order.delivery_address_snapshot.phone}
@@ -315,7 +407,9 @@ export default function OrderDetailScreen() {
                 color={SemanticColors.primaryAction}
               />
               <Text style={styles.paymentMethodText}>
-                {order.payment_method === "cod" ? "Paiement à la livraison" : "Orange Money"}
+                {order.payment_method === "cod"
+                  ? "Paiement à la livraison"
+                  : "Orange Money"}
               </Text>
             </View>
             <View
@@ -326,8 +420,8 @@ export default function OrderDetailScreen() {
                     order.payment_status === "paid"
                       ? `${SemanticColors.success}15`
                       : order.payment_status === "failed"
-                      ? `${SemanticColors.error}15`
-                      : `${SemanticColors.warning}15`,
+                        ? `${SemanticColors.error}15`
+                        : `${SemanticColors.warning}15`,
                 },
               ]}
             >
@@ -339,16 +433,16 @@ export default function OrderDetailScreen() {
                       order.payment_status === "paid"
                         ? SemanticColors.success
                         : order.payment_status === "failed"
-                        ? SemanticColors.error
-                        : SemanticColors.warning,
+                          ? SemanticColors.error
+                          : SemanticColors.warning,
                   },
                 ]}
               >
                 {order.payment_status === "paid"
                   ? "Payé"
                   : order.payment_status === "failed"
-                  ? "Échoué"
-                  : "En attente"}
+                    ? "Échoué"
+                    : "En attente"}
               </Text>
             </View>
           </View>
@@ -380,7 +474,9 @@ export default function OrderDetailScreen() {
             </View>
           )}
           <View style={[styles.priceRow, styles.priceTotal]}>
-            <Text style={[styles.priceLabel, styles.priceTotalLabel]}>Total</Text>
+            <Text style={[styles.priceLabel, styles.priceTotalLabel]}>
+              Total
+            </Text>
             <Text style={[styles.priceValue, styles.priceTotalValue]}>
               {formatGnf(order.total_gnf as unknown as GnfAmount)}
             </Text>
@@ -390,7 +486,11 @@ export default function OrderDetailScreen() {
 
       {/* Actions */}
       {["pending", "confirmed", "preparing"].includes(order.status) && (
-        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} disabled={cancelling}>
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={handleCancel}
+          disabled={cancelling}
+        >
           {cancelling ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
@@ -400,7 +500,12 @@ export default function OrderDetailScreen() {
       )}
 
       {order.status === "delivered" && (
-        <TouchableOpacity style={styles.reorderButton} onPress={() => Alert.alert("Récommander", "Fonctionnalité bientôt disponible")}>
+        <TouchableOpacity
+          style={styles.reorderButton}
+          onPress={() =>
+            Alert.alert("Récommander", "Fonctionnalité bientôt disponible")
+          }
+        >
           <Text style={styles.reorderButtonText}>Recommander</Text>
         </TouchableOpacity>
       )}
@@ -483,7 +588,11 @@ const styles = StyleSheet.create({
   },
   timelineContent: { flex: 1, paddingTop: 2 },
   timelineLabel: { fontSize: FontSize.sm, color: SemanticColors.textSecondary },
-  timelineTime: { fontSize: FontSize.xs, color: SemanticColors.textTertiary, marginTop: 2 },
+  timelineTime: {
+    fontSize: FontSize.xs,
+    color: SemanticColors.textTertiary,
+    marginTop: 2,
+  },
   section: { paddingHorizontal: Spacing.md, marginTop: Spacing.lg },
   sectionTitle: {
     fontSize: FontSize.md,
@@ -512,9 +621,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   orderItemDetails: { flex: 1, justifyContent: "center" },
-  orderItemName: { fontSize: FontSize.sm, fontWeight: FontWeight.medium, color: SemanticColors.textPrimary },
-  orderItemQty: { fontSize: FontSize.xs, color: SemanticColors.textTertiary, marginTop: 2 },
-  orderItemPrice: { fontSize: FontSize.xs, color: SemanticColors.textSecondary, marginTop: 2 },
+  orderItemName: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+    color: SemanticColors.textPrimary,
+  },
+  orderItemQty: {
+    fontSize: FontSize.xs,
+    color: SemanticColors.textTertiary,
+    marginTop: 2,
+  },
+  orderItemPrice: {
+    fontSize: FontSize.xs,
+    color: SemanticColors.textSecondary,
+    marginTop: 2,
+  },
   orderItemTotal: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
@@ -541,7 +662,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   deliveryInfo: { flex: 1 },
-  deliveryLabel: { fontSize: FontSize.xs, color: SemanticColors.textTertiary, textTransform: "uppercase" },
+  deliveryLabel: {
+    fontSize: FontSize.xs,
+    color: SemanticColors.textTertiary,
+    textTransform: "uppercase",
+  },
   deliveryStatusBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -551,7 +676,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: BorderRadius.badge,
   },
-  deliveryStatusText: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
+  deliveryStatusText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+  },
   courierInfo: {
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
@@ -569,8 +697,17 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   addressLine: { fontSize: FontSize.base, color: SemanticColors.textPrimary },
-  addressPhone: { fontSize: FontSize.sm, color: SemanticColors.textSecondary, marginTop: 2 },
-  addressInstructions: { fontSize: FontSize.sm, color: SemanticColors.textTertiary, marginTop: Spacing.sm, fontStyle: "italic" },
+  addressPhone: {
+    fontSize: FontSize.sm,
+    color: SemanticColors.textSecondary,
+    marginTop: 2,
+  },
+  addressInstructions: {
+    fontSize: FontSize.sm,
+    color: SemanticColors.textTertiary,
+    marginTop: Spacing.sm,
+    fontStyle: "italic",
+  },
   paymentCard: {
     backgroundColor: SemanticColors.cardBackground,
     borderRadius: BorderRadius.card,
@@ -578,9 +715,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: SemanticColors.cardBorder,
   },
-  paymentRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  paymentMethod: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
-  paymentMethodText: { fontSize: FontSize.base, color: SemanticColors.textPrimary },
+  paymentRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  paymentMethod: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  paymentMethodText: {
+    fontSize: FontSize.base,
+    color: SemanticColors.textPrimary,
+  },
   paymentStatusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -594,12 +742,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: SemanticColors.cardBorder,
   },
-  priceRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: Spacing.xs },
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: Spacing.xs,
+  },
   priceLabel: { fontSize: FontSize.base, color: SemanticColors.textSecondary },
-  priceValue: { fontSize: FontSize.base, fontWeight: FontWeight.semibold, color: SemanticColors.textPrimary },
-  priceTotal: { borderTopWidth: 1, borderTopColor: SemanticColors.borderDefault, marginTop: Spacing.sm, paddingTop: Spacing.md },
-  priceTotalLabel: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: SemanticColors.textPrimary },
-  priceTotalValue: { fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: SemanticColors.primaryAction },
+  priceValue: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
+    color: SemanticColors.textPrimary,
+  },
+  priceTotal: {
+    borderTopWidth: 1,
+    borderTopColor: SemanticColors.borderDefault,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.md,
+  },
+  priceTotalLabel: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    color: SemanticColors.textPrimary,
+  },
+  priceTotalValue: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: SemanticColors.primaryAction,
+  },
   cancelButton: {
     marginHorizontal: Spacing.md,
     marginTop: Spacing.lg,
@@ -610,7 +779,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.button,
     alignItems: "center",
   },
-  cancelButtonText: { color: SemanticColors.error, fontSize: FontSize.base, fontWeight: FontWeight.semibold },
+  cancelButtonText: {
+    color: SemanticColors.error,
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
+  },
   reorderButton: {
     marginHorizontal: Spacing.md,
     marginTop: Spacing.lg,
@@ -620,5 +793,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.button,
     alignItems: "center",
   },
-  reorderButtonText: { color: SemanticColors.primaryAction, fontSize: FontSize.base, fontWeight: FontWeight.semibold },
+  reorderButtonText: {
+    color: SemanticColors.primaryAction,
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.semibold,
+  },
 });

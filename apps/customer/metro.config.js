@@ -24,6 +24,9 @@ const config = {
   },
 };
 
-module.exports = withNativeWind(mergeConfig(getDefaultConfig(projectRoot), config), {
-  input: "./global.css",
-});
+module.exports = withNativeWind(
+  mergeConfig(getDefaultConfig(projectRoot), config),
+  {
+    input: "./global.css",
+  },
+);

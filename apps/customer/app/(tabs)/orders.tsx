@@ -28,7 +28,10 @@ type OrderListItem = Order & {
   }>;
 };
 
-const statusConfig: Record<OrderStatus, { label: string; color: string; icon: string }> = {
+const statusConfig: Record<
+  OrderStatus,
+  { label: string; color: string; icon: string }
+> = {
   pending: { label: "En attente", color: "#F59E0B", icon: "time" },
   confirmed: { label: "Confirmée", color: "#3B82F6", icon: "checkmark-circle" },
   preparing: { label: "En préparation", color: "#8B5CF6", icon: "construct" },
@@ -93,7 +96,11 @@ export default function OrdersScreen() {
   if (!user) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="lock-closed" size={48} color={SemanticColors.textTertiary} />
+        <Ionicons
+          name="lock-closed"
+          size={48}
+          color={SemanticColors.textTertiary}
+        />
         <Text style={styles.emptyTitle}>Connexion requise</Text>
         <Text style={styles.emptySubtitle}>
           Connectez-vous pour voir vos commandes
@@ -129,11 +136,20 @@ export default function OrdersScreen() {
           ]}
           onPress={() => setActiveTab("active")}
         >
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === "active" && styles.tabButtonTextActive,
-          ]}>
-            En cours ({filteredOrders.filter(o => !["delivered", "cancelled", "returned"].includes(o.status)).length})
+          <Text
+            style={[
+              styles.tabButtonText,
+              activeTab === "active" && styles.tabButtonTextActive,
+            ]}
+          >
+            En cours (
+            {
+              filteredOrders.filter(
+                (o) =>
+                  !["delivered", "cancelled", "returned"].includes(o.status),
+              ).length
+            }
+            )
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -143,10 +159,12 @@ export default function OrdersScreen() {
           ]}
           onPress={() => setActiveTab("past")}
         >
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === "past" && styles.tabButtonTextActive,
-          ]}>
+          <Text
+            style={[
+              styles.tabButtonText,
+              activeTab === "past" && styles.tabButtonTextActive,
+            ]}
+          >
             Historique
           </Text>
         </TouchableOpacity>
@@ -155,12 +173,16 @@ export default function OrdersScreen() {
       {filteredOrders.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons
-            name={activeTab === "active" ? "bag-handle-outline" : "time-outline"}
+            name={
+              activeTab === "active" ? "bag-handle-outline" : "time-outline"
+            }
             size={48}
             color={SemanticColors.textTertiary}
           />
           <Text style={styles.emptyTitle}>
-            {activeTab === "active" ? "Aucune commande en cours" : "Aucun historique"}
+            {activeTab === "active"
+              ? "Aucune commande en cours"
+              : "Aucun historique"}
           </Text>
           <Text style={styles.emptySubtitle}>
             {activeTab === "active"
@@ -185,7 +207,9 @@ export default function OrdersScreen() {
             >
               <View style={styles.orderHeader}>
                 <View style={styles.orderInfo}>
-                  <Text style={styles.orderNumber}>Commande #{item.id.slice(0, 8).toUpperCase()}</Text>
+                  <Text style={styles.orderNumber}>
+                    Commande #{item.id.slice(0, 8).toUpperCase()}
+                  </Text>
                   <Text style={styles.orderDate}>
                     {new Date(item.created_at).toLocaleDateString("fr-FR", {
                       day: "numeric",
@@ -199,7 +223,9 @@ export default function OrdersScreen() {
                   <View
                     style={[
                       styles.statusBadge,
-                      { backgroundColor: `${getStatusConfig(item.status).color}15` },
+                      {
+                        backgroundColor: `${getStatusConfig(item.status).color}15`,
+                      },
                     ]}
                   >
                     <Ionicons
@@ -220,7 +246,11 @@ export default function OrdersScreen() {
               </View>
 
               <View style={styles.orderStore}>
-                <Ionicons name="storefront" size={16} color={SemanticColors.textSecondary} />
+                <Ionicons
+                  name="storefront"
+                  size={16}
+                  color={SemanticColors.textSecondary}
+                />
                 <Text style={styles.orderStoreName}>Boutique Demo Conakry</Text>
               </View>
 
@@ -235,7 +265,11 @@ export default function OrdersScreen() {
                 ))}
                 {((item as OrderListItem).order_items?.length ?? 0) > 2 && (
                   <Text style={styles.orderItemMore}>
-                    +{((item as OrderListItem).order_items?.length ?? 0) - 2} autre{((item as OrderListItem).order_items?.length ?? 0) > 3 ? "s" : ""}
+                    +{((item as OrderListItem).order_items?.length ?? 0) - 2}{" "}
+                    autre
+                    {((item as OrderListItem).order_items?.length ?? 0) > 3
+                      ? "s"
+                      : ""}
                   </Text>
                 )}
               </View>
@@ -255,8 +289,14 @@ export default function OrdersScreen() {
                     router.push(`/orders/${item.id}`);
                   }}
                 >
-                  <Ionicons name="map" size={16} color={SemanticColors.primaryAction} />
-                  <Text style={styles.trackButtonText}>Suivre la livraison</Text>
+                  <Ionicons
+                    name="map"
+                    size={16}
+                    color={SemanticColors.primaryAction}
+                  />
+                  <Text style={styles.trackButtonText}>
+                    Suivre la livraison
+                  </Text>
                 </TouchableOpacity>
               )}
             </TouchableOpacity>
@@ -341,7 +381,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.base,
     fontWeight: FontWeight.semibold,
   },
-  listContent: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, gap: Spacing.md },
+  listContent: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+    gap: Spacing.md,
+  },
   orderCard: {
     backgroundColor: SemanticColors.cardBackground,
     borderRadius: BorderRadius.card,
