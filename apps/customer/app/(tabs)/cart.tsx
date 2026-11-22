@@ -66,10 +66,10 @@ export default function CartScreen() {
           label: a.label ?? "",
           commune: a.commune,
           quartier: a.quartier,
-        }))
+        })),
       );
       setSelectedAddressId(
-        addresses.find((a) => a.is_default)?.id ?? addresses[0]?.id ?? ""
+        addresses.find((a) => a.is_default)?.id ?? addresses[0]?.id ?? "",
       );
     } catch {
       Alert.alert("Erreur", "Impossible de charger les adresses");
@@ -120,7 +120,7 @@ export default function CartScreen() {
       if (!isSupabaseConfigured) {
         Alert.alert(
           "Backend non configuré",
-          "Cette commande ne peut pas être créée : les variables d'environnement Supabase (SUPABASE_URL / SUPABASE_ANON_KEY) sont manquantes. BamanaShop ne simule aucun succès de commande sans backend réel."
+          "Cette commande ne peut pas être créée : les variables d'environnement Supabase (SUPABASE_URL / SUPABASE_ANON_KEY) sont manquantes. BamanaShop ne simule aucun succès de commande sans backend réel.",
         );
         return;
       }
@@ -162,7 +162,9 @@ export default function CartScreen() {
     } catch (error) {
       Alert.alert(
         "Erreur",
-        error instanceof Error ? error.message : "Impossible de créer la commande"
+        error instanceof Error
+          ? error.message
+          : "Impossible de créer la commande",
       );
     } finally {
       setLoading(false);
