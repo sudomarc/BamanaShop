@@ -287,7 +287,6 @@ export default function OrderDetailScreen() {
               </Text>
             </View>
           )}
-          listKey="orderItems"
         />
       </View>
 
@@ -349,9 +348,9 @@ export default function OrderDetailScreen() {
                   Livreur:{" "}
                   {order.delivery_jobs[0].courier.user?.full_name ?? "Assigné"}
                 </Text>
-                {order.delivery_jobs[0].courier.phone && (
+                {order.delivery_jobs[0].courier.user?.phone && (
                   <Text style={styles.courierPhone}>
-                    {order.delivery_jobs[0].courier.user?.phone}
+                    {order.delivery_jobs[0].courier.user.phone}
                   </Text>
                 )}
               </View>

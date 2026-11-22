@@ -86,7 +86,7 @@ function createMockClient(): SupabaseClient<Database> {
     },
     from: mockFrom,
     rpc: () => ({ data: null, error: { message: "Mock mode" } }),
-  } as SupabaseClient<Database>;
+  } as unknown as SupabaseClient<Database>;
 }
 
 export const createSupabaseClient = (): SupabaseClient<Database> => {
