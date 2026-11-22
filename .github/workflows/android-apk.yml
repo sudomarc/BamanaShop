@@ -176,6 +176,7 @@ jobs:
           EXPECTED_APPLICATION_ID: ${{ steps.build_config.outputs.expected_application_id }}
         run: |
           set -euo pipefail
+          export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"
           cd "apps/$APPLICATION/android"
 
           ./gradlew --no-daemon --stacktrace "$GRADLE_TASK" \
