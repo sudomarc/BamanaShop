@@ -9,8 +9,8 @@ import {
   RefreshControl,
   SafeAreaView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { formatGnf } from "@bamanashop/domain";
 
