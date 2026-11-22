@@ -70,30 +70,51 @@ function createMockClient(): SupabaseClient<Database> {
     ): Promise<TResult>;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const createQueryBuilder = <T = Database["public"]["Tables"]["profiles"]["Row"]>(): MockQueryBuilder<T> => {
     const builder: MockQueryBuilder<T> = {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       select: (..._columns: string[]) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       eq: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       neq: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       gt: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       gte: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       lt: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       lte: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       like: (_column: string, _pattern: string) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ilike: (_column: string, _pattern: string) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       is: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       in: (_column: string, _values: unknown[]) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       contains: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       containedBy: (_column: string, _value: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       range: (_from: number, _to: number) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       limit: (_count: number) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       order: (_column: string, _options?: { ascending?: boolean }) => builder,
       single: () => Promise.resolve({ data: null, error: null } as MockPostgrestSingleResponse<T>),
       maybeSingle: () => Promise.resolve({ data: null, error: null } as MockPostgrestSingleResponse<T>),
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       insert: (_values: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       update: (_values: unknown) => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       upsert: (_values: unknown) => builder,
       delete: () => builder,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       then: <TResult>(
         onFulfilled?: (value: MockPostgrestResponse<T>) => TResult,
         onRejected?: (reason: unknown) => TResult
