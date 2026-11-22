@@ -26,7 +26,7 @@ Arguments: application (`customer|pro`), profile (`dev|beta|production`), versio
 
 ## Supabase configuration
 
-Create a root `.env` file with:
+Create a root `.env.mobile` file with only the two public mobile client values. Do not copy server-side keys into this file:
 
 ```dotenv
 SUPABASE_URL=https://your-project.supabase.co
