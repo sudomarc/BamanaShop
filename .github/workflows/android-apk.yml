@@ -1,6 +1,8 @@
 name: Android APK
 
 on:
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       application:
@@ -35,9 +37,13 @@ concurrency:
 
 jobs:
   build:
-    name: Build ${{ inputs.application }} / ${{ inputs.profile }}
+    name: Build ${{ matrix.application }} / ${{ inputs.profile || 'dev' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        application: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.application) || '["customer","pro"]') }}
     steps:
       - name: Checkout selected branch
         uses: actions/checkout@v4
@@ -145,9 +151,9 @@ jobs:
       - name: Calculate version and select Android variant
         id: build_config
         env:
-          APPLICATION: ${{ inputs.application }}
-          PROFILE: ${{ inputs.profile }}
-          APP_VERSION: ${{ inputs.version }}
+          APPLICATION: ${{ matrix.application }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '0.0.1' }}
         run: |
           set -euo pipefail
 
@@ -186,9 +192,9 @@ jobs:
       - name: Build APK with native Gradle project
         id: gradle_build
         env:
-          APPLICATION: ${{ inputs.application }}
-          PROFILE: ${{ inputs.profile }}
-          APP_VERSION: ${{ inputs.version }}
+          APPLICATION: ${{ matrix.application }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '0.0.1' }}
           VERSION_CODE: ${{ steps.build_config.outputs.version_code }}
           GRADLE_TASK: ${{ steps.build_config.outputs.gradle_task }}
           APK_RELATIVE_PATH: ${{ steps.build_config.outputs.apk_relative_path }}
@@ -283,7 +289,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bamanashop-${{ inputs.application }}-android-${{ inputs.profile }}-v${{ inputs.version }}-${{ github.run_number }}
+          name: bamanashop-${{ matrix.application }}-android-${{ inputs.profile || 'dev' }}-v${{ inputs.version || '0.0.1' }}-${{ github.run_number }}
           path: ${{ runner.temp }}/bamanashop-apk/*.apk
           if-no-files-found: ignore
           retention-days: 30
