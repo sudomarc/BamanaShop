@@ -5,8 +5,8 @@ Version : 1.0 · 19 novembre 2026
 ## 1. Architecture cible
 
 Monorepo TypeScript contenant :
-- `apps/customer` : Expo / React Native, application acheteur.
-- `apps/pro` : Expo / React Native, application vendeur + livreur.
+- `apps/customer` : React Native Community CLI (sans Expo) + React Navigation, application acheteur.
+- `apps/pro` : React Native Community CLI (sans Expo) + React Navigation, application vendeur + livreur.
 - `apps/admin` : Next.js, interface web interne.
 - `packages/contracts` : types et schémas d'échange partagés.
 - `packages/domain` : règles métier pures et calculs testables.
@@ -95,6 +95,6 @@ Utiliser clés étrangères, contraintes CHECK, index métier, contraintes d'ide
 
 ## 9. Décisions provisoires à valider en implémentation
 
-- Choisir les versions Expo/React Native/Next/Supabase à partir de leurs docs et contraintes de compatibilité au moment de l'installation.
-- Préférer Expo Router pour la navigation mobile et App Router pour Next.js, sauf raison technique documentée.
+- Choisir des versions React Native CLI, React Navigation, Next.js et Supabase compatibles, à partir de la documentation officielle.
+- Les projets Android Gradle doivent être versionnés dans chaque application mobile. Aucun Expo, Expo Router, EAS ou Expo Prebuild.
 - Ne pas ajouter Redis, microservices ou une couche d'orchestration complexe avant qu'un besoin mesuré existe.
