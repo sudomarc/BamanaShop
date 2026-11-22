@@ -1378,6 +1378,87 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          biometric_enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          biometric_enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          biometric_enabled?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          title: string;
+          body: string;
+          data: Json;
+          read: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          title: string;
+          body: string;
+          data?: Json;
+          read?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          title?: string;
+          body?: string;
+          data?: Json;
+          read?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      push_tokens: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          token: string;
+          platform: string;
+          updated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          token: string;
+          platform: string;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          token?: string;
+          platform?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1460,8 +1541,7 @@ export type Database = {
         | "confirmed"
         | "preparing"
         | "ready_for_pickup"
-        | "in_transit"
-        | "delivered"
+        | "completed"
         | "cancelled"
         | "returned";
       payment_status:

@@ -57,8 +57,7 @@ export const OrderStatus = z.enum([
   "confirmed",
   "preparing",
   "ready_for_pickup",
-  "in_transit",
-  "delivered",
+  "completed",
   "cancelled",
   "returned",
 ]);

@@ -28,8 +28,7 @@ const statusConfig = {
     color: "#06B6D4",
     icon: "bag-handle",
   },
-  in_transit: { label: "En livraison", color: "#3B82F6", icon: "bicycle" },
-  delivered: { label: "Livrée", color: "#16A34A", icon: "checkmark-done" },
+  completed: { label: "Terminée", color: "#16A34A", icon: "checkmark-done" },
   cancelled: { label: "Annulée", color: "#DC2626", icon: "close-circle" },
   returned: { label: "Retournée", color: "#64748B", icon: "return-up-back" },
 } as const;
@@ -72,7 +71,7 @@ export default function OrderDetailScreen() {
   }, [id]);
 
   const handleCancel = async () => {
-    if (!order || order.status === "cancelled" || order.status === "delivered")
+    if (!order || order.status === "cancelled" || order.status === "completed")
       return;
 
     Alert.alert(
@@ -172,10 +171,10 @@ export default function OrderDetailScreen() {
       completed: ["in_transit", "delivered"].includes(order.status),
     },
     {
-      key: "delivered",
-      label: "Livrée",
+      key: "completed",
+      label: "Terminée",
       time: order.delivered_at,
-      completed: order.status === "delivered",
+      completed: order.status === "completed",
     },
   ];
 
@@ -487,7 +486,7 @@ export default function OrderDetailScreen() {
         </TouchableOpacity>
       )}
 
-      {order.status === "delivered" && (
+      {order.status === "completed" && (
         <TouchableOpacity
           style={styles.reorderButton}
           onPress={() =>

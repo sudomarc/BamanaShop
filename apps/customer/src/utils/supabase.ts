@@ -1,4 +1,10 @@
-import { createClient, SupabaseClient, PostgrestResponse, PostgrestSingleResponse, PostgrestError } from "@supabase/supabase-js";
+import {
+  createClient,
+  SupabaseClient,
+  PostgrestResponse,
+  PostgrestSingleResponse,
+  PostgrestError,
+} from "@supabase/supabase-js";
 import Config from "react-native-config";
 import * as Keychain from "react-native-keychain";
 import type { Database } from "@/types/database";
@@ -57,7 +63,10 @@ function createMockClient(): SupabaseClient<Database> {
     containedBy: (column: string, value: unknown) => MockQueryBuilder<T>;
     range: (from: number, to: number) => MockQueryBuilder<T>;
     limit: (count: number) => MockQueryBuilder<T>;
-    order: (column: string, options?: { ascending?: boolean }) => MockQueryBuilder<T>;
+    order: (
+      column: string,
+      options?: { ascending?: boolean },
+    ) => MockQueryBuilder<T>;
     single: () => Promise<MockPostgrestSingleResponse<T>>;
     maybeSingle: () => Promise<MockPostgrestSingleResponse<T>>;
     insert: (values: unknown) => MockQueryBuilder<T>;
@@ -66,12 +75,13 @@ function createMockClient(): SupabaseClient<Database> {
     delete: () => MockQueryBuilder<T>;
     then<TResult>(
       onFulfilled?: (value: MockPostgrestResponse<T>) => TResult,
-      onRejected?: (reason: unknown) => TResult
+      onRejected?: (reason: unknown) => TResult,
     ): Promise<TResult>;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const createQueryBuilder = <T = Database["public"]["Tables"]["profiles"]["Row"]>(): MockQueryBuilder<T> => {
+  const createQueryBuilder = <
+    T = Database["public"]["Tables"]["profiles"]["Row"],
+  >(): MockQueryBuilder<T> => {
     const builder: MockQueryBuilder<T> = {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       select: (..._columns: string[]) => builder,
@@ -105,8 +115,16 @@ function createMockClient(): SupabaseClient<Database> {
       limit: (_count: number) => builder,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       order: (_column: string, _options?: { ascending?: boolean }) => builder,
-      single: () => Promise.resolve({ data: null, error: null } as MockPostgrestSingleResponse<T>),
-      maybeSingle: () => Promise.resolve({ data: null, error: null } as MockPostgrestSingleResponse<T>),
+      single: () =>
+        Promise.resolve({
+          data: null,
+          error: null,
+        } as MockPostgrestSingleResponse<T>),
+      maybeSingle: () =>
+        Promise.resolve({
+          data: null,
+          error: null,
+        } as MockPostgrestSingleResponse<T>),
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       insert: (_values: unknown) => builder,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -114,17 +132,24 @@ function createMockClient(): SupabaseClient<Database> {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       upsert: (_values: unknown) => builder,
       delete: () => builder,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       then: <TResult>(
         onFulfilled?: (value: MockPostgrestResponse<T>) => TResult,
-        onRejected?: (reason: unknown) => TResult
-      ) => Promise.resolve({ data: [], error: null } as MockPostgrestResponse<T>).then(onFulfilled, onRejected),
+        onRejected?: (reason: unknown) => TResult,
+      ) =>
+        Promise.resolve({
+          data: [],
+          error: null,
+          status: 200,
+          statusText: "OK",
+          success: true,
+          count: null,
+        } as MockPostgrestResponse<T>).then(onFulfilled, onRejected),
     };
     return builder;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockFrom = <T extends keyof Database["public"]["Tables"]>() => createQueryBuilder<Database["public"]["Tables"][T]["Row"]>();
+  const mockFrom = <T extends keyof Database["public"]["Tables"]>() =>
+    createQueryBuilder<Database["public"]["Tables"][T]["Row"]>();
 
   return {
     auth: {
@@ -151,7 +176,11 @@ function createMockClient(): SupabaseClient<Database> {
       signOut: async () => ({ error: null }),
     },
     from: mockFrom,
-    rpc: <T = unknown>() => Promise.resolve({ data: null, error: { message: "Mock mode" } as PostgrestError }),
+    rpc: () =>
+      Promise.resolve({
+        data: null,
+        error: { message: "Mock mode" } as PostgrestError,
+      }),
   } as unknown as SupabaseClient<Database>;
 }
 

@@ -206,17 +206,15 @@ const ORDER_TRANSITIONS: ValidTransition[] = [
   },
   {
     from: "ready_for_pickup",
-    to: "in_transit",
+    to: "completed",
     requiresRole: "courier",
-    condition: (o) => o.delivery_status === "accepted",
   },
-  { from: "in_transit", to: "delivered", requiresRole: "courier" },
   { from: "pending", to: "cancelled", requiresRole: "admin" },
   { from: "confirmed", to: "cancelled", requiresRole: "admin" },
   { from: "preparing", to: "cancelled", requiresRole: "admin" },
   { from: "ready_for_pickup", to: "cancelled", requiresRole: "admin" },
-  { from: "delivered", to: "returned", requiresRole: "customer" },
-  { from: "delivered", to: "returned", requiresRole: "admin" },
+  { from: "completed", to: "returned", requiresRole: "customer" },
+  { from: "completed", to: "returned", requiresRole: "admin" },
 ];
 
 export function canTransitionOrder(

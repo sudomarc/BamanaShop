@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "tsc && tsc -m ESNext --outDir dist/esm --declarationDir dist/esm && mv dist/esm/* dist/ 2>/dev/null || true",
+    "build": "rm -rf dist && tsc && tsc -m ESNext --outDir dist/esm --declarationDir dist/esm && mv dist/esm/* dist/",
     "lint": "eslint src --ext .ts",
     "format:check": "prettier --check src",
     "typecheck": "tsc --noEmit",

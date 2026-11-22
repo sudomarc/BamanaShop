@@ -4,6 +4,7 @@
  */
 
 import { createSupabaseClient, isSupabaseConfigured } from "@/utils/supabase";
+import type { Database } from "@/types/database";
 import type {
   Category,
   Product,
@@ -12,8 +13,10 @@ import type {
   Order,
   PaymentMethod,
   OrderStatus,
+  ProductStatus,
   PaymentStatus,
   DeliveryStatus,
+  StoreStatus,
   GnfAmount,
   Uuid,
   PhoneE164,
@@ -30,11 +33,107 @@ const supabase = createSupabaseClient();
 // Check if we're in mock mode (no Supabase config)
 const isMockMode = !isSupabaseConfigured;
 
+// ---------------------------------------------------------------------------
+// DB row -> contract entity mappers
+// database.ts rows carry plain `string`/`number` ids and amounts, while the
+// shared contracts brand them (Uuid, GnfAmount, PhoneE164). Map explicitly at
+// the boundary instead of casting through `any` or `unknown`.
+type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
+type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+type StoreRow = Database["public"]["Tables"]["stores"]["Row"];
+type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
+type AddressRow = Database["public"]["Tables"]["addresses"]["Row"];
+
+function mapOrder(row: OrderRow): Order {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    customer_id: row.customer_id as Uuid,
+    store_id: row.store_id as Uuid,
+    delivery_address_id: row.delivery_address_id as Uuid,
+    assigned_courier_id: row.assigned_courier_id as Uuid | null,
+    assigned_partner_id: row.assigned_partner_id as Uuid | null,
+    status: row.status as OrderStatus,
+    payment_method: row.payment_method as PaymentMethod,
+    payment_status: row.payment_status as PaymentStatus,
+    delivery_status: row.delivery_status as DeliveryStatus,
+    subtotal_gnf: row.subtotal_gnf as GnfAmount,
+    delivery_fee_gnf: row.delivery_fee_gnf as GnfAmount,
+    payment_fee_gnf: row.payment_fee_gnf as GnfAmount,
+    total_gnf: row.total_gnf as GnfAmount,
+    commission_gnf: row.commission_gnf as GnfAmount,
+    courier_cost_gnf: row.courier_cost_gnf as GnfAmount,
+    delivery_address_snapshot:
+      row.delivery_address_snapshot as Order["delivery_address_snapshot"],
+    seller_payable_gnf: row.seller_payable_gnf as GnfAmount,
+    prepared_at: row.prepared_at as IsoDateTime | null,
+    ready_for_pickup_at: row.ready_for_pickup_at as IsoDateTime | null,
+    picked_up_at: row.picked_up_at as IsoDateTime | null,
+    delivered_at: row.delivered_at as IsoDateTime | null,
+    cancelled_at: row.cancelled_at as IsoDateTime | null,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapProduct(row: ProductRow): Product {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    store_id: row.store_id as Uuid,
+    category_id: row.category_id as Uuid,
+    price_gnf: row.price_gnf as GnfAmount,
+    compare_at_price_gnf: row.compare_at_price_gnf as GnfAmount | null,
+    status: row.status as ProductStatus,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+    images: [],
+  };
+}
+
+function mapStore(row: StoreRow): Store {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    seller_id: row.seller_id as Uuid,
+    phone: row.phone as PhoneE164,
+    status: row.status as StoreStatus,
+    opening_hours: row.opening_hours as Record<string, string>,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapCategory(row: CategoryRow): Category {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    parent_id: row.parent_id as Uuid | null,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
+function mapAddress(row: AddressRow): Address {
+  return {
+    ...row,
+    id: row.id as Uuid,
+    user_id: row.user_id as Uuid,
+    phone: row.phone as PhoneE164,
+    created_at: row.created_at as IsoDateTime,
+    updated_at: row.updated_at as IsoDateTime,
+  };
+}
+
 // ============================================================================
 // Generic API Helpers
 // ============================================================================
 
-async function from(table: string) {
+// Preserve the table literal type so Supabase query builder methods resolve to
+// the correct row type instead of collapsing to `never`.
+type TableName = keyof Database["public"]["Tables"];
+
+async function from<Tables extends TableName>(table: Tables) {
   return supabase.from(table);
 }
 
@@ -46,8 +145,10 @@ export type {
   Order,
   PaymentMethod,
   OrderStatus,
+  ProductStatus,
   PaymentStatus,
   DeliveryStatus,
+  StoreStatus,
   GnfAmount,
   Uuid,
   PhoneE164,
@@ -77,7 +178,7 @@ export async function fetchCategories(): Promise<Category[]> {
     .order("display_order");
 
   if (error) throw error;
-  return data as Category[];
+  return (data ?? []).map(mapCategory);
 }
 
 export async function fetchCategoryWithProducts(
@@ -110,8 +211,8 @@ export async function fetchCategoryWithProducts(
     .order("created_at", { ascending: false });
 
   return {
-    category: categoryData as Category,
-    products: (products ?? []) as Product[],
+    category: categoryData ? mapCategory(categoryData) : null,
+    products: (products ?? []).map(mapProduct),
   };
 }
 
@@ -145,7 +246,7 @@ export async function fetchStores(params?: {
 
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
-  return data as Store[];
+  return (data ?? []).map(mapStore);
 }
 
 export async function fetchStore(id: string): Promise<Store | null> {
@@ -160,7 +261,7 @@ export async function fetchStore(id: string): Promise<Store | null> {
     .single();
 
   if (error) return null;
-  return data as Store;
+  return data ? mapStore(data) : null;
 }
 
 export async function fetchStoreProducts(
@@ -186,7 +287,7 @@ export async function fetchStoreProducts(
     ascending: false,
   });
   if (error) throw error;
-  return data as Product[];
+  return (data ?? []).map(mapProduct);
 }
 
 // ============================================================================
@@ -230,7 +331,7 @@ export async function fetchProducts(params?: {
 
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
-  return data as Product[];
+  return (data ?? []).map(mapProduct);
 }
 
 export async function fetchProduct(id: string): Promise<Product | null> {
@@ -245,7 +346,7 @@ export async function fetchProduct(id: string): Promise<Product | null> {
     .single();
 
   if (error) return null;
-  return data as Product;
+  return data ? mapProduct(data) : null;
 }
 
 export async function fetchProductImages(productId: string): Promise<string[]> {
@@ -351,7 +452,7 @@ export async function fetchAddresses(): Promise<Address[]> {
     .order("is_default", { ascending: false });
 
   if (error) throw error;
-  return data as Address[];
+  return (data ?? []).map(mapAddress);
 }
 
 export async function createAddress(
@@ -373,7 +474,7 @@ export async function createAddress(
     .single();
 
   if (error) throw error;
-  return data as Address;
+  return mapAddress(data!);
 }
 
 export async function updateAddress(
@@ -391,7 +492,7 @@ export async function updateAddress(
     .single();
 
   if (error) throw error;
-  return data as Address;
+  return mapAddress(data!);
 }
 
 export async function deleteAddress(id: string): Promise<void> {
@@ -463,7 +564,7 @@ export async function fetchOrders(params?: {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data as Order[];
+  return (data ?? []).map(mapOrder);
 }
 
 export async function fetchOrder(id: string): Promise<Order | null> {
@@ -502,13 +603,15 @@ export async function fetchOrder(id: string): Promise<Order | null> {
     .single();
 
   if (error) return null;
-  return data as Order;
+  return data ? mapOrder(data) : null;
 }
 
 export async function createOrder(params: {
+  customerId: string;
   storeId: string;
   items: Array<{ productId: string; quantity: number; unitPrice: number }>;
   deliveryAddressId: string;
+  deliveryAddressSnapshot: Order["delivery_address_snapshot"];
   paymentMethod: PaymentMethod;
   subtotal: number;
   deliveryFee: number;
@@ -549,11 +652,30 @@ export async function createOrder(params: {
   const { data, error } = await (
     await from("orders")
   )
-    .insert(params)
+    .insert({
+      customer_id: params.customerId as Uuid,
+      store_id: params.storeId as Uuid,
+      status: "pending",
+      subtotal_gnf: params.subtotal as GnfAmount,
+      delivery_fee_gnf: params.deliveryFee as GnfAmount,
+      payment_fee_gnf: params.paymentFee as GnfAmount,
+      total_gnf: params.total as GnfAmount,
+      commission_rate_bps: params.commissionRateBps,
+      commission_gnf: params.commission as GnfAmount,
+      courier_cost_gnf: params.courierCost as GnfAmount,
+      seller_payable_gnf: params.sellerPayable as GnfAmount,
+      payment_method: params.paymentMethod,
+      payment_status: "pending",
+      delivery_address_id: params.deliveryAddressId as Uuid,
+      delivery_address_snapshot: params.deliveryAddressSnapshot,
+      created_at: new Date().toISOString() as IsoDateTime,
+      updated_at: new Date().toISOString() as IsoDateTime,
+    })
     .select()
     .single();
   if (error) throw error;
-  return data as Order;
+  if (!data) throw new Error("Order creation returned no row");
+  return mapOrder(data);
 }
 
 export async function cancelOrder(
@@ -680,7 +802,10 @@ export async function checkPaymentStatus(paymentId: string): Promise<{
     .single();
 
   if (error) throw error;
-  return { status: data.status, paidAt: data.paid_at };
+  return {
+    status: data.status as PaymentStatus,
+    paidAt: data.paid_at ?? undefined,
+  };
 }
 
 // ============================================================================
@@ -711,14 +836,14 @@ export async function fetchNotifications(params?: {
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as Array<{
-    id: string;
-    title: string;
-    body: string;
-    data: Record<string, unknown>;
-    read: boolean;
-    created_at: string;
-  }>;
+  return (data ?? []).map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    data: n.data as Record<string, unknown>,
+    read: n.read,
+    created_at: n.created_at,
+  }));
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
@@ -765,7 +890,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
     .limit(20);
 
   if (error) throw error;
-  return data as Product[];
+  return (data ?? []).map(mapProduct);
 }
 
 export async function searchStores(query: string): Promise<Store[]> {
@@ -783,5 +908,5 @@ export async function searchStores(query: string): Promise<Store[]> {
     .limit(20);
 
   if (error) throw error;
-  return data as Store[];
+  return (data ?? []).map(mapStore);
 }

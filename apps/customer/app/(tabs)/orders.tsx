@@ -34,8 +34,7 @@ const statusConfig = {
   confirmed: { label: "Confirmée", color: "#3B82F6", icon: "checkmark-circle" },
   preparing: { label: "En préparation", color: "#8B5CF6", icon: "construct" },
   ready_for_pickup: { label: "Prête", color: "#06B6D4", icon: "bag-handle" },
-  in_transit: { label: "En livraison", color: "#3B82F6", icon: "bicycle" },
-  delivered: { label: "Livrée", color: "#16A34A", icon: "checkmark-done" },
+  completed: { label: "Terminée", color: "#16A34A", icon: "checkmark-done" },
   cancelled: { label: "Annulée", color: "#DC2626", icon: "close-circle" },
   returned: { label: "Retournée", color: "#64748B", icon: "return-up-back" },
 } as const;
@@ -74,11 +73,12 @@ export default function OrdersScreen() {
     loadOrders();
   }, [user]);
 
+  const pastStatuses: OrderStatus[] = ["completed", "cancelled", "returned"];
   const filteredOrders = orders.filter((order) => {
     if (activeTab === "active") {
-      return !["delivered", "cancelled", "returned"].includes(order.status);
+      return !pastStatuses.includes(order.status);
     }
-    return ["delivered", "cancelled", "returned"].includes(order.status);
+    return pastStatuses.includes(order.status);
   });
 
   const getStatusConfig = (status: OrderStatus) => statusConfig[status];
@@ -279,7 +279,9 @@ export default function OrdersScreen() {
                 </Text>
               </View>
 
-              {item.status === "in_transit" && (
+              {item.delivery_jobs?.some(
+                (job) => job.status === "in_transit",
+              ) && (
                 <TouchableOpacity
                   style={styles.trackButton}
                   onPress={(e) => {
