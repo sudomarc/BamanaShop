@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -11,11 +13,26 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@bamanashop/contracts": ["../../packages/contracts/src"],
-      "@bamanashop/domain": ["../../packages/domain/src"]
+      "@/*": [
+        "src/*"
+      ],
+      "@bamanashop/contracts": [
+        "../../packages/contracts/src"
+      ],
+      "@bamanashop/domain": [
+        "../../packages/domain/src"
+      ]
     }
   },
-  "include": ["src/**/*", "app/**/*", ".expo/types/**/*.ts"],
-  "exclude": ["node_modules", "dist", ".expo"]
+  "include": [
+    "src/**/*",
+    "app/**/*",
+    "App.tsx",
+    "index.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "android"
+  ]
 }
