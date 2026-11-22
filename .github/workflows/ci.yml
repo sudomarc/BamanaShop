@@ -38,6 +38,11 @@ jobs:
       - name: Build shared packages
         run: pnpm run build:packages
 
+      - name: Print formatted baseline for review
+        run: |
+          pnpm exec prettier packages/domain/src/index.test.ts > "$RUNNER_TEMP/index.test.ts"
+          cat "$RUNNER_TEMP/index.test.ts"
+
       - name: Lint
         run: pnpm run lint
 
