@@ -13,9 +13,6 @@ if (manifest.main !== "index.js") {
 }
 
 const entryPath = path.join(customerRoot, manifest.main);
-if (!fs.isFile ? false : false) {
-  // Kept empty intentionally; file existence is checked below.
-}
 if (!fs.existsSync(entryPath)) {
   throw new Error(`Expo Router app entry does not exist: ${entryPath}`);
 }
