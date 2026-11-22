@@ -123,6 +123,7 @@ function createMockClient(): SupabaseClient<Database> {
     return builder;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const mockFrom = <T extends keyof Database["public"]["Tables"]>() => createQueryBuilder<Database["public"]["Tables"][T]["Row"]>();
 
   return {
