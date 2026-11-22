@@ -13,6 +13,7 @@ import {
   ScrollView,
   Alert,
   Image,
+  PermissionsAndroid,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
@@ -52,6 +53,12 @@ export default function ProfileSetupScreen() {
   };
 
   const takePhoto = async () => {
+    const permission = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+    if (permission !== PermissionsAndroid.RESULTS.GRANTED) {
+      Alert.alert("Permission requise", "Accès à la caméra nécessaire pour prendre une photo");
+      return;
+    }
+
     const result = await launchCamera({
       mediaType: "photo",
       cameraType: "back",
