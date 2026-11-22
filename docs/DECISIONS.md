@@ -30,7 +30,7 @@ COD et Orange Money sont ciblés. L'activation dépend des conditions marchandes
 
 ## D-007 — Stack
 **Statut : baseline provisoire.**
-TypeScript, pnpm workspaces, Expo / React Native, Next.js et Supabase. Les versions seront sélectionnées à l'installation après vérification des compatibilités et documentation officielles.
+TypeScript, pnpm workspaces, React Native Community CLI sans Expo, React Navigation, Next.js et Supabase. Les versions seront sélectionnées à l'installation après vérification des compatibilités et documentation officielles.
 
 ## D-008 — Conservation du prototype et attribution
 **Statut : accepté.**
@@ -39,3 +39,12 @@ Le site HTML existant reste une vitrine historique non transactionnelle jusqu'à
 ## D-009 — Quatre sous-agents avec ownership exclusif
 **Statut : accepté.**
 Les responsabilités et chemins exclusifs sont décrits dans [WORKSTREAMS.md](WORKSTREAMS.md). L'orchestrateur possède les configurations racine et l'intégration.
+
+
+## D-010 — Applications mobiles natives sans Expo
+**Statut : accepté pour la refonte Android.**
+- Retirer Expo SDK, Expo Router, les modules Expo, EAS et Expo Prebuild de Customer et Pro.
+- Utiliser React Native Community CLI et React Navigation.
+- Maintenir les projets Android Gradle dans Git.
+- Les APK compilés doivent embarquer leur bundle JavaScript et ne jamais dépendre d'un serveur Metro à l'exécution.
+- DEV reste débogable pour ADB/Logcat mais désactive le support développeur React Native. BETA/PRODUCTION désactivent le flag Android debuggable.
