@@ -203,8 +203,8 @@ jobs:
         run: npx supabase gen types typescript --local > ../packages/contracts/src/database.generated.ts
 
   build-android:
-    name: Build Android APK (${{ inputs.profile }})
-    if: github.event_name == 'workflow_dispatch'
+    name: Build Android APK (${{ inputs.profile || 'dev' }})
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -214,7 +214,7 @@ jobs:
       - name: Validate version and calculate Android versionCode
         id: version
         env:
-          APP_VERSION: ${{ inputs.version }}
+          APP_VERSION: ${{ inputs.version || '0.0.1' }}
         run: |
           version_code="$(node scripts/app-version.cjs "$APP_VERSION")"
           echo "android_version_code=$version_code" >> "$GITHUB_OUTPUT"
@@ -252,15 +252,15 @@ jobs:
       - name: Generate native Android project
         working-directory: apps/customer
         env:
-          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
-          BAMANASHOP_VERSION: ${{ inputs.version }}
+          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile || 'dev' }}
+          BAMANASHOP_VERSION: ${{ inputs.version || '0.0.1' }}
           BAMANASHOP_ANDROID_VERSION_CODE: ${{ steps.version.outputs.android_version_code }}
           EXPO_NO_TELEMETRY: "1"
         run: CI=1 pnpm exec expo prebuild --platform android --clean --no-install
 
       - name: Configure Android debuggability for selected profile
         env:
-          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
+          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile || 'dev' }}
         run: node scripts/android-build-profile.cjs "$BAMANASHOP_BUILD_PROFILE" apps/customer/android/app
 
       - name: Test Android profile configuration
@@ -272,8 +272,8 @@ jobs:
 
       - name: Build APK with Gradle
         env:
-          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
-          BAMANASHOP_VERSION: ${{ inputs.version }}
+          BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile || 'dev' }}
+          BAMANASHOP_VERSION: ${{ inputs.version || '0.0.1' }}
           BAMANASHOP_ANDROID_VERSION_CODE: ${{ steps.version.outputs.android_version_code }}
         run: |
           set -euo pipefail
@@ -322,15 +322,15 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bamanashop-android-${{ inputs.profile }}-v${{ inputs.version }}-${{ github.run_number }}
+          name: bamanashop-android-${{ inputs.profile || 'dev' }}-v${{ inputs.version || '0.0.1' }}-${{ github.run_number }}
           path: ${{ runner.temp }}/bamanashop-apk/*.apk
           if-no-files-found: error
           retention-days: 30
 
       - name: Summarize build
         env:
-          PROFILE: ${{ inputs.profile }}
-          APP_VERSION: ${{ inputs.version }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '0.0.1' }}
           ANDROID_VERSION_CODE: ${{ steps.version.outputs.android_version_code }}
         run: |
           {
