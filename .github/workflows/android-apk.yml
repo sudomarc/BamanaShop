@@ -203,7 +203,7 @@ jobs:
             "-PbamanashopVersionName=$APP_VERSION" \
             "-PbamanashopVersionCode=$VERSION_CODE"
 
-          APK_SOURCE="app/$APK_RELATIVE_PATH"
+          APK_SOURCE="$APK_RELATIVE_PATH"
           test -s "$APK_SOURCE"
 
           if ! unzip -Z1 "$APK_SOURCE" | grep -Fxq "assets/index.android.bundle"; then
