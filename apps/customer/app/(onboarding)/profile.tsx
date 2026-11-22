@@ -13,18 +13,17 @@ import {
   ScrollView,
   Alert,
   Image,
-  PermissionsAndroid,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
-import { launchCamera, launchImageLibrary } from "react-native-image-picker";
+import { launchImageLibrary } from "react-native-image-picker";
 import { useAuthStore } from "@/store/authStore";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing } from "@/constants/theme";
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
-  const { user, updateProfile, loading } = useAuthStore();
+  const { updateProfile } = useAuthStore();
   const [fullName, setFullName] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "ff">("fr");
@@ -46,28 +45,6 @@ export default function ProfileSetupScreen() {
     if (result.didCancel) return;
     if (result.errorCode) {
       Alert.alert("Erreur", result.errorMessage ?? "Impossible d'ouvrir la galerie");
-      return;
-    }
-    const uri = result.assets?.[0]?.uri;
-    if (uri) setAvatar(uri);
-  };
-
-  const takePhoto = async () => {
-    const permission = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
-    if (permission !== PermissionsAndroid.RESULTS.GRANTED) {
-      Alert.alert("Permission requise", "Accès à la caméra nécessaire pour prendre une photo");
-      return;
-    }
-
-    const result = await launchCamera({
-      mediaType: "photo",
-      cameraType: "back",
-      saveToPhotos: false,
-      includeBase64: false,
-    });
-    if (result.didCancel) return;
-    if (result.errorCode) {
-      Alert.alert("Erreur", result.errorMessage ?? "Impossible d'ouvrir la caméra");
       return;
     }
     const uri = result.assets?.[0]?.uri;
@@ -103,7 +80,7 @@ export default function ProfileSetupScreen() {
 
       // Mark onboarding complete
       router.replace("/(tabs)");
-    } catch (error) {
+    } catch {
       setError("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);

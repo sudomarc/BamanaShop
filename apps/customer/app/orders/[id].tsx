@@ -14,11 +14,10 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "@/navigation/compat";
-import { useAuthStore } from "@/store/authStore";
 import { fetchOrder, Order, OrderStatus, DeliveryStatus } from "@/api";
 import { formatGnf, GnfAmount } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
-import { BorderRadius, Spacing, FontSize, FontWeight, Shadows } from "@/constants/theme";
+import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: string }> = {
   pending: { label: "En attente", color: "#F59E0B", icon: "time" },
@@ -46,7 +45,6 @@ export default function OrderDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const id = params.id as string;
-  const { user } = useAuthStore();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -157,7 +155,7 @@ export default function OrderDetailScreen() {
 
         {/* Timeline */}
         <View style={styles.timeline}>
-          {timeline.map((step, index) => (
+          {timeline.map((step) => (
             <View key={step.key} style={styles.timelineItem}>
               <View style={styles.timelineLine} />
               <View

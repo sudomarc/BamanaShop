@@ -93,9 +93,6 @@ export default function CategoryDetailScreen() {
     );
   }
 
-  const color = categoryLabels[category.slug]
-    ? SemanticColors.primaryAction
-    : SemanticColors.primaryAction;
 
   return (
     <ScrollView

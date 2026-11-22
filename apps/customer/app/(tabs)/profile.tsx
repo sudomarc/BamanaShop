@@ -1,28 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Alert,
   Image,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
-import { launchCamera, launchImageLibrary } from "react-native-image-picker";
+import { launchImageLibrary } from "react-native-image-picker";
 import { useAuthStore } from "@/store/authStore";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
-
-const languages = [
-  { code: "fr" as const, name: "Français", flag: "🇫🇷" },
-  { code: "en" as const, name: "English", flag: "🇺🇸" },
-  { code: "ff" as const, name: "Pulaar", flag: "🇬🇳" },
-];
 
 const menuItems = [
   { label: "Mes adresses", icon: "location", route: "/(tabs)/profile/addresses" },
@@ -37,10 +30,8 @@ const menuItems = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, profile, roles, signOut, updateProfile, biometricEnabled, enableBiometric, disableBiometric } = useAuthStore();
+  const { user, profile, roles, signOut, biometricEnabled, enableBiometric, disableBiometric } = useAuthStore();
   const [avatar, setAvatar] = useState<string | null>(profile?.avatar_url ?? null);
-  const [loading, setLoading] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState<"fr" | "en" | "ff">(profile?.preferred_language ?? "fr");
 
   const pickImage = async () => {
     const result = await launchImageLibrary({
@@ -55,21 +46,6 @@ export default function ProfileScreen() {
     }
     const uri = result.assets?.[0]?.uri;
     if (uri) setAvatar(uri);
-  };
-
-  const handleSaveProfile = async () => {
-    setLoading(true);
-    try {
-      await updateProfile({
-        avatar_url: avatar || undefined,
-        preferred_language: selectedLanguage,
-      });
-      Alert.alert("Succès", "Profil mis à jour");
-    } catch {
-      Alert.alert("Erreur", "Impossible de mettre à jour le profil");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const toggleBiometric = async () => {

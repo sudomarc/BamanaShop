@@ -4,8 +4,9 @@ import * as Keychain from "react-native-keychain";
 
 const supabaseUrl = Config.SUPABASE_URL?.trim() ?? "";
 const supabaseAnonKey = Config.SUPABASE_ANON_KEY?.trim() ?? "";
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!isSupabaseConfigured) {
   console.warn("[Supabase] Missing SUPABASE_URL or SUPABASE_ANON_KEY. Using mock client in development.");
 }
 
@@ -28,7 +29,7 @@ const secureStorage = {
 };
 
 export const createSupabaseClient = () => {
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!isSupabaseConfigured) {
     return {
       auth: {
         getSession: async () => ({ data: { session: null }, error: null }),

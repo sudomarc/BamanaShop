@@ -28,7 +28,7 @@ function resolveTarget(
 ): RouteTarget {
   const pathname = typeof href === "string" ? href : href.pathname;
   const supplied = typeof href === "string" ? {} : href.params ?? {};
-  const path = pathname.replace(/^\\/+|\\/+$/g, "");
+  const path = pathname.replace(/^\/+|\/+$/g, "");
 
   if (path.includes("categories/")) {
     const slug = decodeURIComponent(path.split("categories/")[1].split("/")[0]);

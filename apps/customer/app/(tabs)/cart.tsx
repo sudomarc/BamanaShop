@@ -20,25 +20,18 @@ import {
   formatGnf,
   GnfAmount,
   PaymentMethod,
-  Product,
-  DeliveryPartner,
 } from "@bamanashop/contracts";
 import { MOCK_DELIVERY_PARTNER } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
-import { BorderRadius, Spacing, FontSize, FontWeight, Shadows } from "@/constants/theme";
-
-interface CartItem {
-  product: Product;
-  quantity: number;
-}
+import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
 export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { items, updateQuantity, removeItem, clearCart, getTotalItems, getStoreId } = useCartStore();
+  const { items, updateQuantity, clearCart } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [addresses, setAddresses] = useState<
-    Array<{ id: string; label: string; commune: string }>
+    Array<{ id: string; label: string; commune: string; quartier: string }>
   >([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -51,7 +44,8 @@ export default function CartScreen() {
     courierCost: GnfAmount;
     sellerPayable: GnfAmount;
   } | null>(null);
-  const [deliveryCommune, setDeliveryCommune] = useState("Matam");
+  const deliveryCommune =
+    addresses.find((address) => address.id === selectedAddressId)?.commune ?? "Matam";
 
   useEffect(() => {
     loadAddresses();
@@ -182,14 +176,14 @@ export default function CartScreen() {
             <View style={styles.quantityControls}>
               <TouchableOpacity
                 style={styles.qtyButton}
-                onPress={() => updateQuantity(item.product.id, -1)}
+                onPress={() => updateQuantity(item.product.id, item.quantity - 1)}
               >
                 <Ionicons name="remove" size={20} color={SemanticColors.primaryAction} />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{item.quantity}</Text>
               <TouchableOpacity
                 style={styles.qtyButton}
-                onPress={() => updateQuantity(item.product.id, 1)}
+                onPress={() => updateQuantity(item.product.id, item.quantity + 1)}
               >
                 <Ionicons name="add" size={20} color={SemanticColors.primaryAction} />
               </TouchableOpacity>

@@ -3,47 +3,37 @@
  * Supabase-based API with fallback to mock data for development
  */
 
-import { createSupabaseClient } from "@/utils/supabase";
+import { createSupabaseClient, isSupabaseConfigured } from "@/utils/supabase";
 import type {
   Category,
   Product,
   Store,
   Address,
   Order,
-  OrderItem,
-  Profile,
-  DeliveryPartner,
   PaymentMethod,
   OrderStatus,
   PaymentStatus,
-  DeliveryStatus,
+  GnfAmount,
+  Uuid,
+  PhoneE164,
+  IsoDateTime,
 } from "@bamanashop/contracts";
 import {
   MOCK_CATEGORIES,
   MOCK_STORE,
   MOCK_PRODUCTS,
-  MOCK_DELIVERY_PARTNER,
 } from "@bamanashop/contracts";
 
 const supabase = createSupabaseClient();
 
 // Check if we're in mock mode (no Supabase config)
-const isMockMode = !supabase || supabase.auth?.getSession?.toString().includes("Mock mode");
+const isMockMode = !isSupabaseConfigured;
 
 // ============================================================================
 // Generic API Helpers
 // ============================================================================
 
-async function from<T>(table: string) {
-  if (isMockMode) {
-    return {
-      select: () => ({ data: [], error: null }),
-      insert: () => ({ data: null, error: { message: "Mock mode" } }),
-      update: () => ({ data: null, error: { message: "Mock mode" } }),
-      delete: () => ({ data: null, error: { message: "Mock mode" } }),
-      single: () => ({ data: null, error: { message: "Mock mode" } }),
-    } as any;
-  }
+async function from(table: string) {
   return supabase.from(table);
 }
 
@@ -282,16 +272,16 @@ export async function fetchAddresses(): Promise<Address[]> {
   if (isMockMode)
     return [
       {
-        id: "addr-1" as any,
-        user_id: "mock-user" as any,
+        id: "addr-1" as Uuid,
+        user_id: "mock-user" as Uuid,
         label: "Domicile",
         commune: "Matam",
         quartier: "Hamdallaye",
         landmark: "Près de la mosquée",
-        phone: "+224620000000" as any,
+        phone: "+224620000000" as PhoneE164,
         is_default: true,
-        created_at: new Date().toISOString() as any,
-        updated_at: new Date().toISOString() as any,
+        created_at: new Date().toISOString() as IsoDateTime,
+        updated_at: new Date().toISOString() as IsoDateTime,
       },
     ];
 
@@ -306,7 +296,7 @@ export async function fetchAddresses(): Promise<Address[]> {
 export async function createAddress(
   address: Omit<Address, "id" | "created_at" | "updated_at">,
 ): Promise<Address> {
-  if (isMockMode) return { ...address, id: "mock-new" as any, created_at: "" as any, updated_at: "" as any };
+  if (isMockMode) return { ...address, id: "mock-new" as Uuid, created_at: "" as IsoDateTime, updated_at: "" as IsoDateTime };
 
   const { data, error } = await (await from("addresses"))
     .insert(address)
@@ -448,25 +438,29 @@ export async function createOrder(params: {
 }): Promise<Order> {
   if (isMockMode)
     return {
-      id: "mock-order" as any,
-      customer_id: "mock-user" as any,
-      store_id: params.storeId as any,
+      id: "mock-order" as Uuid,
+      customer_id: "mock-user" as Uuid,
+      store_id: params.storeId as Uuid,
       status: "pending",
-      subtotal_gnf: params.subtotal as any,
-      delivery_fee_gnf: params.deliveryFee as any,
-      payment_fee_gnf: params.paymentFee as any,
-      total_gnf: params.total as any,
+      subtotal_gnf: params.subtotal as GnfAmount,
+      delivery_fee_gnf: params.deliveryFee as GnfAmount,
+      payment_fee_gnf: params.paymentFee as GnfAmount,
+      total_gnf: params.total as GnfAmount,
       commission_rate_bps: params.commissionRateBps,
-      commission_gnf: params.commission as any,
-      courier_cost_gnf: params.courierCost as any,
-      seller_payable_gnf: params.sellerPayable as any,
+      commission_gnf: params.commission as GnfAmount,
+      courier_cost_gnf: params.courierCost as GnfAmount,
+      seller_payable_gnf: params.sellerPayable as GnfAmount,
       payment_method: params.paymentMethod,
       payment_status: "pending",
       delivery_status: "unassigned",
-      delivery_address_id: params.deliveryAddressId as any,
-      delivery_address_snapshot: {} as any,
-      created_at: new Date().toISOString() as any,
-      updated_at: new Date().toISOString() as any,
+      delivery_address_id: params.deliveryAddressId as Uuid,
+      delivery_address_snapshot: {
+        commune: "",
+        quartier: "",
+        phone: "+224620000000" as PhoneE164,
+      },
+      created_at: new Date().toISOString() as IsoDateTime,
+      updated_at: new Date().toISOString() as IsoDateTime,
     };
 
   const { data, error } = await (await from("orders")).insert(params).select().single();
@@ -527,7 +521,7 @@ export async function fetchDeliveryJob(jobId: string) {
 
 export async function subscribeToDeliveryJob(
   jobId: string,
-  callback: (job: any) => void,
+  callback: (job: Record<string, unknown>) => void,
 ) {
   if (isMockMode) return () => {};
 
@@ -620,7 +614,14 @@ export async function fetchNotifications(params?: {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data as any[];
+  return (data ?? []) as Array<{
+    id: string;
+    title: string;
+    body: string;
+    data: Record<string, unknown>;
+    read: boolean;
+    created_at: string;
+  }>;
 }
 
 export async function markNotificationRead(id: string): Promise<void> {

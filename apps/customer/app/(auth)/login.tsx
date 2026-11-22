@@ -11,11 +11,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
+import type { PhoneE164 } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
 
 export default function LoginScreen() {
@@ -27,7 +27,6 @@ export default function LoginScreen() {
   const [sentCode, setSentCode] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
-  const [focusedInput, setFocusedInput] = useState<"phone" | "code">("phone");
 
   // Check if coming from deep link with phone pre-filled
   useEffect(() => {
@@ -77,7 +76,7 @@ export default function LoginScreen() {
     }
     setError("");
 
-    const { error: sendError } = await sendOtp(phone.replace(/\D/g, "") as any);
+    const { error: sendError } = await sendOtp(phone.replace(/\s/g, "") as PhoneE164);
     if (sendError) {
       setError(sendError.message);
       return;
@@ -85,7 +84,6 @@ export default function LoginScreen() {
 
     setSentCode(true);
     setCountdown(60);
-    setFocusedInput("code");
   };
 
   const handleVerifyOtp = async () => {
@@ -96,7 +94,7 @@ export default function LoginScreen() {
     setError("");
 
     const { error: verifyError } = await verifyOtp(
-      phone.replace(/\D/g, "") as any,
+      phone.replace(/\s/g, "") as PhoneE164,
       code,
     );
 
@@ -165,7 +163,6 @@ export default function LoginScreen() {
                   keyboardType="phone-pad"
                   autoCompleteType="tel"
                   maxLength={16}
-                  onFocus={() => setFocusedInput("phone")}
                   autoFocus
                 />
               </View>
@@ -232,7 +229,6 @@ export default function LoginScreen() {
                   keyboardType="number-pad"
                   textAlign="center"
                   autoComplete="one-time-code"
-                  onFocus={() => setFocusedInput("code")}
                   autoFocus={i === 0}
                 />
               ))}

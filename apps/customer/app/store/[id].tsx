@@ -17,7 +17,7 @@ import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { fetchStore, fetchStoreProducts, Store, Product } from "@/api";
 import { formatGnf, GnfAmount } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
-import { BorderRadius, Spacing, FontSize, FontWeight, Shadows } from "@/constants/theme";
+import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
 export default function StoreDetailScreen() {
   const router = useRouter();

@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   FlatList,
-  Alert,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
@@ -19,6 +18,15 @@ import { fetchOrders, Order, OrderStatus } from "@/api";
 import { formatGnf, GnfAmount } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
+
+type OrderListItem = Order & {
+  order_items?: Array<{
+    id: string;
+    product_name: string;
+    quantity: number;
+    product?: { name?: string | null } | null;
+  }>;
+};
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: string }> = {
   pending: { label: "En attente", color: "#F59E0B", icon: "time" },
@@ -217,17 +225,17 @@ export default function OrdersScreen() {
               </View>
 
               <View style={styles.orderItems}>
-                {item.order_items?.slice(0, 2).map((oi: any, idx: number) => (
-                  <View key={idx} style={styles.orderItemRow}>
+                {(item as OrderListItem).order_items?.slice(0, 2).map((oi) => (
+                  <View key={oi.id} style={styles.orderItemRow}>
                     <Text style={styles.orderItemName} numberOfLines={1}>
                       {oi.product?.name ?? oi.product_name}
                     </Text>
                     <Text style={styles.orderItemQty}>x{oi.quantity}</Text>
                   </View>
                 ))}
-                {(item.order_items?.length ?? 0) > 2 && (
+                {((item as OrderListItem).order_items?.length ?? 0) > 2 && (
                   <Text style={styles.orderItemMore}>
-                    +{(item.order_items.length - 2)} autre{item.order_items.length > 3 ? "s" : ""}
+                    +{((item as OrderListItem).order_items?.length ?? 0) - 2} autre{((item as OrderListItem).order_items?.length ?? 0) > 3 ? "s" : ""}
                   </Text>
                 )}
               </View>
