@@ -6,7 +6,8 @@ VERSION="${2:-1.0.0}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 case "$PROFILE" in
-  dev|beta|production) GRADLE_TASK="assembleRelease"; APK_SOURCE="app/build/outputs/apk/release/app-release.apk" ;;
+  dev) GRADLE_TASK="assembleDebug"; APK_SOURCE="app/build/outputs/apk/debug/app-debug.apk" ;;
+  beta|production) GRADLE_TASK="assembleRelease"; APK_SOURCE="app/build/outputs/apk/release/app-release.apk" ;;
   *)
     echo "Usage: $0 [dev|beta|production] [1.2.3|1.2.3-beta.1|dev.test-0.1]" >&2
     exit 2
@@ -37,7 +38,8 @@ BAMANASHOP_ANDROID_VERSION_CODE="$VERSION_CODE" \
 EXPO_NO_TELEMETRY=1 \
   pnpm exec expo prebuild --platform android --clean --no-install
 
-node "$ROOT_DIR/scripts/android-build-profile.cjs" "$PROFILE" "$ROOT_DIR/apps/customer/android/app/build.gradle"
+node "$ROOT_DIR/scripts/android-build-profile.cjs" "$PROFILE" "$ROOT_DIR/apps/customer/android/app"
+node --test "$ROOT_DIR/scripts/android-build-profile.test.cjs"
 
 cd "$ROOT_DIR/apps/customer/android"
 ./gradlew --no-daemon --stacktrace ":app:$GRADLE_TASK"
