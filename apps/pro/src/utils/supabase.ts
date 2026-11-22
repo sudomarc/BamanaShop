@@ -31,7 +31,7 @@ const secureStorage = {
   },
 };
 
-export const createSupabaseClient = () => {
+export const createSupabaseClient = (): ReturnType<typeof createClient> => {
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
       auth: {
@@ -65,11 +65,7 @@ export const createSupabaseClient = () => {
         delete: () => ({ data: null, error: { message: "Mock mode" } }),
       }),
       rpc: () => ({ data: null, error: { message: "Mock mode" } }),
-    } as import("@supabase/supabase-js").SupabaseClient<
-      unknown,
-      "public",
-      unknown
-    >;
+    } as unknown as ReturnType<typeof createClient>;
   }
 
   return createClient(supabaseUrl, supabaseAnonKey, {
