@@ -15,9 +15,16 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
-import { fetchAddresses, createOrder, isSupabaseConfigured } from "@/api";
+import { fetchAddresses, createOrder } from "@/api";
+import { isSupabaseConfigured } from "@/utils/supabase";
 import { calculateOrderTotals } from "@bamanashop/domain";
-import { GnfAmount, PaymentMethod, MOCK_STORE } from "@bamanashop/contracts";
+import {
+  GnfAmount,
+  PaymentMethod,
+  PhoneE164,
+  MOCK_STORE,
+  MOCK_DELIVERY_PARTNER,
+} from "@bamanashop/contracts";
 import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
@@ -28,7 +35,16 @@ export default function CartScreen() {
   const { items, updateQuantity, clearCart } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [addresses, setAddresses] = useState<
-    Array<{ id: string; label: string; commune: string; quartier: string }>
+    Array<{
+      id: string;
+      label: string;
+      commune: string;
+      quartier: string;
+      landmark: string | null | undefined;
+      street_details: string | null | undefined;
+      phone: string;
+      instructions: string | null | undefined;
+    }>
   >([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -66,6 +82,10 @@ export default function CartScreen() {
           label: a.label ?? "",
           commune: a.commune,
           quartier: a.quartier,
+          landmark: a.landmark,
+          street_details: a.street_details,
+          phone: a.phone,
+          instructions: a.instructions,
         })),
       );
       setSelectedAddressId(
@@ -143,7 +163,7 @@ export default function CartScreen() {
           quartier: address.quartier,
           landmark: address.landmark ?? null,
           street_details: address.street_details ?? null,
-          phone: address.phone,
+          phone: address.phone as PhoneE164,
           instructions: address.instructions ?? null,
         },
         paymentMethod,
