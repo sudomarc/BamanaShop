@@ -212,6 +212,8 @@ jobs:
           unzip -t "$OUTPUT_DIR/$APK_NAME" >/dev/null
 
           echo "apk_path=$OUTPUT_DIR/$APK_NAME" >> "$GITHUB_OUTPUT"
+          echo "apk_relative_path=$APK_RELATIVE_PATH" >> "$GITHUB_OUTPUT"
+          echo "gradle_task=$GRADLE_TASK" >> "$GITHUB_OUTPUT"
           {
             echo "### Android APK build"
             echo "- Application: $APPLICATION"
