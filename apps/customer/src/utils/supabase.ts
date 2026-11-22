@@ -50,7 +50,10 @@ function createMockClient(): SupabaseClient<Database> {
     containedBy: (column: string, value: unknown) => typeof mockQueryBuilder;
     range: (from: number, to: number) => typeof mockQueryBuilder;
     limit: (count: number) => typeof mockQueryBuilder;
-    order: (column: string, options?: { ascending?: boolean }) => typeof mockQueryBuilder;
+    order: (
+      column: string,
+      options?: { ascending?: boolean },
+    ) => typeof mockQueryBuilder;
     single: () => Promise<{ data: null; error: { message: string } }>;
     maybeSingle: () => Promise<{ data: null; error: { message: string } }>;
     insert: (values: unknown) => typeof mockQueryBuilder;
@@ -93,9 +96,12 @@ function createMockClient(): SupabaseClient<Database> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     limit: (_count: number) => mockQueryBuilder,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    order: (_column: string, _options?: { ascending?: boolean }) => mockQueryBuilder,
-    single: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
-    maybeSingle: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
+    order: (_column: string, _options?: { ascending?: boolean }) =>
+      mockQueryBuilder,
+    single: () =>
+      Promise.resolve({ data: null, error: { message: "Mock mode" } }),
+    maybeSingle: () =>
+      Promise.resolve({ data: null, error: { message: "Mock mode" } }),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     insert: (_values: unknown) => mockQueryBuilder,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -106,7 +112,8 @@ function createMockClient(): SupabaseClient<Database> {
     then: <TResult>(
       onFulfilled?: (value: { data: unknown[]; error: null }) => TResult,
       onRejected?: (reason: unknown) => TResult,
-    ) => Promise.resolve({ data: [], error: null }).then(onFulfilled, onRejected),
+    ) =>
+      Promise.resolve({ data: [], error: null }).then(onFulfilled, onRejected),
   };
 
   const mockFrom = () => mockQueryBuilder;
