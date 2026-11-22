@@ -34,7 +34,10 @@ const secureStorage = {
 };
 
 function createMockClient(): SupabaseClient<Database> {
-  const mockFrom = <T extends keyof Database["public"]["Tables"] = keyof Database["public"]["Tables"]>() => ({
+  const mockFrom = <
+    T extends keyof Database["public"]["Tables"] =
+      keyof Database["public"]["Tables"],
+  >() => ({
     select: (): {
       data: Database["public"]["Tables"][T]["Row"][];
       error: null;
