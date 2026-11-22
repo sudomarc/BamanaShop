@@ -33,7 +33,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Build shared packages
         run: pnpm run build:packages
@@ -79,7 +79,12 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pinned Supabase CLI
+        run: |
+          CLI_VERSION="$(./supabase/node_modules/.bin/supabase --version)"
+          test "$CLI_VERSION" = "2.122.1"
 
       - name: Start local Supabase
         run: ./supabase/node_modules/.bin/supabase start

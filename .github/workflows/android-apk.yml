@@ -24,59 +24,15 @@ on:
         required: true
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: android-apk-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  resolve-lockfile:
-    name: Resolve and commit pnpm lockfile
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout selected branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          fetch-depth: 0
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.21.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Resolve lockfile from declared workspace manifests
-        run: pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts
-
-      - name: Commit regenerated lockfile to the selected branch
-        env:
-          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
-        run: |
-          if git diff --quiet -- pnpm-lock.yaml; then
-            echo "pnpm-lock.yaml is synchronized."
-            exit 0
-          fi
-
-          if [ "$TARGET_BRANCH" = "main" ]; then
-            echo "::error::The lockfile changed on main. Commit the regenerated lockfile through a pull request before building from main."
-            exit 1
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pnpm-lock.yaml
-          git commit -m "chore: synchronize pnpm lockfile for native mobile apps"
-          git push origin "HEAD:$TARGET_BRANCH"
-
   build:
     name: Build ${{ matrix.application }} / ${{ inputs.profile || 'dev' }}
-    needs: resolve-lockfile
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
@@ -87,7 +43,6 @@ jobs:
       - name: Checkout selected branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -111,14 +66,14 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
+          yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Install workspace dependencies from the committed lockfile
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Prepare mobile-only Supabase environment
         env:
@@ -132,7 +87,10 @@ jobs:
           } > "$GITHUB_WORKSPACE/.env.mobile"
 
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "::warning::Supabase client values are not configured; the app will use its mock mode."
+            echo "::warning::Supabase client values are missing; this APK will run in mock mode and OTP/database operations will not work."
+            echo "- Backend mode: MOCK (missing SUPABASE_URL and/or SUPABASE_ANON_KEY)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Backend mode: Supabase configured" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Configure stable signing when repository secrets exist
@@ -302,5 +260,5 @@ jobs:
         with:
           name: bamanashop-${{ matrix.application }}-android-${{ inputs.profile || 'dev' }}-v${{ inputs.version || '0.0.1' }}-${{ github.run_number }}
           path: ${{ runner.temp }}/bamanashop-apk/*.apk
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 30
