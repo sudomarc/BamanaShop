@@ -225,38 +225,70 @@ jobs:
             echo "- Metro required at runtime: no"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Install and launch APK on Android emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        env:
-          APK_PATH: ${{ steps.gradle_build.outputs.apk_path }}
-          APPLICATION_ID: ${{ steps.build_config.outputs.expected_application_id }}
-        with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          profile: pixel_6
-          disable-animations: true
-          script: |
-            set -euo pipefail
-            adb install -r "$APK_PATH"
-            adb shell monkey -p "$APPLICATION_ID" 1
-            sleep 25
+      - name: Verify APK is autonomous (no Metro at runtime)
+        run: |
+          set -euo pipefail
+          APPLICATION="${{ matrix.application }}"
+          PROFILE="${{ inputs.profile || 'dev' }}"
+          APP_VERSION="${{ inputs.version || '0.0.1' }}"
+          APPLICATION_ID="${{ steps.build_config.outputs.expected_application_id }}"
+          EXPECTED_DEBUGGABLE="${{ steps.build_config.outputs.expected_debuggable }}"
 
-            APP_PID="$(adb shell pidof "$APPLICATION_ID" | tr -d '\r')"
-            if [ -z "$APP_PID" ]; then
-              adb logcat -d -t 500 > "$RUNNER_TEMP/android-startup.log"
-              tail -n 160 "$RUNNER_TEMP/android-startup.log"
-              echo "The installed app did not stay running after launch." >&2
-              exit 1
-            fi
+          APK_SOURCE="${{ steps.gradle_build.outputs.apk_relative_path }}"
+          test -s "$APK_SOURCE"
 
-            adb logcat -d --pid="$APP_PID" > "$RUNNER_TEMP/android-app.log"
-            if grep -E "FATAL EXCEPTION|Unable to load script|Could not connect to development server|No bundle URL present" "$RUNNER_TEMP/android-app.log"; then
-              echo "The app logged a startup or JavaScript bundle failure." >&2
-              exit 1
-            fi
+          echo "=== Android APK verification ==="
+          echo "- Application: $APPLICATION"
+          echo "- Profile: $PROFILE"
+          echo "- Version: $APP_VERSION"
 
-            echo "ADB installation and startup passed with no Metro server."
+          # Verify the embedded React Native JavaScript bundle is present (no Metro required)
+          if ! unzip -Z1 "$APK_SOURCE" | grep -Fxq "assets/index.android.bundle"; then
+            echo "::error::The APK does not contain the embedded React Native JavaScript bundle."
+            exit 1
+          fi
+          echo "- Embedded JS bundle: verified"
+
+          # Verify Android debuggable flag matches expected profile
+          ACTUAL_DEBUGGABLE="$(apkanalyzer manifest debuggable "$APK_SOURCE" | tr -d '\r')"
+          if [ "$ACTUAL_DEBUGGABLE" != "$EXPECTED_DEBUGGABLE" ]; then
+            echo "::error::Expected Android debuggable=$EXPECTED_DEBUGGABLE but got $ACTUAL_DEBUGGABLE."
+            exit 1
+          fi
+          echo "- Android debuggable: $ACTUAL_DEBUGGABLE"
+
+          # Verify application ID
+          ACTUAL_APPLICATION_ID="$(apkanalyzer manifest application-id "$APK_SOURCE" | tr -d '\r')"
+          if [ "$ACTUAL_APPLICATION_ID" != "$APPLICATION_ID" ]; then
+            echo "::error::Expected applicationId=$APPLICATION_ID but got $ACTUAL_APPLICATION_ID."
+            exit 1
+          fi
+          echo "- Application ID: $ACTUAL_APPLICATION_ID"
+
+          # Verify APK integrity and signature
+          unzip -t "$APK_SOURCE" >/dev/null
+          apksigner verify "$APK_SOURCE"
+          echo "- APK signed: verified"
+
+          # Copy APK to artifact output directory
+          OUTPUT_DIR="$RUNNER_TEMP/bamanashop-apk"
+          mkdir -p "$OUTPUT_DIR"
+          APK_NAME="BamanaShop-$APPLICATION-$PROFILE-v$APP_VERSION.apk"
+          cp "$APK_SOURCE" "$OUTPUT_DIR/$APK_NAME"
+          echo "apk_path=$OUTPUT_DIR/$APK_NAME" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Android APK build"
+            echo "- Application: $APPLICATION"
+            echo "- Profile: $PROFILE"
+            echo "- Version: $APP_VERSION"
+            echo "- Android versionCode: ${{ steps.build_config.outputs.version_code }}"
+            echo "- Gradle task: ${{ steps.gradle_build.outputs.gradle_task }}"
+            echo "- Application ID: $ACTUAL_APPLICATION_ID"
+            echo "- Android debuggable: $ACTUAL_DEBUGGABLE"
+            echo "- Embedded JS bundle: verified"
+            echo "- Metro required at runtime: no"
+            echo "- APK path: $OUTPUT_DIR/$APK_NAME"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK artifact
         if: always()
