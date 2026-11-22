@@ -347,8 +347,6 @@ export default function CartScreen() {
   );
 }
 
-// Need to import Image
-import { Image } from "react-native";
 
 const styles = StyleSheet.create({
   scrollView: { flex: 1, backgroundColor: SemanticColors.screenBackground },
