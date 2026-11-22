@@ -15,7 +15,8 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "@/navigation/compat";
 import { useAuthStore } from "@/store/authStore";
 import { fetchOrders, Order, OrderStatus } from "@/api";
-import { formatGnf, GnfAmount } from "@bamanashop/contracts";
+import { GnfAmount } from "@bamanashop/contracts";
+import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
@@ -309,6 +310,12 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.lg,
+  },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   scrollView: { flex: 1, backgroundColor: SemanticColors.screenBackground },
   contentContainer: { paddingBottom: Spacing.xl },
