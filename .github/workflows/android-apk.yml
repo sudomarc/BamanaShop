@@ -75,6 +75,9 @@ jobs:
       - name: Install workspace dependencies from the committed lockfile
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared workspace packages for Metro
+        run: pnpm run build:packages
+
       - name: Prepare mobile-only Supabase environment
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || vars.SUPABASE_URL }}
