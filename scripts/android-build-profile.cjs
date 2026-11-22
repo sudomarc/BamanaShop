@@ -120,7 +120,7 @@ function disableReactNativeDevSupport(source) {
     return source.replace(javaBlock, "@Override\n  protected boolean getUseDeveloperSupport() {\n    return false;\n  }");
   }
 
-  if (/getUseDeveloperSupport\s*\(/.test(source) && /return\s+false/.test(source)) {
+  if (/getUseDeveloperSupport\s*\(/.test(source) && /(?:=\s*false|return\s+false)/.test(source)) {
     return source;
   }
   throw new Error("Could not safely disable Metro support in generated MainApplication source.");
