@@ -1,6 +1,8 @@
 import "./global.css";
 import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -91,7 +93,7 @@ export default function App() {
     );
   }
 
-  return <Providers><AppNavigator /></Providers>;
+  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><Providers><AppNavigator /></Providers></SafeAreaProvider></GestureHandlerRootView>;
 }
 
 const styles = StyleSheet.create({
