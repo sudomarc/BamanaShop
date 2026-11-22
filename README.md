@@ -35,7 +35,6 @@ BamanaShop/
 - **Node.js** ≥ 20
 - **pnpm** ≥ 12 (`npm install -g pnpm@12.21.0`)
 - **Supabase CLI** (`npm install -g supabase`)
-- **Expo CLI** (`npm install -g @expo/cli`)
 
 ### Installation
 
@@ -49,7 +48,8 @@ pnpm install
 
 # Configure environment
 cp .env.example .env.local
-# Edit .env.local with your Supabase credentials
+# Edit .env.local for Admin/server tools. Never expose the service-role key to mobile apps.
+# Create .env.mobile containing only SUPABASE_URL and SUPABASE_ANON_KEY for Customer/Pro builds.
 
 # Start local Supabase
 pnpm supabase:start
@@ -65,8 +65,8 @@ pnpm dev
 ```
 
 This starts:
-- **Customer app** (Expo) → `pnpm dev:customer`
-- **Pro app** (Expo) → `pnpm dev:pro`
+- **Customer app** (React Native CLI) → `pnpm dev:customer` (starts the development Metro bundler only)
+- **Pro app** (React Native CLI) → `pnpm dev:pro` (starts the development Metro bundler only)
 - **Admin dashboard** (Next.js) → `pnpm dev:admin` at http://localhost:3000
 
 ## 📦 Workspace Commands
@@ -77,8 +77,10 @@ This starts:
 | `pnpm dev:customer` | Start Customer React Native app |
 | `pnpm dev:pro` | Start Pro React Native app |
 | `pnpm dev:admin` | Start Admin Next.js app |
-| `pnpm build` | Build all apps & packages |
+| `pnpm build` | Build shared packages and Admin web app |
 | `pnpm build:packages` | Build shared packages only |
+| `pnpm build:customer:android` | Build Customer production APK |
+| `pnpm build:pro:android` | Build Pro production APK |
 | `pnpm lint` | ESLint all workspaces |
 | `pnpm format:check` | Prettier check all workspaces |
 | `pnpm typecheck` | TypeScript strict check all workspaces |
@@ -276,3 +278,6 @@ MIT License - see [LICENSE](LICENSE)
 ## Android APKs
 
 Customer and Pro have checked-in native Android Gradle projects. Build APKs with `./BUILD_AND_INSTALL.sh customer dev 1.2.3` or `./BUILD_AND_INSTALL.sh pro beta 1.2.3`, or use the **Android APK** GitHub Actions workflow. The JavaScript bundle is embedded in each APK; an installed APK does not need a Metro server. See [Android build instructions](docs/ANDROID_GITHUB_ACTIONS.md).
+
+
+> **Android runtime:** Metro is not required for installed APKs. The Android build embeds the JavaScript bundle in DEV, BETA and PRODUCTION. DEV keeps Android debuggable for ADB/Logcat while React Native developer support stays disabled.
