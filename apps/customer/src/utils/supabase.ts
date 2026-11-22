@@ -37,29 +37,48 @@ function createMockClient(): SupabaseClient<Database> {
   // Use a simple mock query builder that returns `any` to bypass strict type checking in mock mode.
   // This is acceptable because mock mode is only used during development when Supabase is not configured.
   const mockQueryBuilder = {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     select: (..._columns: string[]) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     eq: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     neq: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     gt: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     gte: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     lt: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     lte: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     like: (_column: string, _pattern: string) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ilike: (_column: string, _pattern: string) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     is: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     in: (_column: string, _values: unknown[]) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     contains: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     containedBy: (_column: string, _value: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     range: (_from: number, _to: number) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     limit: (_count: number) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     order: (
       _column: string,
       _options?: { ascending?: boolean },
     ) => mockQueryBuilder,
     single: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
     maybeSingle: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     insert: (_values: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     update: (_values: unknown) => mockQueryBuilder,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     upsert: (_values: unknown) => mockQueryBuilder,
     delete: () => mockQueryBuilder,
     then: <TResult>(
@@ -67,7 +86,7 @@ function createMockClient(): SupabaseClient<Database> {
       onRejected?: (reason: unknown) => TResult,
     ) =>
       Promise.resolve({ data: [], error: null }).then(onFulfilled, onRejected),
-  } as any;
+  } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const mockFrom = () => mockQueryBuilder;
 
