@@ -1,66 +1,67 @@
-# Android APK Builds with GitHub Actions
+# Android APK builds
 
-BamanaShop Customer APKs are compiled directly on GitHub Actions runners. The workflow uses Expo Prebuild to generate the native Android project and Gradle to produce the APK. It does not call EAS Build or upload source code to expo.dev.
+Customer and Pro are bare React Native applications. The Android projects are checked into `apps/customer/android` and `apps/pro/android`; GitHub Actions does not generate them.
 
-## Start a build
+## Build from GitHub Actions
 
-1. Open **GitHub → sudomarc/BamanaShop → Actions**.
-2. Select **BamanaShop**.
-3. Click **Run workflow**.
-4. Choose a profile:
-   - `dev`
-   - `beta`
-   - `production`
-5. Enter a version such as `1.2.3`, `1.2.3-beta.1`, or `dev.test-0.1`.
-6. Start the run. When it finishes, download the APK from the run's **Artifacts** section.
+Open **Actions → Android APK → Run workflow** and select:
+- Application: `customer` or `pro`
+- Profile: `dev`, `beta` or `production`
+- Version: for example `1.2.3` or `1.2.3-beta.1`
 
-No `EXPO_TOKEN` or `EAS_PROJECT_ID` repository secret is required for Android APK builds.
+The artifact contains one APK for the selected application.
 
-## Versioning
+## One-time signing setup
 
-The exact version entered in the workflow is applied to the app's version name. Accepted formats are SemVer (`MAJOR.MINOR.PATCH`, optionally with prerelease/build metadata) and named versions (`LABEL-MAJOR.MINOR`, for example `dev.test-0.1`). Named versions use patch `0` for Android version-code calculation. Android `versionCode` is derived as:
+All profiles use the same private Android keystore so that a later APK can replace the installed APK with `adb install -r`. Do not commit the keystore or its passwords.
 
-```text
-major * 1,000,000 + minor * 1,000 + patch + 1
+Create a keystore locally:
+
+```bash
+keytool -genkeypair -v -keystore bamanashop-upload.jks -storetype JKS -alias bamanashop -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 bamanashop-upload.jks > bamanashop-upload.base64
 ```
 
-Use higher numeric components for each upgrade. The code is deterministic; different labels with the same numeric components produce the same Android versionCode.
+Add these GitHub Actions repository secrets:
+- `BAMANASHOP_ANDROID_KEYSTORE_BASE64`: contents of `bamanashop-upload.base64`
+- `BAMANASHOP_ANDROID_KEYSTORE_PASSWORD`
+- `BAMANASHOP_ANDROID_KEY_ALIAS`: normally `bamanashop`
+- `BAMANASHOP_ANDROID_KEY_PASSWORD`
+
+Keep a secure backup of the keystore. Losing it prevents signing future updates with the same certificate. Never share the keystore or passwords.
 
 ## Profiles
 
-| Profile | Gradle variant | Intended use |
-|---|---|---|
-| `dev` | `assembleDebug` | Standalone development APK; Android debugging enabled |
-| `beta` | `assembleRelease` | Standalone test APK; Android debugging disabled |
-| `production` | `assembleRelease` | Standalone release APK; Android debugging disabled |
+| Profile | Gradle task | Android debuggable | JS bundled | Metro at runtime |
+|---|---|---:|---:|---:|
+| DEV | `:app:assembleDebug` | true | yes | no |
+| BETA | `:app:assembleRelease` | false | yes | no |
+| PRODUCTION | `:app:assembleRelease` | false | yes | no |
 
-All three profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android Debug variant, but the build config forces the React Native Gradle plugin to bundle JavaScript for Debug and disables React Native's Metro-based developer support in `MainApplication`. The Android manifest remains debuggable for ADB inspection and Logcat.
+DEV keeps the Android debug flag for ADB and Logcat. React Native developer support is disabled in `MainApplication`, and the Gradle plugin bundles JavaScript for the Debug variant. Metro is only used as the build-time bundler; it is not started by the installed APK.
 
-## Install with ADB
-
-After downloading and extracting the artifact:
+## Install and inspect with ADB
 
 ```bash
 adb devices
-adb install -r ./BamanaShop-beta-v1.2.3.apk
+adb install -r ./BamanaShop-customer-dev-v1.2.3.apk
+adb logcat -s ReactNativeJS AndroidRuntime
 ```
 
-For an APK signed with a different certificate than the version already installed, uninstall the old application first:
+Package IDs:
+- Customer: `com.bamanashop.customer`
+- Pro: `com.bamanashop.pro`
 
-```bash
-adb uninstall com.bamanashop.customer
-```
+If the signing certificate differs from the installed build, Android refuses the update. Uninstall only as a last resort because it clears the app's local data.
 
 ## Local build
 
-From the repository root:
+Install JDK 17, Android SDK Platform 34, Build Tools 34.0.0, NDK 26.1.10909125 and Gradle 8.7. From the repository root:
 
 ```bash
-./BUILD_AND_INSTALL.sh beta 1.2.3
+pnpm install
+cd apps/customer/android
+gradle :app:assembleDebug -PbamanashopVersionName=dev.1.0 -PbamanashopVersionCode=1000001
 ```
 
-The script generates the Android project, runs Gradle, validates the APK, and installs it if an ADB device is connected.
-
-## Production signing
-
-The workflow currently produces installable APKs using the generated debug signing configuration. It does not configure a private, persistent production signing key. These artifacts are suitable for controlled direct installation/testing, not Google Play publication. Before Play Store release, configure a private Android upload keystore in GitHub Secrets and wire it into the Gradle release signing configuration.
+For BETA/PRODUCTION use `:app:assembleRelease`. Export the same signing environment variables used by CI to sign with the same keystore.
