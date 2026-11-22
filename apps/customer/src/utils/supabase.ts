@@ -68,12 +68,13 @@ function createMockClient(): SupabaseClient<Database> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     limit: (_count: number) => mockQueryBuilder,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    order: (
-      _column: string,
-      _options?: { ascending?: boolean },
-    ) => mockQueryBuilder,
-    single: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
-    maybeSingle: () => Promise.resolve({ data: null, error: { message: "Mock mode" } }),
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    order: (_column: string, _options?: { ascending?: boolean }) =>
+      mockQueryBuilder,
+    single: () =>
+      Promise.resolve({ data: null, error: { message: "Mock mode" } }),
+    maybeSingle: () =>
+      Promise.resolve({ data: null, error: { message: "Mock mode" } }),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     insert: (_values: unknown) => mockQueryBuilder,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
