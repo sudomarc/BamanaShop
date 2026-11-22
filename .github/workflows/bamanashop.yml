@@ -261,7 +261,7 @@ jobs:
       - name: Configure Android debuggability for selected profile
         env:
           BAMANASHOP_BUILD_PROFILE: ${{ inputs.profile }}
-        run: node scripts/android-build-profile.cjs "$BAMANASHOP_BUILD_PROFILE" apps/customer/android/app/build.gradle
+        run: node scripts/android-build-profile.cjs "$BAMANASHOP_BUILD_PROFILE" apps/customer/android/app
 
       - name: Test Android profile configuration
         run: node --test scripts/android-build-profile.test.cjs
@@ -279,7 +279,11 @@ jobs:
           set -euo pipefail
 
           case "$BAMANASHOP_BUILD_PROFILE" in
-            dev|beta|production)
+            dev)
+              gradle_task="assembleDebug"
+              apk_source="app/build/outputs/apk/debug/app-debug.apk"
+              ;;
+            beta|production)
               gradle_task="assembleRelease"
               apk_source="app/build/outputs/apk/release/app-release.apk"
               ;;
@@ -335,7 +339,11 @@ jobs:
             echo "- App version: $APP_VERSION"
             echo "- Android versionCode: $ANDROID_VERSION_CODE"
             echo "- Artifact: bamanashop-android-$PROFILE-v$APP_VERSION-${{ github.run_number }}"
-            echo "- Gradle variant: Release (JavaScript bundle embedded)"
+            if [ "$PROFILE" = "dev" ]; then
+              echo "- Gradle variant: Debug (JavaScript bundle embedded)"
+            else
+              echo "- Gradle variant: Release (JavaScript bundle embedded)"
+            fi
             if [ "$PROFILE" = "dev" ]; then
               echo "- Android debuggable: true"
             else
