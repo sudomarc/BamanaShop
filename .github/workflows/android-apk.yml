@@ -44,6 +44,7 @@ jobs:
     steps:
       - name: Checkout pull request merge ref or dispatched branch
         uses: actions/checkout@v4
+
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -228,15 +229,15 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify APK is autonomous (no Metro at runtime)
+        env:
+          APPLICATION: ${{ matrix.application }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '0.0.1' }}
+          APPLICATION_ID: ${{ steps.build_config.outputs.expected_application_id }}
+          EXPECTED_DEBUGGABLE: ${{ steps.build_config.outputs.expected_debuggable }}
         run: |
           set -euo pipefail
           export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"
-          APPLICATION="${{ matrix.application }}"
-          PROFILE="${{ inputs.profile || 'dev' }}"
-          APP_VERSION="${{ inputs.version || '0.0.1' }}"
-          APPLICATION_ID="${{ steps.build_config.outputs.expected_application_id }}"
-          EXPECTED_DEBUGGABLE="${{ steps.build_config.outputs.expected_debuggable }}"
-
           APK_SOURCE="${{ steps.gradle_build.outputs.apk_relative_path }}"
           test -s "$APK_SOURCE"
 
