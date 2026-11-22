@@ -10,12 +10,12 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Image,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { fetchOrder, Order, OrderStatus, DeliveryStatus } from "@/api";
-import { formatGnf, GnfAmount } from "@bamanashop/contracts";
+import { GnfAmount } from "@bamanashop/contracts";
+import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
@@ -266,22 +266,14 @@ export default function OrderDetailScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.orderItem}>
-              {item.product?.images?.[0] ? (
-                <Image
-                  source={{ uri: item.product.images[0] }}
-                  style={styles.orderItemImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.orderItemImagePlaceholder}>
+              <View style={styles.orderItemImagePlaceholder}>
                   <Ionicons
                     name="image"
                     size={24}
                     color={SemanticColors.textTertiary}
                   />
-                </View>
-              )}
-              <View style={styles.orderItemDetails} style={{ flex: 1 }}>
+              </View>
+              <View style={[styles.orderItemDetails, { flex: 1 }]}>
                 <Text style={styles.orderItemName} numberOfLines={1}>
                   {item.product?.name ?? item.product_name}
                 </Text>
