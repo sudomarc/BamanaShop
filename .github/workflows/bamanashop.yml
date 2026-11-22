@@ -54,6 +54,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Verify Expo Router custom entry
+        run: node scripts/verify-expo-router-entry.cjs
+
       - name: Validate Customer Expo config
         working-directory: apps/customer
         run: |
