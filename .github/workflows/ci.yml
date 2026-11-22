@@ -33,7 +33,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build shared packages
         run: pnpm run build:packages
@@ -41,11 +41,6 @@ jobs:
 
       - name: Lint
         run: pnpm run lint
-
-      - name: Normalize domain test with workspace Prettier for diagnosis
-        run: |
-          pnpm --filter=@bamanashop/domain exec prettier --write src/index.test.ts
-          cat packages/domain/src/index.test.ts
 
       - name: Check formatting
         run: pnpm run format:check
@@ -88,15 +83,15 @@ jobs:
 
       - name: Start local Supabase
         working-directory: supabase
-        run: npx supabase start
+        run: pnpm exec supabase start
 
       - name: Reset database and apply migrations
         working-directory: supabase
-        run: npx supabase db reset --linked=false
+        run: pnpm exec supabase db reset --linked=false
 
       - name: Generate local database types
         working-directory: supabase
-        run: npx supabase gen types typescript --local > "$RUNNER_TEMP/database.generated.ts"
+        run: pnpm exec supabase gen types typescript --local > "$RUNNER_TEMP/database.generated.ts"
 
       - name: Verify Supabase database types can be generated
         run: |
