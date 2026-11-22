@@ -23,7 +23,7 @@ case "$PROFILE" in
     ;;
 esac
 
-for required in pnpm node java gradle adb; do
+for required in pnpm node java adb; do
   if ! command -v "$required" >/dev/null 2>&1; then
     echo "$required is required and must be available in PATH." >&2
     exit 1
@@ -40,7 +40,7 @@ cd "$ROOT_DIR"
 pnpm install --no-frozen-lockfile --ignore-scripts
 
 cd "$APP_DIR/android"
-gradle --no-daemon --stacktrace "$GRADLE_TASK" \
+./gradlew --no-daemon --stacktrace "$GRADLE_TASK" \
   "-PbamanashopVersionName=$VERSION" \
   "-PbamanashopVersionCode=$VERSION_CODE"
 
