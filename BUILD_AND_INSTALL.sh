@@ -38,6 +38,9 @@ BAMANASHOP_ANDROID_VERSION_CODE="$VERSION_CODE" \
 EXPO_NO_TELEMETRY=1 \
   pnpm exec expo prebuild --platform android --clean --no-install
 
+node "$ROOT_DIR/scripts/android-build-profile.cjs" "$PROFILE" "$ROOT_DIR/apps/customer/android/app"
+node --test "$ROOT_DIR/scripts/android-build-profile.test.cjs"
+
 cd "$ROOT_DIR/apps/customer/android"
 ./gradlew --no-daemon --stacktrace ":app:$GRADLE_TASK"
 
@@ -50,6 +53,10 @@ mkdir -p "$ROOT_DIR/apk"
 APK_PATH="$ROOT_DIR/apk/BamanaShop-$PROFILE-v$VERSION.apk"
 cp "$APK_SOURCE" "$APK_PATH"
 unzip -t "$APK_PATH" >/dev/null
+if ! unzip -Z1 "$APK_PATH" | grep -Fxq "assets/index.android.bundle"; then
+  echo "The APK does not contain the embedded React Native JavaScript bundle." >&2
+  exit 1
+fi
 
 echo "APK created: $APK_PATH"
 
@@ -60,6 +67,4 @@ else
   echo "No authorized ADB device detected; APK was kept at $APK_PATH."
 fi
 
-if [ "$PROFILE" = "dev" ]; then
-  echo "Dev APK requires the Metro server: pnpm dev:customer"
-fi
+echo "All profiles are standalone APKs; Metro is not required at runtime."

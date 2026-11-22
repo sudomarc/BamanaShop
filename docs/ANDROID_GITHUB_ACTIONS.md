@@ -30,9 +30,11 @@ Use higher numeric components for each upgrade. The code is deterministic; diffe
 
 | Profile | Gradle variant | Intended use |
 |---|---|---|
-| `dev` | `assembleDebug` | Development; requires Metro to serve the JavaScript bundle |
-| `beta` | `assembleRelease` | Release build for testing |
-| `production` | `assembleRelease` | Release build |
+| `dev` | `assembleDebug` | Standalone development APK; Android debugging enabled |
+| `beta` | `assembleRelease` | Standalone test APK; Android debugging disabled |
+| `production` | `assembleRelease` | Standalone release APK; Android debugging disabled |
+
+All three profiles embed the React Native JavaScript bundle and run without Metro. DEV remains an Android Debug variant, but the build config forces the React Native Gradle plugin to bundle JavaScript for Debug and disables React Native's Metro-based developer support in `MainApplication`. The Android manifest remains debuggable for ADB inspection and Logcat.
 
 ## Install with ADB
 
@@ -61,4 +63,4 @@ The script generates the Android project, runs Gradle, validates the APK, and in
 
 ## Production signing
 
-The current workflow produces installable APKs for direct distribution and testing. It does not configure a private, persistent Google Play upload key. Before publishing to Google Play, configure a private Android signing keystore and wire it into the Gradle release signing configuration.
+The workflow currently produces installable APKs using the generated debug signing configuration. It does not configure a private, persistent production signing key. These artifacts are suitable for controlled direct installation/testing, not Google Play publication. Before Play Store release, configure a private Android upload keystore in GitHub Secrets and wire it into the Gradle release signing configuration.
