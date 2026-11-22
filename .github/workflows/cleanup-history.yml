@@ -1,0 +1,76 @@
+name: One-time Actions history cleanup
+
+on:
+  push:
+    branches:
+      - refactor/remove-expo-native-android
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Delete every previous Actions run in this repository
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t runs < <(
+            gh api --paginate "repos/${GH_REPO}/actions/runs?per_page=100" \
+              --jq '.workflow_runs[] | [.id, .status] | @tsv'
+          )
+
+          echo "Found ${#runs[@]} workflow runs."
+          deleted=0
+          failed=0
+
+          for entry in "${runs[@]}"; do
+            read -r run_id status <<< "${entry}"
+            [[ "${run_id}" == "${CURRENT_RUN_ID}" ]] && continue
+
+            if [[ "${status}" != "completed" ]]; then
+              gh api --silent --method POST \
+                "repos/${GH_REPO}/actions/runs/${run_id}/cancel" || true
+
+              for attempt in {1..30}; do
+                status=$(gh api "repos/${GH_REPO}/actions/runs/${run_id}" \
+                  --jq '.status' 2>/dev/null || echo "missing")
+                [[ "${status}" == "completed" || "${status}" == "missing" ]] && break
+                sleep 2
+              done
+            fi
+
+            if gh api --silent --method DELETE \
+              "repos/${GH_REPO}/actions/runs/${run_id}"; then
+              ((deleted += 1))
+            else
+              echo "::error::Could not delete workflow run ${run_id}"
+              ((failed += 1))
+            fi
+          done
+
+          echo "Deleted previous runs: ${deleted}; failures: ${failed}"
+          (( failed == 0 ))
+
+      - name: Remove this temporary workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GH_BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          path=".github/workflows/cleanup-history.yml"
+          sha=$(gh api "repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}" --jq '.sha')
+          gh api --silent --method DELETE "repos/${GH_REPO}/contents/${path}" \
+            -f message="chore(ci): remove temporary history cleanup workflow" \
+            -f sha="${sha}" \
+            -f branch="${GH_BRANCH}"
