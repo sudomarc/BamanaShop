@@ -151,7 +151,6 @@ export default function CartScreen() {
         deliveryFee: totals.deliveryFee,
         paymentFee: totals.paymentFee,
         total: totals.total,
-        // eslint-disable-next-line no-magic-numbers
         commissionRateBps: 1000,
         commission: totals.commission,
         courierCost: totals.courierCost,
