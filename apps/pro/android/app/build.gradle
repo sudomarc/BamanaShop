@@ -4,8 +4,8 @@ apply plugin: "com.facebook.react"
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
 
 project.ext.envConfigFiles = [
-    debug: "../../.env",
-    release: "../../.env"
+    debug: "../../.env.mobile",
+    release: "../../.env.mobile"
 ]
 apply from: project(":react-native-config").projectDir.getPath() + "/dotenv.gradle"
 
