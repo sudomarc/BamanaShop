@@ -147,7 +147,7 @@ export default function ProfileSetupScreen() {
               onChangeText={setFullName}
               placeholder="Votre nom complet"
               autoCapitalize="words"
-              autoCompleteType="name"
+              autoComplete="name"
             />
           </View>
         </View>
