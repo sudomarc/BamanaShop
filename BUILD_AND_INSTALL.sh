@@ -29,6 +29,7 @@ echo "Building BamanaShop Customer: profile=$PROFILE version=$VERSION versionCod
 
 cd "$ROOT_DIR"
 pnpm install --frozen-lockfile --ignore-scripts
+node "$ROOT_DIR/scripts/verify-expo-router-entry.cjs"
 
 cd "$ROOT_DIR/apps/customer"
 CI=1 \
