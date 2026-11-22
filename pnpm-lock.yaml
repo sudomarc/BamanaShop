@@ -290,6 +290,9 @@ importers:
       react-native-config:
         specifier: 1.5.3
         version: 1.5.3
+      react-native-css-interop:
+        specifier: 0.2.7
+        version: 0.2.7
       react-native-gesture-handler:
         specifier: 2.16.1
         version: 2.16.1(react-native@0.74.5(@babel/core@7.29.13(supports-color@8.1.1))(@babel/preset-env@7.29.14(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@18.2.79)(react@18.2.0)(supports-color@8.1.1))(react@18.2.0)
@@ -402,6 +405,9 @@ importers:
       react-native-config:
         specifier: 1.5.3
         version: 1.5.3
+      react-native-css-interop:
+        specifier: 0.2.7
+        version: 0.2.7
       react-native-gesture-handler:
         specifier: 2.16.1
         version: 2.16.1(react-native@0.74.5(@babel/core@7.29.13(supports-color@8.1.1))(@babel/preset-env@7.29.14(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@18.2.79)(react@18.2.0)(supports-color@8.1.1))(react@18.2.0)
