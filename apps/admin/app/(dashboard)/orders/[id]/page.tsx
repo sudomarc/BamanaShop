@@ -178,7 +178,7 @@ export default function OrderDetailPage({
                 {statusOptions
                   .filter(
                     (opt) =>
-                      opt.allowedFrom.includes(mockOrder.status) ||
+                      (opt.allowedFrom ?? []).includes(mockOrder.status) ||
                       opt.value === mockOrder.status,
                   )
                   .map((opt) => (
