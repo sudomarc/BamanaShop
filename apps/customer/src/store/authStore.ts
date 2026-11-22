@@ -7,7 +7,9 @@
 import { create } from "zustand";
 import { createSupabaseClient } from "@/utils/supabase";
 import { Profile, UserRole, PhoneE164 } from "@bamanashop/contracts";
-import * as LocalAuthentication from "expo-local-authentication";
+import ReactNativeBiometrics from "react-native-biometrics";
+
+const biometrics = new ReactNativeBiometrics({ allowDeviceCredentials: true });
 
 const supabase = createSupabaseClient();
 
@@ -173,19 +175,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user } = get();
     if (!user) return;
 
-    // Check device capability
-    const hasHardware = await LocalAuthentication.hasHardwareAsync();
-    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-
-    if (!hasHardware || !isEnrolled) {
-      throw new Error("Biometric authentication not available on this device");
+    const sensor = await biometrics.isSensorAvailable();
+    if (!sensor.available) {
+      throw new Error(sensor.error ?? "Biometric authentication is not available on this device");
     }
 
-    // Save preference
-    await supabase.from("user_preferences").upsert({
+    const prompt = await biometrics.simplePrompt({
+      promptMessage: "Confirmez votre identité pour activer la connexion biométrique",
+      cancelButtonText: "Annuler",
+    });
+    if (!prompt.success) {
+      throw new Error("Biometric activation was cancelled");
+    }
+
+    const { error } = await supabase.from("user_preferences").upsert({
       user_id: user.id,
       biometric_enabled: true,
     });
+    if (error) throw error;
 
     set({ biometricEnabled: true });
   },
@@ -207,13 +214,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!biometricEnabled) return false;
 
     try {
-      const result = await LocalAuthentication.authenticateAsync({
+      const sensor = await biometrics.isSensorAvailable();
+      if (!sensor.available) return false;
+      const result = await biometrics.simplePrompt({
         promptMessage: "Authentifiez-vous pour accéder à BamanaShop",
-        fallbackLabel: "Utiliser le code PIN",
-        cancelLabel: "Annuler",
-        disableDeviceFallback: false,
+        cancelButtonText: "Annuler",
       });
-
       return result.success;
     } catch {
       return false;
