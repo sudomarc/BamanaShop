@@ -248,6 +248,9 @@ importers:
 
   apps/customer:
     dependencies:
+      '@babel/runtime':
+        specifier: 7.29.14
+        version: 7.29.14
       '@bamanashop/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -360,6 +363,9 @@ importers:
 
   apps/pro:
     dependencies:
+      '@babel/runtime':
+        specifier: 7.29.14
+        version: 7.29.14
       '@bamanashop/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
