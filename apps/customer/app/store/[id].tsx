@@ -12,8 +12,8 @@ import {
   FlatList,
   Image,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter, useLocalSearchParams } from "@/navigation/compat";
 import { fetchStore, fetchStoreProducts, Store, Product } from "@/api";
 import { formatGnf, GnfAmount } from "@bamanashop/contracts";
 import { SemanticColors } from "@/constants/colors";
