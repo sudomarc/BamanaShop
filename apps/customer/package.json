@@ -2,7 +2,7 @@
   "name": "@bamanashop/customer",
   "version": "0.0.0",
   "private": true,
-  "main": "expo-router/entry",
+  "main": "index.js",
   "scripts": {
     "dev": "expo start",
     "build:web": "expo export --platform web",
@@ -41,7 +41,8 @@
     "react-native-screens": "3.31.1",
     "react-native-web": "~0.19.13",
     "zustand": "^4.5.0",
-    "expo-asset": "~10.0.10"
+    "expo-asset": "~10.0.10",
+    "@expo/metro-runtime": "3.2.3"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
