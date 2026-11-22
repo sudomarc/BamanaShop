@@ -3,6 +3,8 @@ name: Test No Checkout
 on:
   push:
     branches: [refactor/remove-expo-native-android]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
