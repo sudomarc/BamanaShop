@@ -40,10 +40,8 @@ jobs:
       matrix:
         application: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.application) || '["customer","pro"]') }}
     steps:
-      - name: Checkout selected branch
+      - name: Checkout pull request merge ref or dispatched branch
         uses: actions/checkout@v4
-        with:
-
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
