@@ -34,7 +34,6 @@ BamanaShop/
 
 - **Node.js** ≥ 20
 - **pnpm** ≥ 12 (`npm install -g pnpm@12.21.0`)
-- **Supabase CLI** (`npm install -g supabase`)
 
 ### Installation
 
@@ -43,21 +42,20 @@ BamanaShop/
 cd /home/marco/DEV/BamanaShop
 
 # Install dependencies (all workspaces)
-export PATH="$HOME/.npm-global/bin:$PATH"
-pnpm install
+pnpm install --frozen-lockfile
 
 # Configure environment
 cp .env.example .env.local
 # Edit .env.local for Admin/server tools. Never expose the service-role key to mobile apps.
 # Create .env.mobile containing only SUPABASE_URL and SUPABASE_ANON_KEY for Customer/Pro builds.
 
-# Start local Supabase
+# Start local Supabase with the workspace-pinned Supabase CLI (2.122.1)
 pnpm supabase:start
 
-# Run migrations & seed
+# Reset and migrate the local Supabase database only
 pnpm supabase:reset
 
-# Generate TypeScript types from DB
+# Generate TypeScript types from the local database
 pnpm supabase:types
 
 # Start all development servers
