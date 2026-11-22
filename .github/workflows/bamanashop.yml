@@ -268,7 +268,9 @@ jobs:
 
       - name: Verify React Native Gradle plugin resolution
         working-directory: apps/customer/android
-        run: node --print "require.resolve('@react-native/gradle-plugin/package.json')"
+        run: |
+          node --print "require.resolve('@react-native/gradle-plugin/package.json')"
+          node --print "require.resolve('@react-native/assets-registry/registry.js')"
 
       - name: Build APK with Gradle
         env:
