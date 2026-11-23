@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@bamanashop/contracts": ["../../packages/contracts/src"],
+      "@bamanashop/domain": ["../../packages/domain/src"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "app/**/*",
+    "App.tsx",
+    "index.js",
+    "nativewind-env.d.ts"
+  ],
+  "exclude": ["node_modules", "dist", "android"]
+}

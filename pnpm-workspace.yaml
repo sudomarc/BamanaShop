@@ -1,0 +1,8 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'supabase'
+allowBuilds:
+  esbuild: true
+  supabase: true
+  react-native-screens: false
