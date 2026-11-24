@@ -2,9 +2,27 @@ name: BamanaShop
 
 on:
   push:
-    branches: [chore/single-bamanashop-workflow]
+    branches: [main, "fix/**", "refactor/**", "chore/**"]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "supabase/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/bamanashop.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "supabase/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/bamanashop.yml"
   workflow_dispatch:
     inputs:
       application:
@@ -137,7 +155,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -147,8 +165,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -185,7 +204,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -195,8 +214,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -221,14 +241,18 @@ jobs:
           grep -q "export type Database" "$RUNNER_TEMP/database.generated.ts"
 
   build-android:
-    name: Build Android APK
+    name: Build Android APK (${{ matrix.application }})
     needs: cleanup-history
-    if: always() && github.event_name == 'workflow_dispatch'
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'pull_request')
+    strategy:
+      fail-fast: false
+      matrix:
+        application: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.application) || '["customer","pro"]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -238,8 +262,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -252,8 +277,13 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;26.1.10909125"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -306,9 +336,9 @@ jobs:
       - name: Calculate build configuration
         id: config
         env:
-          APPLICATION: ${{ inputs.application }}
-          PROFILE: ${{ inputs.profile }}
-          APP_VERSION: ${{ inputs.version }}
+          APPLICATION: ${{ matrix.application }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '1.0.0' }}
         run: |
           set -euo pipefail
           VERSION_CODE="$(node scripts/app-version.cjs "$APP_VERSION")"
@@ -353,7 +383,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "apps/$APPLICATION/android"
-          ./gradlew --no-daemon --stacktrace "$GRADLE_TASK" \
+          ./gradlew --no-daemon --stacktrace --max-workers=2 "$GRADLE_TASK" \
             "-PbamanashopVersionName=$APP_VERSION" \
             "-PbamanashopVersionCode=$VERSION_CODE"
 
@@ -380,16 +410,40 @@ jobs:
           ACTUAL_APPLICATION_ID="$(apkanalyzer manifest application-id "$APK_PATH" | tr -d '\r')"
           test "$ACTUAL_APPLICATION_ID" = "$EXPECTED_APPLICATION_ID"
 
-          apksigner verify "$APK_PATH"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::Android apksigner was not found under $ANDROID_HOME/build-tools."
+            exit 1
+          fi
+
+          APKANALYZER="$(command -v apkanalyzer || true)"
+          if [ -z "$APKANALYZER" ]; then
+            APKANALYZER="$(find "$ANDROID_HOME" -type f -name apkanalyzer -print -quit)"
+          fi
+          if [ -z "$APKANALYZER" ]; then
+            echo "::error::Android apkanalyzer was not found in the installed SDK."
+            exit 1
+          fi
+
+          ACTUAL_DEBUGGABLE="$("$APKANALYZER" manifest debuggable "$APK_PATH" | tr -d '\r')"
+          test "$ACTUAL_DEBUGGABLE" = "$EXPECTED_DEBUGGABLE"
+
+          ACTUAL_APPLICATION_ID="$("$APKANALYZER" manifest application-id "$APK_PATH" | tr -d '\r')"
+          test "$ACTUAL_APPLICATION_ID" = "$EXPECTED_APPLICATION_ID"
+
+          "$APKSIGNER" verify --verbose "$APK_PATH"
           unzip -t "$APK_PATH" >/dev/null
 
           mkdir -p "$RUNNER_TEMP/bamanashop-apk"
-          cp "$APK_PATH" "$RUNNER_TEMP/bamanashop-apk/BamanaShop-$APPLICATION-$PROFILE-v$APP_VERSION.apk"
+          OUTPUT_APK="$RUNNER_TEMP/bamanashop-apk/BamanaShop-$APPLICATION-$PROFILE-v$APP_VERSION.apk"
+          cp "$APK_PATH" "$OUTPUT_APK"
+          sha256sum "$OUTPUT_APK"
+          ls -lh "$OUTPUT_APK"
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: bamanashop-${{ inputs.application }}-${{ inputs.profile }}-v${{ inputs.version }}-${{ github.run_number }}
+          name: bamanashop-${{ matrix.application }}-${{ inputs.profile || 'dev' }}-v${{ inputs.version || '1.0.0' }}-${{ github.run_number }}
           path: ${{ runner.temp }}/bamanashop-apk/*.apk
           if-no-files-found: error
           retention-days: 30
