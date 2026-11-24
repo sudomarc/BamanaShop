@@ -151,7 +151,7 @@ jobs:
     name: Quality checks
     needs: cleanup-history
     if: always() && github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -200,7 +200,7 @@ jobs:
     name: Supabase migration verification
     needs: cleanup-history
     if: always() && github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -248,7 +248,7 @@ jobs:
       fail-fast: false
       matrix:
         application: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.application) || '["customer","pro"]') }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 90
     steps:
       - name: Checkout
