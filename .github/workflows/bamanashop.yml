@@ -1,8 +1,10 @@
 name: BamanaShop
 
 on:
-  push:
+  workflow_run:
+    workflows: [Continuous Integration]
     branches: [main]
+    types: [completed]
   workflow_dispatch:
     inputs:
       profile:
@@ -33,9 +35,12 @@ jobs:
       fail-fast: false
       matrix:
         application: [customer, pro]
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
