@@ -173,7 +173,10 @@ export function AccessReviewScreen({
             accessibilityRole="button"
             disabled={profileLoading}
             onPress={onRetry}
-            style={[styles.primaryButton, profileLoading && styles.disabledButton]}
+            style={[
+              styles.primaryButton,
+              profileLoading && styles.disabledButton,
+            ]}
           >
             {profileLoading ? (
               <ActivityIndicator color="#FFFFFF" />
