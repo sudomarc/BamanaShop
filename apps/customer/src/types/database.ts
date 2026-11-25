@@ -1474,6 +1474,7 @@ export type Database = {
           p_store_id: string;
           p_delivery_address_id: string;
           p_payment_method: "cod" | "orange_money";
+          p_expected_delivery_fee_gnf: number;
           p_items: Json;
           p_idempotency_key: string;
         };
