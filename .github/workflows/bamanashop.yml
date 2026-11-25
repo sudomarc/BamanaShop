@@ -78,8 +78,9 @@ jobs:
 
       - name: Prepare mobile Supabase environment
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL || vars.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || vars.SUPABASE_URL || 'https://ahptltoiketlvbqmynzk.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFocHRsdG9pa2V0bHZicW15bnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1NjIzNTcsImV4cCI6MjExMTEzODM1N30.jqgwx3NfpFoY8-fo3ErYWS87tXEce58NkTKTrTHJTpY' }}
+        # These are public mobile-client defaults for the connected project. Repository variables/secrets may override them.
         run: |
           set -euo pipefail
 
