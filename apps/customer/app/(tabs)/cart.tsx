@@ -36,7 +36,7 @@ export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { items, updateQuantity, clearCart } = useCartStore();
-  const [paymentMethod] = useState<PaymentMethod>("cod");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [idempotencyKey, setIdempotencyKey] = useState(() => createCheckoutKey());
   const [addresses, setAddresses] = useState<
     Array<{
@@ -154,6 +154,13 @@ export default function CartScreen() {
     }
     if (items.length === 0) {
       Alert.alert("Panier vide", "Ajoutez des produits avant de commander");
+      return;
+    }
+    if (items.some((item) => item.product.store_id !== items[0].product.store_id)) {
+      Alert.alert(
+        "Panier invalide",
+        "Une commande doit concerner une seule boutique. Retirez les produits d'autres boutiques avant de continuer.",
+      );
       return;
     }
     if (!selectedAddressId) {
