@@ -155,10 +155,18 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
-      - name: Inspect cart test formatting
+      - name: Inspect Customer formatting
         run: |
-          pnpm exec prettier --write apps/customer/src/__tests__/cart-rules.test.ts
-          git --no-pager diff -- apps/customer/src/__tests__/cart-rules.test.ts
+          pnpm exec prettier --write \
+            "apps/customer/app/(tabs)/cart.tsx" \
+            apps/customer/src/__tests__/cart-rules.test.ts \
+            apps/customer/src/__tests__/checkout-idempotency.test.ts \
+            apps/customer/src/utils/checkoutIdempotency.ts
+          git --no-pager diff -- \
+            "apps/customer/app/(tabs)/cart.tsx" \
+            apps/customer/src/__tests__/cart-rules.test.ts \
+            apps/customer/src/__tests__/checkout-idempotency.test.ts \
+            apps/customer/src/utils/checkoutIdempotency.ts
 
       - name: Check formatting
         run: pnpm run format:check
