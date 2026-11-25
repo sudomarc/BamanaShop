@@ -187,9 +187,11 @@ export default function CartScreen() {
         items: items.map((i) => ({
           productId: i.product.id,
           quantity: i.quantity,
+          expectedUnitPrice: i.product.price_gnf,
         })),
         deliveryAddressId: selectedAddressId,
         paymentMethod,
+        expectedDeliveryFee: totals!.deliveryFee,
         idempotencyKey,
       });
 
