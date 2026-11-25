@@ -61,15 +61,22 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    addItem(product, quantity);
-    Alert.alert(
-      "Ajouté au panier",
-      `${product.name} x${quantity} ajouté à votre panier`,
-      [
-        { text: "Continuer mes achats", style: "cancel" },
-        { text: "Voir le panier", onPress: () => router.push("/(tabs)/cart") },
-      ],
-    );
+    try {
+      addItem(product, quantity);
+      Alert.alert(
+        "Ajouté au panier",
+        `${product.name} x${quantity} ajouté à votre panier`,
+        [
+          { text: "Continuer mes achats", style: "cancel" },
+          { text: "Voir le panier", onPress: () => router.push("/(tabs)/cart") },
+        ],
+      );
+    } catch (error) {
+      Alert.alert(
+        "Panier mono-boutique",
+        error instanceof Error ? error.message : "Impossible d'ajouter ce produit.",
+      );
+    }
   };
 
   if (loading) {
@@ -276,7 +283,7 @@ export default function ProductDetailScreen() {
             <View style={styles.featureText}>
               <Text style={styles.featureTitle}>Paiement sécurisé</Text>
               <Text style={styles.featureDesc}>
-                À la livraison ou Orange Money
+                À la livraison
               </Text>
             </View>
           </View>
