@@ -31,12 +31,7 @@ import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const {
-    items,
-    updateQuantity,
-    clearCart,
-    getCheckoutKey,
-  } = useCartStore();
+  const { items, updateQuantity, clearCart, getCheckoutKey } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [addresses, setAddresses] = useState<
     Array<{
