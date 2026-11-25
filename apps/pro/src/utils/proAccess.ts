@@ -26,9 +26,7 @@ export type ProAccessDecision =
  * Decide which Pro surface may be rendered from authenticated, approved roles.
  * Customer, staff and partner-manager roles do not grant Seller/Courier access.
  */
-export function getProAccessDecision(
-  input: ProAccessInput,
-): ProAccessDecision {
+export function getProAccessDecision(input: ProAccessInput): ProAccessDecision {
   if (!input.backendConfigured) return { kind: "backend-unavailable" };
   if (!input.initialized || input.profileLoading) {
     return { kind: "loading" };
@@ -44,17 +42,11 @@ export function getProAccessDecision(
 
   if (availableRoles.length === 0) return { kind: "no-approved-role" };
 
-  if (
-    input.selectedRole === "seller" &&
-    availableRoles.includes("seller")
-  ) {
+  if (input.selectedRole === "seller" && availableRoles.includes("seller")) {
     return { kind: "seller" };
   }
 
-  if (
-    input.selectedRole === "courier" &&
-    availableRoles.includes("courier")
-  ) {
+  if (input.selectedRole === "courier" && availableRoles.includes("courier")) {
     return { kind: "courier" };
   }
 
