@@ -279,7 +279,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (get().user?.id !== userId) return;
 
       set({
-        profile: profileResult.data as Profile,
+        profile: profileResult.data as Profile | null,
         roles,
         requestedRoles,
         roleStatuses,
