@@ -233,6 +233,16 @@ export function AccessReviewScreen({
                 <Text style={styles.statusValue}>
                   {status ? statusLabels[status] : "Aucune demande enregistrée"}
                 </Text>
+                {role === "seller" && sellerProfile?.review_note ? (
+                  <Text style={styles.reviewNote}>
+                    Motif : {sellerProfile.review_note}
+                  </Text>
+                ) : null}
+                {role === "courier" && courierProfile?.review_note ? (
+                  <Text style={styles.reviewNote}>
+                    Motif : {courierProfile.review_note}
+                  </Text>
+                ) : null}
               </View>
             );
           })}
@@ -455,6 +465,12 @@ const styles = StyleSheet.create({
     color: "#334155",
     fontSize: 13,
     fontWeight: "600",
+  },
+  reviewNote: {
+    color: "#B45309",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
   },
   statusValue: {
     color: "#64748B",
