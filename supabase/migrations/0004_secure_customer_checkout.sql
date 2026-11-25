@@ -89,7 +89,7 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM pg_catalog.jsonb_array_elements(p_items) AS entry(item)
-    GROUP BY entry.item->>'product_id'
+    GROUP BY (entry.item->>'product_id')::UUID
     HAVING pg_catalog.count(*) > 1
   ) THEN
     RAISE EXCEPTION 'Cart contains duplicate product lines'
@@ -420,6 +420,30 @@ BEGIN
     'EXECUTE'
   ) THEN
     RAISE EXCEPTION 'process_payout must not be executable by anon/authenticated';
+  END IF;
+
+  IF pg_catalog.has_function_privilege(
+    'anon',
+    'public.create_customer_order(uuid, uuid, public.payment_method, jsonb, text)',
+    'EXECUTE'
+  ) OR pg_catalog.has_function_privilege(
+    'anon',
+    'public.cancel_customer_order(uuid, text)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'Checkout mutation RPCs must not be executable by anon';
+  END IF;
+
+  IF NOT pg_catalog.has_function_privilege(
+    'authenticated',
+    'public.create_customer_order(uuid, uuid, public.payment_method, jsonb, text)',
+    'EXECUTE'
+  ) OR NOT pg_catalog.has_function_privilege(
+    'authenticated',
+    'public.cancel_customer_order(uuid, text)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'Authenticated customers must have access to the checkout RPCs';
   END IF;
 
   IF pg_catalog.has_table_privilege('authenticated', 'public.orders', 'INSERT')
