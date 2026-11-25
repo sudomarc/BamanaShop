@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import {
   buildProApplicationPayload,
-  PRO_BUSINESS_ACTIVITIES,
   type ProApplicationDraft,
   type ProBusinessActivity,
   type ProVehicleType,

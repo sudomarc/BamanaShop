@@ -256,7 +256,7 @@ BEGIN
       updated_at = pg_catalog.now();
 
   IF pg_catalog.cardinality(v_activities) > 0 THEN
-    INSERT INTO public.seller_profiles (
+    INSERT INTO public.seller_profiles AS existing_seller (
       user_id,
       business_name,
       business_activities,
@@ -278,18 +278,18 @@ BEGIN
         business_activities = EXCLUDED.business_activities,
         business_details = EXCLUDED.business_details,
         status = CASE
-          WHEN public.seller_profiles.status = 'rejected'::public.role_status
+          WHEN existing_seller.status = 'rejected'::public.role_status
             THEN 'pending'::public.role_status
           ELSE public.seller_profiles.status
         END,
         updated_at = pg_catalog.now()
     RETURNING status INTO v_seller_status;
 
-    INSERT INTO public.role_memberships (user_id, role, status)
+    INSERT INTO public.role_memberships AS existing_membership (user_id, role, status)
     VALUES (v_user_id, 'seller', 'pending')
     ON CONFLICT (user_id, role) DO UPDATE
     SET status = CASE
-          WHEN public.role_memberships.status = 'rejected'::public.role_status
+          WHEN existing_membership.status = 'rejected'::public.role_status
             THEN 'pending'::public.role_status
           ELSE public.role_memberships.status
         END,
@@ -297,7 +297,7 @@ BEGIN
   END IF;
 
   IF COALESCE(p_courier_requested, FALSE) THEN
-    INSERT INTO public.courier_profiles (
+    INSERT INTO public.courier_profiles AS existing_courier (
       user_id,
       vehicle_type,
       vehicle_plate,
@@ -316,14 +316,14 @@ BEGIN
     SET vehicle_type = EXCLUDED.vehicle_type,
         vehicle_plate = EXCLUDED.vehicle_plate,
         status = CASE
-          WHEN public.courier_profiles.status = 'rejected'::public.role_status
+          WHEN existing_courier.status = 'rejected'::public.role_status
             THEN 'pending'::public.role_status
           ELSE public.courier_profiles.status
         END,
         updated_at = pg_catalog.now()
     RETURNING status INTO v_courier_status;
 
-    INSERT INTO public.role_memberships (user_id, role, status)
+    INSERT INTO public.role_memberships AS existing_membership (user_id, role, status)
     VALUES (v_user_id, 'courier', 'pending')
     ON CONFLICT (user_id, role) DO UPDATE
     SET status = CASE
