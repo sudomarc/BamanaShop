@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   resolveCheckoutKey,
   type CheckoutKey,
-} from "@/utils/checkoutIdempotency";
+} from "../utils/checkoutIdempotency";
 
 describe("checkout idempotency key", () => {
   it("reuses the key for an identical checkout context", () => {
@@ -42,11 +42,7 @@ describe("checkout idempotency key", () => {
   });
 
   it("creates a key after the cart is cleared", () => {
-    const result = resolveCheckoutKey(
-      "new-cart",
-      null,
-      () => "new-key",
-    );
+    const result = resolveCheckoutKey("new-cart", null, () => "new-key");
 
     expect(result.key).toBe("new-key");
     expect(result.context).toBe("new-cart");
