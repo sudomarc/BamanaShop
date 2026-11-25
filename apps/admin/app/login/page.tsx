@@ -15,11 +15,11 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
-    void supabase.auth.getSession().then(
-      ({ data }: { data: { session: Session | null } }) => {
+    void supabase.auth
+      .getSession()
+      .then(({ data }: { data: { session: Session | null } }) => {
         if (data.session) router.replace("/dashboard");
-      },
-    );
+      });
   }, [router, supabase]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
