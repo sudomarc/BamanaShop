@@ -91,6 +91,11 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
     router.replace("/login");
   };
 
+  const accessTitle =
+    state === "denied"
+      ? "Accès administrateur refusé"
+      : "Vérification impossible";
+
   if (!isSupabaseConfigured()) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
@@ -121,9 +126,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
       <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
         <section className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-lg font-semibold text-slate-900">
-            {state === "denied"
-              ? "Accès administrateur refusé"
-              : "Vérification impossible"}
+            {accessTitle}
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {message ??
