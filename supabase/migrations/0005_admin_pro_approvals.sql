@@ -170,7 +170,8 @@ BEGIN
       'seller'::public.user_role,
       'courier'::public.user_role
     )
-    AND membership.status = 'pending'::public.role_status;
+    AND membership.status = 'pending'::public.role_status
+    AND membership.user_id <> v_admin_id;
 
   RETURN v_applications;
 END;
@@ -201,6 +202,11 @@ BEGIN
       AND admin_role.status = 'approved'::public.role_status
   ) THEN
     RAISE EXCEPTION 'Administrator access required'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF p_user_id IS NULL OR p_user_id = v_admin_id THEN
+    RAISE EXCEPTION 'Administrators cannot review their own applications'
       USING ERRCODE = '42501';
   END IF;
 
