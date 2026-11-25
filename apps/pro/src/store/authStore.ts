@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createSupabaseClient, isSupabaseConfigured } from "@/utils/supabase";
+import { createSupabaseClient } from "@/utils/supabase";
 import {
   Profile,
   UserRole,
@@ -226,24 +226,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         })
         .map((membership) => membership.role);
 
-      if (
-        roles.includes("seller") &&
-        roles.includes("courier") &&
-        sellerProfile?.status === "approved" &&
-        courierProfile?.status === "approved"
-      ) {
-        // Both role records must be approved before either workspace is exposed.
-      } else {
-        if (roleStatuses.seller === "approved" && sellerProfile?.status !== "approved") {
-          roleStatuses.seller = sellerProfile?.status ?? "pending";
-        }
-        if (roleStatuses.courier === "approved" && courierProfile?.status !== "approved") {
-          roleStatuses.courier = courierProfile?.status ?? "pending";
-        }
+      if (roleStatuses.seller === "approved" && sellerProfile?.status !== "approved") {
+        roleStatuses.seller = sellerProfile?.status ?? "pending";
+      }
+      if (roleStatuses.courier === "approved" && courierProfile?.status !== "approved") {
+        roleStatuses.courier = courierProfile?.status ?? "pending";
       }
 
       const availableProRoles = roles.filter(
-        (role) => role === "seller" || role === "courier",
+        (role): role is "seller" | "courier" =>
+          role === "seller" || role === "courier",
       );
       const nextSelectedRole =
         selectedRole && availableProRoles.includes(selectedRole as "seller" | "courier")
