@@ -735,7 +735,9 @@ export async function createOrder(params: {
   if (createError) throw createError;
   if (!orderId) throw new Error("Order creation returned no id");
 
-  const { data, error } = await (await from("orders"))
+  const { data, error } = await (
+    await from("orders")
+  )
     .select("*")
     .eq("id", orderId)
     .single();
