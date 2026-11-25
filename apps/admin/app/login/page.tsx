@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Session } from "@supabase/supabase-js";
 import { createSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
 export default function AdminLoginPage() {
@@ -14,9 +15,11 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace("/dashboard");
-    });
+    void supabase.auth.getSession().then(
+      ({ data }: { data: { session: Session | null } }) => {
+        if (data.session) router.replace("/dashboard");
+      },
+    );
   }, [router, supabase]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
