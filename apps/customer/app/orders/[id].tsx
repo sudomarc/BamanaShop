@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "@/navigation/compat";
-import { fetchOrder, Order, OrderStatus, DeliveryStatus } from "@/api";
+import { fetchOrder, cancelOrder, Order, OrderStatus, DeliveryStatus } from "@/api";
 import { GnfAmount } from "@bamanashop/contracts";
 import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
@@ -84,10 +84,9 @@ export default function OrderDetailScreen() {
           onPress: async () => {
             setCancelling(true);
             try {
-              // In real app, call cancel API
-              // await cancelOrder(id, "Client a annulé");
-              Alert.alert("Annulée", "La commande a été annulée");
-              router.back();
+              await cancelOrder(id, "Annulée par le client");
+              await loadOrder();
+              Alert.alert("Annulée", "Votre commande a été annulée.");
             } catch {
               Alert.alert("Erreur", "Impossible d'annuler");
             } finally {
