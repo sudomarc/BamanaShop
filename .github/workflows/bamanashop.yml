@@ -5,12 +5,6 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      application:
-        description: Android application(s)
-        type: choice
-        options: [customer, pro, both]
-        default: both
-        required: true
       profile:
         description: APK profile
         type: choice
@@ -225,7 +219,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        application: ${{ fromJSON(inputs.application == 'customer' && '["customer"]' || inputs.application == 'pro' && '["pro"]' || '["customer","pro"]') }}
+        application: [customer, pro]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
