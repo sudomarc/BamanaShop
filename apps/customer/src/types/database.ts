@@ -1462,6 +1462,13 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      cancel_customer_order: {
+        Args: {
+          p_order_id: string;
+          p_reason: string;
+        };
+        Returns: undefined;
+      };
       create_customer_order: {
         Args: {
           p_store_id: string;
