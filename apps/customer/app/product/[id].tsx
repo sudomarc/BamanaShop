@@ -287,9 +287,7 @@ export default function ProductDetailScreen() {
             />
             <View style={styles.featureText}>
               <Text style={styles.featureTitle}>Paiement sécurisé</Text>
-              <Text style={styles.featureDesc}>
-                À la livraison
-              </Text>
+              <Text style={styles.featureDesc}>À la livraison</Text>
             </View>
           </View>
           <View style={styles.featureItem}>
