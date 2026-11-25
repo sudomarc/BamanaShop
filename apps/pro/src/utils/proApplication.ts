@@ -55,8 +55,16 @@ function requiredText(value: string, label: string): string {
 }
 
 function parseList(value: string, label: string): string[] {
-  const items = [...new Set(value.split(/[\n,;]/).map((item) => item.trim()).filter(Boolean))];
-  if (items.length === 0) throw new Error(`${label} : indiquez au moins une valeur.`);
+  const items = [
+    ...new Set(
+      value
+        .split(/[\n,;]/)
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ];
+  if (items.length === 0)
+    throw new Error(`${label} : indiquez au moins une valeur.`);
   return items;
 }
 
@@ -75,7 +83,9 @@ export function buildProApplicationPayload(
 
   const activities = [...new Set(draft.activities)];
   if (activities.length !== draft.activities.length) {
-    throw new Error("Une activité commerciale est sélectionnée plusieurs fois.");
+    throw new Error(
+      "Une activité commerciale est sélectionnée plusieurs fois.",
+    );
   }
   if (activities.length === 0 && !draft.courierRequested) {
     throw new Error("Sélectionnez au moins une activité ou l'accès livreur.");
@@ -87,15 +97,26 @@ export function buildProApplicationPayload(
   if (activities.length > 0) {
     businessName = requiredText(draft.businessName, "Le nom de l'entreprise");
     if (businessName.length > 200) {
-      throw new Error("Le nom de l'entreprise ne doit pas dépasser 200 caractères.");
+      throw new Error(
+        "Le nom de l'entreprise ne doit pas dépasser 200 caractères.",
+      );
     }
   }
 
   if (activities.includes("physical_store")) {
     businessDetails.physical_store = {
-      commune: requiredText(draft.physicalStore.commune, "La commune du commerce"),
-      quartier: requiredText(draft.physicalStore.quartier, "Le quartier du commerce"),
-      address_line: requiredText(draft.physicalStore.addressLine, "L'adresse du commerce"),
+      commune: requiredText(
+        draft.physicalStore.commune,
+        "La commune du commerce",
+      ),
+      quartier: requiredText(
+        draft.physicalStore.quartier,
+        "Le quartier du commerce",
+      ),
+      address_line: requiredText(
+        draft.physicalStore.addressLine,
+        "L'adresse du commerce",
+      ),
     };
   }
 
@@ -112,14 +133,21 @@ export function buildProApplicationPayload(
   if (activities.includes("wholesaler")) {
     const rawMinimumOrder = draft.wholesaler.minimumOrderGnf.replace(/\s/g, "");
     if (!/^[0-9]+$/.test(rawMinimumOrder)) {
-      throw new Error("Le minimum de commande grossiste doit être un montant GNF positif.");
+      throw new Error(
+        "Le minimum de commande grossiste doit être un montant GNF positif.",
+      );
     }
     const minimumOrder = Number(rawMinimumOrder);
     if (!Number.isSafeInteger(minimumOrder) || minimumOrder <= 0) {
-      throw new Error("Le minimum de commande grossiste doit être un montant GNF positif.");
+      throw new Error(
+        "Le minimum de commande grossiste doit être un montant GNF positif.",
+      );
     }
     businessDetails.wholesaler = {
-      goods: parseList(draft.wholesaler.goods, "Les catégories de marchandises"),
+      goods: parseList(
+        draft.wholesaler.goods,
+        "Les catégories de marchandises",
+      ),
       minimum_order_gnf: minimumOrder,
     };
   }

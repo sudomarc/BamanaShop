@@ -155,17 +155,6 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
-      - name: Capture Prettier formatting diagnostics
-        run: |
-          pnpm exec prettier --write \
-            "apps/pro/src/components/ProAccessScreens.tsx" \
-            "apps/pro/src/components/ProApplicationForm.tsx" \
-            "apps/pro/src/utils/proApplication.ts"
-          git --no-pager diff -- \
-            "apps/pro/src/components/ProAccessScreens.tsx" \
-            "apps/pro/src/components/ProApplicationForm.tsx" \
-            "apps/pro/src/utils/proApplication.ts"
-
       - name: Check formatting
         run: pnpm run format:check
 

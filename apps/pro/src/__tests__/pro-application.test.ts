@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildProApplicationPayload,
   type ProApplicationDraft,
-} from "@/utils/proApplication";
+} from "../utils/proApplication";
 
 const validDraft: ProApplicationDraft = {
   fullName: "Aissata Barry",

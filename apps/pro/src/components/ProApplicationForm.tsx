@@ -15,7 +15,11 @@ import {
   type ProVehicleType,
 } from "@/utils/proApplication";
 
-const activityOptions: Array<{ value: ProBusinessActivity; label: string; detail: string }> = [
+const activityOptions: Array<{
+  value: ProBusinessActivity;
+  label: string;
+  detail: string;
+}> = [
   {
     value: "physical_store",
     label: "Commerce physique",
@@ -100,7 +104,9 @@ export function ProApplicationForm({
   initialDraft?: Partial<ProApplicationDraft>;
   loading: boolean;
   onCancel: () => void;
-  onSubmit: (payload: ReturnType<typeof buildProApplicationPayload>) => Promise<string | null>;
+  onSubmit: (
+    payload: ReturnType<typeof buildProApplicationPayload>,
+  ) => Promise<string | null>;
 }) {
   const [draft, setDraft] = useState<ProApplicationDraft>({
     ...emptyDraft,
@@ -126,9 +132,10 @@ export function ProApplicationForm({
   const [error, setError] = useState<string | null>(null);
 
   const selectedLabels = useMemo(
-    () => activityOptions
-      .filter((option) => draft.activities.includes(option.value))
-      .map((option) => option.label),
+    () =>
+      activityOptions
+        .filter((option) => draft.activities.includes(option.value))
+        .map((option) => option.label),
     [draft.activities],
   );
 
@@ -217,7 +224,9 @@ export function ProApplicationForm({
         <Text style={styles.title}>Votre activité professionnelle</Text>
         <Text style={styles.subtitle}>Étape {step} sur 3</Text>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${(step / 3) * 100}%` }]} />
+          <View
+            style={[styles.progressFill, { width: `${(step / 3) * 100}%` }]}
+          />
         </View>
 
         {step === 1 ? (
@@ -239,7 +248,8 @@ export function ProApplicationForm({
 
             <Text style={styles.sectionTitle}>Que souhaitez-vous faire ?</Text>
             <Text style={styles.helper}>
-              Sélectionnez toutes les activités que vous exercez. Vous pouvez en choisir plusieurs.
+              Sélectionnez toutes les activités que vous exercez. Vous pouvez en
+              choisir plusieurs.
             </Text>
             {activityOptions.map((option) => {
               const selected = draft.activities.includes(option.value);
@@ -251,7 +261,12 @@ export function ProApplicationForm({
                   onPress={() => toggleActivity(option.value)}
                   style={[styles.option, selected && styles.optionSelected]}
                 >
-                  <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      selected && styles.checkboxSelected,
+                    ]}
+                  >
                     {selected ? <Text style={styles.checkmark}>✓</Text> : null}
                   </View>
                   <View style={styles.optionText}>
@@ -265,7 +280,9 @@ export function ProApplicationForm({
             <Pressable
               accessibilityRole="checkbox"
               accessibilityState={{ checked: draft.courierRequested }}
-              onPress={() => update("courierRequested", !draft.courierRequested)}
+              onPress={() =>
+                update("courierRequested", !draft.courierRequested)
+              }
               style={[
                 styles.option,
                 draft.courierRequested && styles.optionSelected,
@@ -295,7 +312,9 @@ export function ProApplicationForm({
           <>
             {draft.activities.length > 0 ? (
               <>
-                <Text style={styles.sectionTitle}>Informations commerciales</Text>
+                <Text style={styles.sectionTitle}>
+                  Informations commerciales
+                </Text>
                 <Field
                   label="Nom de l'entreprise ou du commerce"
                   value={draft.businessName}
@@ -311,19 +330,25 @@ export function ProApplicationForm({
                 <Field
                   label="Commune"
                   value={draft.physicalStore.commune}
-                  onChangeText={(value) => updateNested("physicalStore", "commune", value)}
+                  onChangeText={(value) =>
+                    updateNested("physicalStore", "commune", value)
+                  }
                   placeholder="Ex. Dixinn"
                 />
                 <Field
                   label="Quartier"
                   value={draft.physicalStore.quartier}
-                  onChangeText={(value) => updateNested("physicalStore", "quartier", value)}
+                  onChangeText={(value) =>
+                    updateNested("physicalStore", "quartier", value)
+                  }
                   placeholder="Nom du quartier"
                 />
                 <Field
                   label="Adresse du commerce"
                   value={draft.physicalStore.addressLine}
-                  onChangeText={(value) => updateNested("physicalStore", "addressLine", value)}
+                  onChangeText={(value) =>
+                    updateNested("physicalStore", "addressLine", value)
+                  }
                   placeholder="Rue, repère et numéro"
                   multiline
                 />
@@ -336,13 +361,17 @@ export function ProApplicationForm({
                 <Field
                   label="Canaux de vente"
                   value={draft.onlineSeller.channels}
-                  onChangeText={(value) => updateNested("onlineSeller", "channels", value)}
+                  onChangeText={(value) =>
+                    updateNested("onlineSeller", "channels", value)
+                  }
                   placeholder="Facebook, Instagram, site web…"
                 />
                 <Field
                   label="Zones de livraison"
                   value={draft.onlineSeller.deliveryZones}
-                  onChangeText={(value) => updateNested("onlineSeller", "deliveryZones", value)}
+                  onChangeText={(value) =>
+                    updateNested("onlineSeller", "deliveryZones", value)
+                  }
                   placeholder="Matam, Ratoma, Dixinn…"
                 />
               </>
@@ -354,13 +383,17 @@ export function ProApplicationForm({
                 <Field
                   label="Marchandises proposées"
                   value={draft.wholesaler.goods}
-                  onChangeText={(value) => updateNested("wholesaler", "goods", value)}
+                  onChangeText={(value) =>
+                    updateNested("wholesaler", "goods", value)
+                  }
                   placeholder="Riz, huile, boissons…"
                 />
                 <Field
                   label="Commande minimale (GNF)"
                   value={draft.wholesaler.minimumOrderGnf}
-                  onChangeText={(value) => updateNested("wholesaler", "minimumOrderGnf", value)}
+                  onChangeText={(value) =>
+                    updateNested("wholesaler", "minimumOrderGnf", value)
+                  }
                   placeholder="100000"
                   keyboardType="numeric"
                 />
@@ -373,13 +406,17 @@ export function ProApplicationForm({
                 <Field
                   label="Fournisseurs ou marques"
                   value={draft.distributor.suppliers}
-                  onChangeText={(value) => updateNested("distributor", "suppliers", value)}
+                  onChangeText={(value) =>
+                    updateNested("distributor", "suppliers", value)
+                  }
                   placeholder="Noms des fournisseurs"
                 />
                 <Field
                   label="Zones de distribution"
                   value={draft.distributor.distributionZones}
-                  onChangeText={(value) => updateNested("distributor", "distributionZones", value)}
+                  onChangeText={(value) =>
+                    updateNested("distributor", "distributionZones", value)
+                  }
                   placeholder="Communes ou régions couvertes"
                 />
               </>
@@ -398,7 +435,12 @@ export function ProApplicationForm({
                         onPress={() => update("vehicleType", option.value)}
                         style={[styles.chip, selected && styles.chipSelected]}
                       >
-                        <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                        <Text
+                          style={[
+                            styles.chipText,
+                            selected && styles.chipTextSelected,
+                          ]}
+                        >
                           {option.label}
                         </Text>
                       </Pressable>
@@ -422,7 +464,8 @@ export function ProApplicationForm({
           <>
             <Text style={styles.sectionTitle}>Vérification de la demande</Text>
             <Text style={styles.helper}>
-              Vérifiez vos informations avant l'envoi. Votre accès restera en attente jusqu'à validation par l'équipe BamanaShop.
+              Vérifiez vos informations avant l'envoi. Votre accès restera en
+              attente jusqu'à validation par l'équipe BamanaShop.
             </Text>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Nom</Text>
@@ -435,7 +478,9 @@ export function ProApplicationForm({
             {draft.businessName.trim() ? (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Commerce</Text>
-                <Text style={styles.summaryValue}>{draft.businessName.trim()}</Text>
+                <Text style={styles.summaryValue}>
+                  {draft.businessName.trim()}
+                </Text>
               </View>
             ) : null}
             {selectedLabels.map((label) => (
@@ -448,13 +493,18 @@ export function ProApplicationForm({
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Livreur</Text>
                 <Text style={styles.summaryValue}>
-                  {vehicleOptions.find((option) => option.value === draft.vehicleType)?.label}
+                  {
+                    vehicleOptions.find(
+                      (option) => option.value === draft.vehicleType,
+                    )?.label
+                  }
                 </Text>
               </View>
             ) : null}
             <View style={styles.notice}>
               <Text style={styles.noticeText}>
-                L'envoi crée une demande en attente. Il ne donne pas immédiatement accès aux espaces vendeur ou livreur.
+                L'envoi crée une demande en attente. Il ne donne pas
+                immédiatement accès aux espaces vendeur ou livreur.
               </Text>
             </View>
           </>
@@ -465,7 +515,9 @@ export function ProApplicationForm({
         <View style={styles.actions}>
           <Pressable
             disabled={loading}
-            onPress={step === 1 ? onCancel : () => setStep((current) => current - 1)}
+            onPress={
+              step === 1 ? onCancel : () => setStep((current) => current - 1)
+            }
             style={styles.secondaryButton}
           >
             <Text style={styles.secondaryButtonText}>

@@ -153,9 +153,9 @@ export function AccessReviewScreen({
     typeof record[key] === "string" ? (record[key] as string) : "";
   const readList = (record: Record<string, unknown>, key: string) =>
     Array.isArray(record[key])
-      ? (record[key] as unknown[]).filter(
-          (value): value is string => typeof value === "string",
-        ).join(", ")
+      ? (record[key] as unknown[])
+          .filter((value): value is string => typeof value === "string")
+          .join(", ")
       : "";
 
   const physicalStore = readRecord(details.physical_store);
@@ -261,7 +261,9 @@ export function AccessReviewScreen({
             style={styles.primaryButton}
           >
             <Text style={styles.primaryButtonText}>
-              {requestedRoles.some((role) => role === "seller" || role === "courier")
+              {requestedRoles.some(
+                (role) => role === "seller" || role === "courier",
+              )
                 ? "Compléter ou modifier ma demande"
                 : "Demander un accès professionnel"}
             </Text>
