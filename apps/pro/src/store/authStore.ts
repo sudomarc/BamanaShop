@@ -99,7 +99,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         password,
       });
       if (error) throw error;
-      if (!data.user) throw new Error("Supabase n'a retourné aucun utilisateur.");
+      if (!data.user) {
+        throw new Error("Supabase n'a retourné aucun utilisateur.");
+      }
 
       set({
         user: { id: data.user.id, email: data.user.email },
@@ -109,7 +111,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await get().fetchProfiles();
       return { error: null };
     } catch (error) {
-      const normalized = error instanceof Error ? error : new Error(errorMessage(error));
+      const normalized =
+        error instanceof Error ? error : new Error(errorMessage(error));
       set({ profileError: normalized.message });
       return { error: normalized };
     } finally {
@@ -226,10 +229,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         })
         .map((membership) => membership.role);
 
-      if (roleStatuses.seller === "approved" && sellerProfile?.status !== "approved") {
+      if (
+        roleStatuses.seller === "approved" &&
+        sellerProfile?.status !== "approved"
+      ) {
         roleStatuses.seller = sellerProfile?.status ?? "pending";
       }
-      if (roleStatuses.courier === "approved" && courierProfile?.status !== "approved") {
+      if (
+        roleStatuses.courier === "approved" &&
+        courierProfile?.status !== "approved"
+      ) {
         roleStatuses.courier = courierProfile?.status ?? "pending";
       }
 
@@ -238,7 +247,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           role === "seller" || role === "courier",
       );
       const nextSelectedRole =
-        selectedRole && availableProRoles.includes(selectedRole as "seller" | "courier")
+        selectedRole &&
+        availableProRoles.includes(selectedRole as "seller" | "courier")
           ? selectedRole
           : availableProRoles.length === 1
             ? availableProRoles[0]
