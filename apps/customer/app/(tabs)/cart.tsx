@@ -25,6 +25,7 @@ import { isSupabaseConfigured } from "@/utils/supabase";
 import { calculateOrderTotals } from "@bamanashop/domain";
 import { GnfAmount, PaymentMethod } from "@bamanashop/contracts";
 import { formatGnf } from "@bamanashop/domain";
+import { selectDeliveryPartner } from "@/utils/deliveryRules";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
@@ -120,29 +121,14 @@ export default function CartScreen() {
       );
       if (!deliveryAddress) throw new Error("Delivery address not found");
 
-      // Match the server: only partners covering this commune are eligible.
-      const eligiblePartners = partners.filter(
-        (candidate) =>
-          candidate.coverage_zones.length === 0 ||
-          candidate.coverage_zones.some(
-            (zone) =>
-              zone.trim().toLocaleLowerCase() ===
-              deliveryAddress.commune.trim().toLocaleLowerCase(),
-          ),
+      // Use the same coverage and tariff rules as the server checkout RPC.
+      const partner = selectDeliveryPartner(
+        partners,
+        deliveryAddress.commune,
       );
-      if (eligiblePartners.length === 0) {
+      if (!partner) {
         throw new Error("Aucun partenaire ne dessert cette commune.");
       }
-
-      // Match the server tariff selection: lowest base + COD handling fee,
-      // then stable partner ID ordering for deterministic ties.
-      const partner = [...eligiblePartners].sort(
-        (a, b) =>
-          a.base_fee_gnf +
-          a.cod_handling_fee_gnf -
-          (b.base_fee_gnf + b.cod_handling_fee_gnf) ||
-          a.id.localeCompare(b.id),
-      )[0];
 
       // Routing is not integrated yet; the server uses a zero-distance estimate.
       const distanceKm = 0;
