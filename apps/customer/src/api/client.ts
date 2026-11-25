@@ -742,17 +742,16 @@ export async function cancelOrder(
   orderId: string,
   reason: string,
 ): Promise<void> {
-  if (isMockMode) return;
+  if (isMockMode) {
+    throw new Error(
+      "Le backend BamanaShop n'est pas configuré. Aucune annulation ne peut être simulée.",
+    );
+  }
 
-  const { error } = await (
-    await from("orders")
-  )
-    .update({
-      status: "cancelled",
-      cancellation_reason: reason,
-      cancelled_at: new Date().toISOString(),
-    })
-    .eq("id", orderId);
+  const { error } = await supabase.rpc("cancel_customer_order", {
+    p_order_id: orderId,
+    p_reason: reason,
+  });
 
   if (error) throw error;
 }
