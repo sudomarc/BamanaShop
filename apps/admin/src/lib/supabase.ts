@@ -6,7 +6,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 export const isSupabaseConfigured = () =>
   Boolean(supabaseUrl && supabaseAnonKey);
 
-export const createSupabaseClient = () => {
+type AdminSupabaseClient = ReturnType<typeof createBrowserClient>;
+
+export const createSupabaseClient = (): AdminSupabaseClient => {
   if (!isSupabaseConfigured()) {
     return {
       auth: {
@@ -30,7 +32,7 @@ export const createSupabaseClient = () => {
         data: null,
         error: { message: "Supabase is not configured." },
       }),
-    } as any;
+    } as unknown as AdminSupabaseClient;
   }
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
