@@ -165,6 +165,15 @@ BEGIN
     INTO v_partner
   FROM public.delivery_partners AS dp
   WHERE dp.is_active = TRUE
+    AND (
+      pg_catalog.cardinality(dp.coverage_zones) = 0
+      OR EXISTS (
+        SELECT 1
+        FROM pg_catalog.unnest(dp.coverage_zones) AS zone_name
+        WHERE pg_catalog.lower(pg_catalog.btrim(zone_name))
+          = pg_catalog.lower(pg_catalog.btrim(v_address.commune))
+      )
+    )
   ORDER BY (dp.base_fee_gnf + dp.cod_handling_fee_gnf), dp.id
   LIMIT 1;
 
