@@ -169,8 +169,8 @@ BEGIN
       pg_catalog.cardinality(dp.coverage_zones) = 0
       OR EXISTS (
         SELECT 1
-        FROM pg_catalog.unnest(dp.coverage_zones) AS zone_name
-        WHERE pg_catalog.lower(pg_catalog.btrim(zone_name))
+        FROM pg_catalog.unnest(dp.coverage_zones) AS zones(zone_name)
+        WHERE pg_catalog.lower(pg_catalog.btrim(zones.zone_name))
           = pg_catalog.lower(pg_catalog.btrim(v_address.commune))
       )
     )
