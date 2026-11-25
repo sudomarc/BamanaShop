@@ -217,11 +217,15 @@ jobs:
           grep -q "export type Database" "$RUNNER_TEMP/database.generated.ts"
 
   build-android:
-    name: Build Android APK
+    name: Build Android APK (${{ matrix.application }})
     needs: cleanup-history
-    if: always() && github.event_name == 'workflow_dispatch'
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        application: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.application) || '["customer","pro"]') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -302,9 +306,9 @@ jobs:
       - name: Calculate build configuration
         id: config
         env:
-          APPLICATION: ${{ inputs.application }}
-          PROFILE: ${{ inputs.profile }}
-          APP_VERSION: ${{ inputs.version }}
+          APPLICATION: ${{ matrix.application }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '1.0.0' }}
         run: |
           set -euo pipefail
           VERSION_CODE="$(node scripts/app-version.cjs "$APP_VERSION")"
@@ -342,23 +346,41 @@ jobs:
 
       - name: Build APK with the checked-in native Gradle project
         env:
-          APPLICATION: ${{ inputs.application }}
-          APP_VERSION: ${{ inputs.version }}
+          APPLICATION: ${{ matrix.application }}
+          APP_VERSION: ${{ inputs.version || '1.0.0' }}
           VERSION_CODE: ${{ steps.config.outputs.version_code }}
           GRADLE_TASK: ${{ steps.config.outputs.gradle_task }}
         run: |
           set -euo pipefail
           cd "apps/$APPLICATION/android"
-          ./gradlew --no-daemon --stacktrace "$GRADLE_TASK" \
-            "-PbamanashopVersionName=$APP_VERSION" \
-            "-PbamanashopVersionCode=$VERSION_CODE"
+          for attempt in 1 2 3; do
+            set +e
+            ./gradlew --no-daemon --stacktrace "$GRADLE_TASK" \
+              "-PbamanashopVersionName=$APP_VERSION" \
+              "-PbamanashopVersionCode=$VERSION_CODE" 2>&1 | tee "$RUNNER_TEMP/gradle-build.log"
+            build_status=${PIPESTATUS[0]}
+            set -e
+
+            if [ "$build_status" -eq 0 ]; then
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 3 ] && grep -Eqi 'HTTP 429|status code 429|Too Many Requests' "$RUNNER_TEMP/gradle-build.log"; then
+              delay=$((attempt * 30))
+              echo "::warning::Maven Central rate-limited this build. Retrying in ${delay}s (attempt $((attempt + 1))/3)."
+              sleep "$delay"
+              continue
+            fi
+
+            exit "$build_status"
+          done
 
       - name: Verify standalone APK
         env:
-          APPLICATION: ${{ inputs.application }}
-          PROFILE: ${{ inputs.profile }}
-          APP_VERSION: ${{ inputs.version }}
-          APK_PATH: apps/${{ inputs.application }}/android/${{ steps.config.outputs.apk_path }}
+          APPLICATION: ${{ matrix.application }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '1.0.0' }}
+          APK_PATH: apps/${{ matrix.application }}/android/${{ steps.config.outputs.apk_path }}
           EXPECTED_DEBUGGABLE: ${{ steps.config.outputs.expected_debuggable }}
           EXPECTED_APPLICATION_ID: ${{ steps.config.outputs.application_id }}
         run: |
@@ -385,7 +407,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: bamanashop-${{ inputs.application }}-${{ inputs.profile }}-v${{ inputs.version }}-${{ github.run_number }}
+          name: bamanashop-${{ matrix.application }}-${{ inputs.profile || 'dev' }}-v${{ inputs.version || '1.0.0' }}-${{ github.run_number }}
           path: ${{ runner.temp }}/bamanashop-apk/*.apk
           if-no-files-found: error
           retention-days: 30
