@@ -225,7 +225,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        application: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.application != 'both' && format('[\"{0}\"]', inputs.application) || '[\"customer\",\"pro\"]') }}
+        application: ${{ fromJSON(inputs.application == 'customer' && '["customer"]' || inputs.application == 'pro' && '["pro"]' || '["customer","pro"]') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
