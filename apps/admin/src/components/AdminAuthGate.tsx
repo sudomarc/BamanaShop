@@ -35,10 +35,10 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, nextSession: Session | null) => {
-      if (!active) return;
-      setSession(nextSession);
-      setState(nextSession ? "loading" : "signed-out");
-      setMessage(null);
+        if (!active) return;
+        setSession(nextSession);
+        setState(nextSession ? "loading" : "signed-out");
+        setMessage(null);
       },
     );
 
