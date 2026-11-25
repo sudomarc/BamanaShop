@@ -1,10 +1,8 @@
 name: BamanaShop
 
 on:
-  pull_request:
-    branches: [main]
   push:
-    branches: [fix/android-apksigner-path]
+    branches: [main]
   workflow_dispatch:
     inputs:
       profile:
@@ -18,204 +16,17 @@ on:
         type: string
         default: "1.0.0"
         required: true
-      clean_history:
-        description: Delete all previous GitHub Actions runs and keep this run
-        type: boolean
-        default: false
-        required: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: bamanashop-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: bamanashop-delivery-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  cleanup-history:
-    name: One-time Actions history cleanup
-    if: github.event_name == 'workflow_dispatch' && inputs.clean_history
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      actions: write
-    steps:
-      - name: Cancel and delete all previous workflow runs
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const { owner, repo } = context.repo;
-            const currentRunId = context.runId;
-            const runs = [];
-            let page = 1;
-
-            while (true) {
-              const response = await github.rest.actions.listWorkflowRunsForRepo({
-                owner,
-                repo,
-                per_page: 100,
-                page,
-              });
-              runs.push(...response.data.workflow_runs);
-              if (response.data.workflow_runs.length < 100) break;
-              page += 1;
-            }
-
-            core.info("Found " + runs.length + " existing run(s); preserving current run " + currentRunId + ".");
-            let deleted = 0;
-            const failures = [];
-
-            for (const run of runs) {
-              if (run.id === currentRunId) continue;
-
-              try {
-                let status = run.status;
-
-                if (status !== "completed") {
-                  try {
-                    await github.rest.actions.cancelWorkflowRun({
-                      owner,
-                      repo,
-                      run_id: run.id,
-                    });
-                  } catch (error) {
-                    core.warning("Cancel " + run.id + ": " + error.message);
-                  }
-
-                  for (let attempt = 0; attempt < 60; attempt += 1) {
-                    const latest = await github.rest.actions.getWorkflowRun({
-                      owner,
-                      repo,
-                      run_id: run.id,
-                    });
-                    status = latest.data.status;
-                    if (status === "completed") break;
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                  }
-                }
-
-                if (status !== "completed") {
-                  throw new Error("Run " + run.id + " did not reach completed state.");
-                }
-
-                await github.rest.actions.deleteWorkflowRun({
-                  owner,
-                  repo,
-                  run_id: run.id,
-                });
-                deleted += 1;
-                core.info("Deleted run " + run.id + ": " + run.name);
-              } catch (error) {
-                failures.push(run.id + ": " + error.message);
-                core.error("Could not delete run " + run.id + ": " + error.message);
-              }
-            }
-
-            await core.summary
-              .addHeading("Actions history cleanup")
-              .addRaw("Deleted " + deleted + " previous run(s). Preserved current run " + currentRunId + ".")
-              .write();
-
-            if (failures.length > 0) {
-              core.setFailed(failures.length + " run(s) could not be deleted:\n" + failures.join("\n"));
-            }
-
-  quality:
-    name: Quality checks
-    needs: cleanup-history
-    if: always() && github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.21.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared packages
-        run: pnpm run build:packages
-
-      - name: Lint
-        run: pnpm run lint
-
-      - name: Check formatting
-        run: pnpm run format:check
-
-      - name: Typecheck
-        run: pnpm run typecheck
-
-      - name: Unit tests
-        run: pnpm run test
-
-      - name: Validate PNG assets
-        run: pnpm run validate:png
-
-      - name: Validate legacy storefront SEO
-        run: node scripts/validate-seo.mjs
-
-      - name: Build Admin
-        run: pnpm --filter=@bamanashop/admin build
-
-  supabase:
-    name: Supabase migration verification
-    needs: cleanup-history
-    if: always() && github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.21.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Verify pinned Supabase CLI
-        run: |
-          CLI_VERSION="$(./supabase/node_modules/.bin/supabase --version)"
-          test "$CLI_VERSION" = "2.122.1"
-
-      - name: Start local Supabase
-        run: ./supabase/node_modules/.bin/supabase start
-
-      - name: Reset database and apply migrations
-        run: ./supabase/node_modules/.bin/supabase db reset --local
-
-      - name: Generate local database types
-        run: ./supabase/node_modules/.bin/supabase gen types typescript --local > "$RUNNER_TEMP/database.generated.ts"
-
-      - name: Verify generated types
-        run: |
-          test -s "$RUNNER_TEMP/database.generated.ts"
-          grep -q "export type Database" "$RUNNER_TEMP/database.generated.ts"
-
   build-android:
     name: Build Android APK (${{ matrix.application }})
-    needs: cleanup-history
-    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
