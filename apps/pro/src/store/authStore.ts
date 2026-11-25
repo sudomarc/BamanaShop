@@ -153,11 +153,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const [profileResult, membershipsResult] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .maybeSingle(),
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         supabase
           .from("role_memberships")
           .select("role, status")
