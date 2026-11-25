@@ -1,3 +1,5 @@
+import type { Json } from "@/types/database";
+
 export const PRO_BUSINESS_ACTIVITIES = [
   "physical_store",
   "online_seller",
@@ -40,7 +42,7 @@ export type ProApplicationPayload = {
   phone: string;
   businessName: string | null;
   businessActivities: ProBusinessActivity[];
-  businessDetails: Record<string, unknown>;
+  businessDetails: Record<string, Json>;
   courierRequested: boolean;
   vehicleType: ProVehicleType | null;
   vehiclePlate: string | null;
@@ -79,7 +81,7 @@ export function buildProApplicationPayload(
     throw new Error("Sélectionnez au moins une activité ou l'accès livreur.");
   }
 
-  const businessDetails: Record<string, unknown> = {};
+  const businessDetails: Record<string, Json> = {};
   let businessName: string | null = null;
 
   if (activities.length > 0) {
