@@ -16,6 +16,11 @@ AS $function$
 BEGIN
   IF current_user IN ('postgres', 'service_role')
      OR public.is_admin() THEN
+    IF TG_OP = 'UPDATE'
+       AND OLD.status = 'rejected'::public.role_status
+       AND NEW.status = 'pending'::public.role_status THEN
+      NEW.review_note := NULL;
+    END IF;
     RETURN NEW;
   END IF;
 
@@ -100,7 +105,7 @@ BEGIN
         'user_id', membership.user_id,
         'role', membership.role,
         'membership_status', membership.status,
-        'submitted_at', membership.created_at,
+        'submitted_at', membership.updated_at,
         'profile', pg_catalog.jsonb_build_object(
           'email', auth_user.email,
           'full_name', profile.full_name,
@@ -182,7 +187,7 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  IF p_role NOT IN (
+  IF p_role IS NULL OR p_role NOT IN (
     'seller'::public.user_role,
     'courier'::public.user_role
   ) THEN
@@ -190,7 +195,7 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  IF p_decision NOT IN ('approve', 'reject') THEN
+  IF p_decision IS NULL OR p_decision NOT IN ('approve', 'reject') THEN
     RAISE EXCEPTION 'Decision must be approve or reject'
       USING ERRCODE = '22023';
   END IF;
