@@ -192,10 +192,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (profileResult.error) throw profileResult.error;
       if (membershipsResult.error) throw membershipsResult.error;
-      if (!profileResult.data) {
-        throw new Error("Le profil de ce compte est introuvable.");
-      }
-
       const memberships: Array<{ role: UserRole; status: RoleStatus }> = [];
       const roleStatuses: Record<UserRole, RoleStatus | null> = {
         ...initialRoleStatuses,
