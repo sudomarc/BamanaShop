@@ -307,30 +307,58 @@ SET search_path = ''
 AS $function$
 BEGIN
   IF OLD.status IS DISTINCT FROM 'cancelled'::public.order_status
-     AND NEW.status = 'cancelled'::public.order_status
-     AND NOT EXISTS (
-       SELECT 1
-       FROM public.inventory_movements AS existing_release
-       WHERE existing_release.reference_id = NEW.id
-         AND existing_release.reason = 'release'
-     ) THEN
-    INSERT INTO public.inventory_movements (
-      product_id,
-      quantity_delta,
-      reason,
-      reference_id,
-      created_by
-    )
-    SELECT
-      reservation.product_id,
-      -pg_catalog.sum(reservation.quantity_delta)::INTEGER,
-      'release',
-      NEW.id,
-      NEW.customer_id
-    FROM public.inventory_movements AS reservation
-    WHERE reservation.reference_id = NEW.id
-      AND reservation.reason = 'reservation'
-    GROUP BY reservation.product_id;
+     AND NEW.status = 'cancelled'::public.order_status THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.inventory_movements AS existing_release
+      WHERE existing_release.reference_id = NEW.id
+        AND existing_release.reason = 'release'
+    ) THEN
+      INSERT INTO public.inventory_movements (
+        product_id,
+        quantity_delta,
+        reason,
+        reference_id,
+        created_by
+      )
+      SELECT
+        reservation.product_id,
+        -pg_catalog.sum(reservation.quantity_delta)::INTEGER,
+        'release',
+        NEW.id,
+        NEW.customer_id
+      FROM public.inventory_movements AS reservation
+      WHERE reservation.reference_id = NEW.id
+        AND reservation.reason = 'reservation'
+      GROUP BY reservation.product_id;
+    END IF;
+
+    -- Any cancellation path must fail an outstanding COD payment as well.
+    UPDATE public.orders
+    SET payment_status = 'failed',
+        cancelled_at = COALESCE(cancelled_at, pg_catalog.now())
+    WHERE id = NEW.id
+      AND payment_status IN (
+        'pending'::public.payment_status,
+        'requires_action'::public.payment_status,
+        'cash_due'::public.payment_status
+      );
+
+    UPDATE public.payments
+    SET status = 'failed',
+        failed_at = COALESCE(failed_at, pg_catalog.now()),
+        failure_reason = COALESCE(
+          failure_reason,
+          NULLIF(NEW.cancellation_reason, ''),
+          'Order cancelled'
+        ),
+        updated_at = pg_catalog.now()
+    WHERE order_id = NEW.id
+      AND status IN (
+        'pending'::public.payment_status,
+        'requires_action'::public.payment_status,
+        'cash_due'::public.payment_status
+      );
   END IF;
 
   RETURN NEW;
@@ -376,13 +404,6 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  UPDATE public.payments
-  SET status = 'failed',
-      failed_at = pg_catalog.now(),
-      failure_reason = 'Order cancelled by customer',
-      updated_at = pg_catalog.now()
-  WHERE order_id = p_order_id
-    AND status = 'cash_due'::public.payment_status;
 END;
 $function$;
 
