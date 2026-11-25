@@ -376,7 +376,12 @@ jobs:
           ACTUAL_APPLICATION_ID="$(apkanalyzer manifest application-id "$APK_PATH" | tr -d '\r')"
           test "$ACTUAL_APPLICATION_ID" = "$EXPECTED_APPLICATION_ID"
 
-          apksigner verify "$APK_PATH"
+          APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          if [ ! -x "$APKSIGNER" ]; then
+            echo "::error::Android apksigner was not found at $APKSIGNER."
+            exit 1
+          fi
+          "$APKSIGNER" verify "$APK_PATH"
           unzip -t "$APK_PATH" >/dev/null
 
           mkdir -p "$RUNNER_TEMP/bamanashop-apk"
