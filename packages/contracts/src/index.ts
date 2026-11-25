@@ -212,6 +212,7 @@ export const CourierProfile = z.object({
   status: RoleStatus,
   approved_by: Uuid.nullable().optional(),
   approved_at: IsoDateTime.nullable().optional(),
+  review_note: z.string().max(500).nullable().optional(),
   created_at: IsoDateTime,
   updated_at: IsoDateTime,
 });
