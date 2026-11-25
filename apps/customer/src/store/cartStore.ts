@@ -8,22 +8,21 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Product } from "@bamanashop/contracts";
 import { assertSingleStoreCart } from "@/utils/cartRules";
+import {
+  createCheckoutKey,
+  resolveCheckoutKey,
+  type CheckoutKey,
+} from "@/utils/checkoutIdempotency";
 
 interface CartItem {
   product: Product;
   quantity: number;
 }
 
-interface CheckoutKey {
-  context: string;
-  key: string;
-}
-
 interface CartState {
   items: CartItem[];
   checkoutKey: CheckoutKey | null;
   getCheckoutKey: (context: string) => string;
-  resetCheckoutKey: () => void;
   addItem: (product: Product, quantity?: number) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
@@ -41,14 +40,10 @@ export const useCartStore = create<CartState>()(
 
       getCheckoutKey: (context) => {
         const current = get().checkoutKey;
-        if (current?.context === context) return current.key;
-
-        const key = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-        set({ checkoutKey: { context, key } });
-        return key;
+        const next = resolveCheckoutKey(context, current, createCheckoutKey);
+        if (next !== current) set({ checkoutKey: next });
+        return next.key;
       },
-
-      resetCheckoutKey: () => set({ checkoutKey: null }),
 
       addItem: (product: Product, quantity = 1) => {
         if (!Number.isInteger(quantity) || quantity < 1) {
