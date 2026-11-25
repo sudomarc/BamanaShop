@@ -3,6 +3,8 @@ name: BamanaShop
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [fix/android-apksigner-path]
   workflow_dispatch:
     inputs:
       profile:
@@ -213,7 +215,7 @@ jobs:
   build-android:
     name: Build Android APK (${{ matrix.application }})
     needs: cleanup-history
-    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request')
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
