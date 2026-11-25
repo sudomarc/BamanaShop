@@ -218,7 +218,9 @@ export function ProApplicationsQueue({
 
                 {seller ? (
                   <div className="space-y-2 rounded-lg bg-slate-50 p-4">
-                    <p className="font-semibold text-slate-900">{seller.business_name}</p>
+                    <p className="font-semibold text-slate-900">
+                      {seller.business_name}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {seller.business_activities.map((activity) => (
                         <span key={activity} className="badge badge-info">
@@ -241,7 +243,8 @@ export function ProApplicationsQueue({
                       {courier.vehicle_type || "Non renseigné"}
                     </p>
                     <p className="mt-1">
-                      Immatriculation : {courier.vehicle_plate || "Non renseignée"}
+                      Immatriculation :{" "}
+                      {courier.vehicle_plate || "Non renseignée"}
                     </p>
                   </div>
                 ) : null}
