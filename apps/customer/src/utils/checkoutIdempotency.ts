@@ -4,10 +4,9 @@ export interface CheckoutKey {
 }
 
 export function createCheckoutKey(): string {
-  return [
-    Date.now().toString(36),
-    Math.random().toString(36).slice(2),
-  ].join("-");
+  return [Date.now().toString(36), Math.random().toString(36).slice(2)].join(
+    "-",
+  );
 }
 
 export function resolveCheckoutKey(
