@@ -42,6 +42,9 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: Print canonical Admin login formatting (diagnostic)
+        run: pnpm exec prettier apps/admin/app/login/page.tsx
+
       - name: Check formatting
         run: pnpm run format:check
 
