@@ -232,7 +232,7 @@ export function ProApplicationsQueue({
                 {courier ? (
                   <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700">
                     <p>
-                      **Moyen de transport :** {courier.vehicle_type || "Non renseigné"}
+                      <strong>Moyen de transport :</strong> {courier.vehicle_type || "Non renseigné"}
                     </p>
                     <p className="mt-1">
                       Immatriculation : {courier.vehicle_plate || "Non renseignée"}
