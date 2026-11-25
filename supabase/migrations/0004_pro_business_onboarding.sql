@@ -135,6 +135,7 @@ BEGIN
   END IF;
 
   IF pg_catalog.cardinality(v_activities) > 4
+     OR pg_catalog.array_position(v_activities, NULL) IS NOT NULL
      OR NOT (
        v_activities <@ ARRAY[
          'physical_store',
@@ -228,7 +229,10 @@ BEGIN
   END IF;
 
   IF COALESCE(p_courier_requested, FALSE)
-     AND p_vehicle_type NOT IN ('motorcycle', 'bicycle', 'car', 'walking') THEN
+     AND (
+       p_vehicle_type IS NULL
+       OR p_vehicle_type NOT IN ('motorcycle', 'bicycle', 'car', 'walking')
+     ) THEN
     RAISE EXCEPTION 'Select a valid courier vehicle type'
       USING ERRCODE = '22023';
   END IF;
