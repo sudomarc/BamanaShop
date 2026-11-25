@@ -32,7 +32,9 @@ export default function CourierMissionsScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Flux à implémenter</Text>
-          <Text style={styles.item}>• Réception et acceptation d'une mission</Text>
+          <Text style={styles.item}>
+            • Réception et acceptation d'une mission
+          </Text>
           <Text style={styles.item}>• Retrait chez le vendeur</Text>
           <Text style={styles.item}>• Suivi et mise à jour du trajet</Text>
           <Text style={styles.item}>• Confirmation de livraison et preuve</Text>
