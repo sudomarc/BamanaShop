@@ -24,16 +24,21 @@ import {
 } from "@/api";
 import { isSupabaseConfigured } from "@/utils/supabase";
 import { calculateOrderTotals } from "@bamanashop/domain";
-import { GnfAmount, PaymentMethod, PhoneE164 } from "@bamanashop/contracts";
+import { GnfAmount, PaymentMethod } from "@bamanashop/contracts";
 import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
+
+function createCheckoutKey(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
 
 export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { items, updateQuantity, clearCart } = useCartStore();
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
+  const [paymentMethod] = useState<PaymentMethod>("cod");
+  const [idempotencyKey, setIdempotencyKey] = useState(() => createCheckoutKey());
   const [addresses, setAddresses] = useState<
     Array<{
       id: string;
@@ -64,6 +69,10 @@ export default function CartScreen() {
   useEffect(() => {
     loadAddresses();
   }, []);
+
+  useEffect(() => {
+    setIdempotencyKey(createCheckoutKey());
+  }, [items, selectedAddressId, paymentMethod]);
 
   useEffect(() => {
     if (items.length > 0) {
@@ -167,36 +176,19 @@ export default function CartScreen() {
         return;
       }
 
-      const address = addresses.find((a) => a.id === selectedAddressId);
-      if (!address) throw new Error("Adresse de livraison introuvable");
-      if (!totals) throw new Error("Totaux de commande indisponibles");
+      if (!addresses.some((address) => address.id === selectedAddressId)) {
+        throw new Error("Adresse de livraison introuvable");
+      }
 
       const order = await createOrder({
-        customerId: user.id,
         storeId: items[0].product.store_id,
         items: items.map((i) => ({
           productId: i.product.id,
           quantity: i.quantity,
-          unitPrice: i.product.price_gnf,
         })),
         deliveryAddressId: selectedAddressId,
-        deliveryAddressSnapshot: {
-          commune: address.commune,
-          quartier: address.quartier,
-          landmark: address.landmark ?? null,
-          street_details: address.street_details ?? null,
-          phone: address.phone as PhoneE164,
-          instructions: address.instructions ?? null,
-        },
         paymentMethod,
-        subtotal: totals.subtotal,
-        deliveryFee: totals.deliveryFee,
-        paymentFee: totals.paymentFee,
-        total: totals.total,
-        commissionRateBps: 1000,
-        commission: totals.commission,
-        courierCost: totals.courierCost,
-        sellerPayable: totals.sellerPayable,
+        idempotencyKey,
       });
 
       clearCart();
@@ -359,7 +351,7 @@ export default function CartScreen() {
             styles.paymentOption,
             paymentMethod === "orange_money" && styles.paymentOptionSelected,
           ]}
-          onPress={() => setPaymentMethod("orange_money")}
+          disabled
         >
           <View style={styles.paymentOptionContent}>
             <Ionicons
