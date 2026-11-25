@@ -3,14 +3,10 @@ name: BamanaShop
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [fix/android-apksigner-path]
   workflow_dispatch:
     inputs:
-      application:
-        description: Android application
-        type: choice
-        options: [customer, pro]
-        default: customer
-        required: true
       profile:
         description: APK profile
         type: choice
@@ -217,11 +213,15 @@ jobs:
           grep -q "export type Database" "$RUNNER_TEMP/database.generated.ts"
 
   build-android:
-    name: Build Android APK
+    name: Build Android APK (${{ matrix.application }})
     needs: cleanup-history
-    if: always() && github.event_name == 'workflow_dispatch'
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        application: [customer, pro]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -302,9 +302,9 @@ jobs:
       - name: Calculate build configuration
         id: config
         env:
-          APPLICATION: ${{ inputs.application }}
-          PROFILE: ${{ inputs.profile }}
-          APP_VERSION: ${{ inputs.version }}
+          APPLICATION: ${{ matrix.application }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '1.0.0' }}
         run: |
           set -euo pipefail
           VERSION_CODE="$(node scripts/app-version.cjs "$APP_VERSION")"
@@ -342,8 +342,8 @@ jobs:
 
       - name: Build APK with the checked-in native Gradle project
         env:
-          APPLICATION: ${{ inputs.application }}
-          APP_VERSION: ${{ inputs.version }}
+          APPLICATION: ${{ matrix.application }}
+          APP_VERSION: ${{ inputs.version || '1.0.0' }}
           VERSION_CODE: ${{ steps.config.outputs.version_code }}
           GRADLE_TASK: ${{ steps.config.outputs.gradle_task }}
         run: |
@@ -355,10 +355,10 @@ jobs:
 
       - name: Verify standalone APK
         env:
-          APPLICATION: ${{ inputs.application }}
-          PROFILE: ${{ inputs.profile }}
-          APP_VERSION: ${{ inputs.version }}
-          APK_PATH: apps/${{ inputs.application }}/android/${{ steps.config.outputs.apk_path }}
+          APPLICATION: ${{ matrix.application }}
+          PROFILE: ${{ inputs.profile || 'dev' }}
+          APP_VERSION: ${{ inputs.version || '1.0.0' }}
+          APK_PATH: apps/${{ matrix.application }}/android/${{ steps.config.outputs.apk_path }}
           EXPECTED_DEBUGGABLE: ${{ steps.config.outputs.expected_debuggable }}
           EXPECTED_APPLICATION_ID: ${{ steps.config.outputs.application_id }}
         run: |
@@ -376,7 +376,12 @@ jobs:
           ACTUAL_APPLICATION_ID="$(apkanalyzer manifest application-id "$APK_PATH" | tr -d '\r')"
           test "$ACTUAL_APPLICATION_ID" = "$EXPECTED_APPLICATION_ID"
 
-          apksigner verify "$APK_PATH"
+          APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          if [ ! -x "$APKSIGNER" ]; then
+            echo "::error::Android apksigner was not found at $APKSIGNER."
+            exit 1
+          fi
+          "$APKSIGNER" verify "$APK_PATH"
           unzip -t "$APK_PATH" >/dev/null
 
           mkdir -p "$RUNNER_TEMP/bamanashop-apk"
@@ -385,7 +390,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: bamanashop-${{ inputs.application }}-${{ inputs.profile }}-v${{ inputs.version }}-${{ github.run_number }}
+          name: bamanashop-${{ matrix.application }}-${{ inputs.profile || 'dev' }}-v${{ inputs.version || '1.0.0' }}-${{ github.run_number }}
           path: ${{ runner.temp }}/bamanashop-apk/*.apk
           if-no-files-found: error
           retention-days: 30
