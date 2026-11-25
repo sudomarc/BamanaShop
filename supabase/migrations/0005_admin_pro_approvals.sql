@@ -55,6 +55,11 @@ AS $function$
 BEGIN
   IF current_user IN ('postgres', 'service_role')
      OR public.is_admin() THEN
+    IF TG_OP = 'UPDATE'
+       AND OLD.status = 'rejected'::public.role_status
+       AND NEW.status = 'pending'::public.role_status THEN
+      NEW.review_note := NULL;
+    END IF;
     RETURN NEW;
   END IF;
 
