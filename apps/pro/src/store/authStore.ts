@@ -12,59 +12,79 @@ interface AuthState {
   user: { id: string; email?: string } | null;
   profile: Profile | null;
   roles: UserRole[];
-  roleStatuses: Record<UserRole, RoleStatus>;
+  requestedRoles: UserRole[];
+  roleStatuses: Record<UserRole, RoleStatus | null>;
   sellerProfile: SellerProfile | null;
   courierProfile: CourierProfile | null;
   initialized: boolean;
   loading: boolean;
+  profileLoading: boolean;
+  profileError: string | null;
   selectedRole: UserRole | null;
   initAuth: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (
-    email: string,
-    password: string,
-    fullName: string,
-    phone: string,
-    roles?: UserRole[],
-  ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   selectRole: (role: UserRole) => void;
   fetchProfiles: () => Promise<void>;
 }
 
 const supabase = createSupabaseClient();
-const mockMode = !isSupabaseConfigured;
 
-const initialRoleStatuses: Record<UserRole, RoleStatus> = {
-  customer: "pending",
-  seller: "pending",
-  courier: "pending",
-  partner_manager: "pending",
-  admin: "pending",
-  staff: "pending",
+const initialRoleStatuses: Record<UserRole, RoleStatus | null> = {
+  customer: null,
+  seller: null,
+  courier: null,
+  partner_manager: null,
+  admin: null,
+  staff: null,
 };
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
+const emptyProfileState = {
   profile: null,
-  roles: [],
+  roles: [] as UserRole[],
+  requestedRoles: [] as UserRole[],
   roleStatuses: initialRoleStatuses,
   sellerProfile: null,
   courierProfile: null,
+  selectedRole: null,
+};
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Impossible de vérifier les autorisations de ce compte.";
+}
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  ...emptyProfileState,
   initialized: false,
   loading: false,
-  selectedRole: null,
+  profileLoading: false,
+  profileError: null,
 
   initAuth: async () => {
     try {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
-      if (session?.user) {
-        set({ user: { id: session.user.id, email: session.user.email } });
-        await get().fetchProfiles();
+      if (error) throw error;
+
+      if (!session?.user) {
+        set({ user: null, ...emptyProfileState, profileError: null });
+        return;
       }
+
+      set({
+        user: { id: session.user.id, email: session.user.email },
+      });
+      await get().fetchProfiles();
     } catch (error) {
+      set({
+        ...emptyProfileState,
+        profileError: errorMessage(error),
+      });
       console.error("[Auth] initAuth error:", error);
     } finally {
       set({ initialized: true });
@@ -72,134 +92,188 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signIn: async (email: string, password: string) => {
-    set({ loading: true });
+    set({ loading: true, profileError: null });
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
       if (error) throw error;
-      if (data.user) {
-        set({ user: { id: data.user.id, email: data.user.email } });
-        await get().fetchProfiles();
-      }
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    } finally {
-      set({ loading: false });
-    }
-  },
+      if (!data.user) throw new Error("Supabase n'a retourné aucun utilisateur.");
 
-  signUp: async (
-    email: string,
-    password: string,
-    fullName: string,
-    phone: string,
-    roles = ["customer"],
-  ) => {
-    set({ loading: true });
-    try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
-      if (data.user) {
-        if (!mockMode) {
-          await supabase.from("profiles").insert({
-            id: data.user.id,
-            phone,
-            full_name: fullName,
-          });
-          for (const role of roles) {
-            await supabase.from("role_memberships").insert({
-              user_id: data.user.id,
-              role,
-              status: role === "customer" ? "approved" : "pending",
-            });
-          }
-        }
-        set({ user: { id: data.user.id, email: data.user.email } });
-        await get().fetchProfiles();
-      }
+      set({
+        user: { id: data.user.id, email: data.user.email },
+        ...emptyProfileState,
+        profileError: null,
+      });
+      await get().fetchProfiles();
       return { error: null };
     } catch (error) {
-      return { error: error as Error };
+      const normalized = error instanceof Error ? error : new Error(errorMessage(error));
+      set({ profileError: normalized.message });
+      return { error: normalized };
     } finally {
-      set({ loading: false });
+      set({ loading: false, initialized: true });
     }
   },
 
   signOut: async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+
     set({
       user: null,
-      profile: null,
-      roles: [],
-      roleStatuses: initialRoleStatuses,
-      sellerProfile: null,
-      courierProfile: null,
-      selectedRole: null,
+      ...emptyProfileState,
+      profileError: null,
+      profileLoading: false,
+      loading: false,
+      initialized: true,
     });
   },
 
   selectRole: (role: UserRole) => {
-    const { roleStatuses } = get();
-    if (roleStatuses[role] === "approved") {
+    const { roles } = get();
+    if ((role === "seller" || role === "courier") && roles.includes(role)) {
       set({ selectedRole: role });
     }
   },
 
   fetchProfiles: async () => {
-    const { user } = get();
-    if (!user) return;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    const { data: memberships } = await supabase
-      .from("role_memberships")
-      .select("role, status")
-      .eq("user_id", user.id);
-
-    const roleStatuses: Record<UserRole, RoleStatus> = {
-      ...initialRoleStatuses,
-    };
-    const roles: UserRole[] = [];
-    memberships?.forEach((m) => {
-      roleStatuses[m.role as UserRole] = m.status as RoleStatus;
-      if (m.status === "approved") roles.push(m.role as UserRole);
-    });
-
-    let sellerProfile: SellerProfile | null = null;
-    let courierProfile: CourierProfile | null = null;
-
-    if (roles.includes("seller")) {
-      const { data } = await supabase
-        .from("seller_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-      sellerProfile = data as SellerProfile | null;
+    const { user, selectedRole } = get();
+    if (!user) {
+      set({ ...emptyProfileState, profileError: null });
+      return;
     }
 
-    if (roles.includes("courier")) {
-      const { data } = await supabase
-        .from("courier_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-      courierProfile = data as CourierProfile | null;
-    }
+    const userId = user.id;
+    set({ profileLoading: true, profileError: null });
 
-    set({
-      profile: profile as Profile | null,
-      roles,
-      roleStatuses,
-      sellerProfile,
-      courierProfile,
-      selectedRole: roles.length === 1 ? roles[0] : null,
-    });
+    try {
+      const [profileResult, membershipsResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabase
+          .from("role_memberships")
+          .select("role, status")
+          .eq("user_id", userId),
+      ]);
+
+      if (profileResult.error) throw profileResult.error;
+      if (membershipsResult.error) throw membershipsResult.error;
+      if (!profileResult.data) {
+        throw new Error("Le profil de ce compte est introuvable.");
+      }
+
+      const memberships: Array<{ role: UserRole; status: RoleStatus }> = [];
+      const roleStatuses: Record<UserRole, RoleStatus | null> = {
+        ...initialRoleStatuses,
+      };
+
+      for (const membership of membershipsResult.data ?? []) {
+        const parsedRole = UserRole.safeParse(membership.role);
+        const parsedStatus = RoleStatus.safeParse(membership.status);
+        if (!parsedRole.success || !parsedStatus.success) {
+          throw new Error("Une adhésion de rôle contient une valeur inconnue.");
+        }
+
+        memberships.push({
+          role: parsedRole.data,
+          status: parsedStatus.data,
+        });
+        roleStatuses[parsedRole.data] = parsedStatus.data;
+      }
+
+      const requestedRoles = memberships.map((membership) => membership.role);
+      const hasSellerMembership = requestedRoles.includes("seller");
+      const hasCourierMembership = requestedRoles.includes("courier");
+
+      const [sellerResult, courierResult] = await Promise.all([
+        hasSellerMembership
+          ? supabase
+              .from("seller_profiles")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        hasCourierMembership
+          ? supabase
+              .from("courier_profiles")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      if (sellerResult.error) throw sellerResult.error;
+      if (courierResult.error) throw courierResult.error;
+
+      const sellerProfile = sellerResult.data as SellerProfile | null;
+      const courierProfile = courierResult.data as CourierProfile | null;
+
+      const roles = memberships
+        .filter((membership) => {
+          if (membership.status !== "approved") return false;
+          if (membership.role === "seller") {
+            return sellerProfile?.status === "approved";
+          }
+          if (membership.role === "courier") {
+            return courierProfile?.status === "approved";
+          }
+          return true;
+        })
+        .map((membership) => membership.role);
+
+      if (
+        roles.includes("seller") &&
+        roles.includes("courier") &&
+        sellerProfile?.status === "approved" &&
+        courierProfile?.status === "approved"
+      ) {
+        // Both role records must be approved before either workspace is exposed.
+      } else {
+        if (roleStatuses.seller === "approved" && sellerProfile?.status !== "approved") {
+          roleStatuses.seller = sellerProfile?.status ?? "pending";
+        }
+        if (roleStatuses.courier === "approved" && courierProfile?.status !== "approved") {
+          roleStatuses.courier = courierProfile?.status ?? "pending";
+        }
+      }
+
+      const availableProRoles = roles.filter(
+        (role) => role === "seller" || role === "courier",
+      );
+      const nextSelectedRole =
+        selectedRole && availableProRoles.includes(selectedRole as "seller" | "courier")
+          ? selectedRole
+          : availableProRoles.length === 1
+            ? availableProRoles[0]
+            : null;
+
+      if (get().user?.id !== userId) return;
+
+      set({
+        profile: profileResult.data as Profile,
+        roles,
+        requestedRoles,
+        roleStatuses,
+        sellerProfile,
+        courierProfile,
+        selectedRole: nextSelectedRole,
+        profileError: null,
+      });
+    } catch (error) {
+      if (get().user?.id === userId) {
+        set({
+          ...emptyProfileState,
+          profileError: errorMessage(error),
+        });
+      }
+      throw error;
+    } finally {
+      if (get().user?.id === userId) set({ profileLoading: false });
+    }
   },
 }));
