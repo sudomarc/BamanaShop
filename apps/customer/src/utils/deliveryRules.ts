@@ -9,10 +9,10 @@ export type DeliveryPartnerQuote = {
  * Select the cheapest active partner that serves the requested commune.
  * An empty coverage list means the partner has no geographic restriction.
  */
-export function selectDeliveryPartner(
-  partners: readonly DeliveryPartnerQuote[],
+export function selectDeliveryPartner<T extends DeliveryPartnerQuote>(
+  partners: readonly T[],
   commune: string,
-): DeliveryPartnerQuote | null {
+): T | null {
   const normalizedCommune = commune.trim().toLowerCase();
   const eligible = partners.filter(
     (partner) =>
