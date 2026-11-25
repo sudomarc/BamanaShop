@@ -13,15 +13,15 @@ const base = {
 
 describe("Pro role access gate", () => {
   it("blocks the app when backend configuration is missing", () => {
-    expect(
-      getProAccessDecision({ ...base, backendConfigured: false }),
-    ).toEqual({ kind: "backend-unavailable" });
+    expect(getProAccessDecision({ ...base, backendConfigured: false })).toEqual(
+      { kind: "backend-unavailable" },
+    );
   });
 
   it("shows loading until the session is initialized", () => {
-    expect(
-      getProAccessDecision({ ...base, initialized: false }),
-    ).toEqual({ kind: "loading" });
+    expect(getProAccessDecision({ ...base, initialized: false })).toEqual({
+      kind: "loading",
+    });
   });
 
   it("requires sign-in when there is no authenticated user", () => {
