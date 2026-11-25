@@ -122,10 +122,7 @@ export default function CartScreen() {
       if (!deliveryAddress) throw new Error("Delivery address not found");
 
       // Use the same coverage and tariff rules as the server checkout RPC.
-      const partner = selectDeliveryPartner(
-        partners,
-        deliveryAddress.commune,
-      );
+      const partner = selectDeliveryPartner(partners, deliveryAddress.commune);
       if (!partner) {
         throw new Error("Aucun partenaire ne dessert cette commune.");
       }
