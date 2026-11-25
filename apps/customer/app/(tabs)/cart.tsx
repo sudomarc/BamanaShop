@@ -151,7 +151,12 @@ export default function CartScreen() {
     } catch (error) {
       if (requestId === totalsRequestId.current) {
         console.error("Calculate totals error:", error);
-        Alert.alert("Erreur", "Impossible de calculer les totaux");
+        Alert.alert(
+          "Erreur",
+          error instanceof Error
+            ? error.message
+            : "Impossible de calculer les totaux",
+        );
       }
     }
   };
