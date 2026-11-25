@@ -270,7 +270,7 @@ export function ProApplicationsQueue({
                       type="button"
                       disabled={actionId === key}
                       onClick={() => void review(application, "approve")}
-                      className="btn btn-success"
+                      className="btn btn-primary"
                     >
                       {actionId === key ? "Traitement…" : "Approuver"}
                     </button>
