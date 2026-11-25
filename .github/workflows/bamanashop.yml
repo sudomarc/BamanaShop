@@ -278,7 +278,11 @@ jobs:
       - name: Install Android SDK packages
         run: |
           set -euo pipefail
+          # sdkmanager exits after accepting licenses; `yes` may then receive SIGPIPE.
+          # Keep the final sdkmanager exit code while ignoring the upstream pipe status.
+          set +o pipefail
           yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
           sdkmanager \
             "platform-tools" \
             "platforms;android-34" \
