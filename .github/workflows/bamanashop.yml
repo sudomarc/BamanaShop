@@ -81,38 +81,62 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY }}
         run: |
+          set -euo pipefail
+
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL and SUPABASE_ANON_KEY must be configured before building a mobile APK."
+            exit 1
+          fi
+
+          node - "$SUPABASE_URL" <<'NODE'
+          const url = new URL(process.argv[2]);
+          if (url.protocol !== "https:") {
+            throw new Error("Mobile builds require an HTTPS Supabase URL.");
+          }
+          NODE
+
           umask 077
           {
             printf 'SUPABASE_URL=%s\n' "$SUPABASE_URL"
             printf 'SUPABASE_ANON_KEY=%s\n' "$SUPABASE_ANON_KEY"
           } > "$GITHUB_WORKSPACE/.env.mobile"
 
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "::warning::Supabase client values are missing; backend-dependent features may not work."
-          fi
-
-      - name: Configure Android signing when secrets are available
+      - name: Configure Android signing
         env:
+          PROFILE: ${{ inputs.profile || 'dev' }}
           KEYSTORE_BASE64: ${{ secrets.BAMANASHOP_ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.BAMANASHOP_ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.BAMANASHOP_ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.BAMANASHOP_ANDROID_KEY_PASSWORD }}
         run: |
+          set -euo pipefail
           if [ -n "$KEYSTORE_BASE64" ]; then
             test -n "$KEYSTORE_PASSWORD"
             test -n "$KEY_ALIAS"
             test -n "$KEY_PASSWORD"
             KEYSTORE_FILE="$RUNNER_TEMP/bamanashop-upload.jks"
             printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_FILE"
-            keytool -list -keystore "$KEYSTORE_FILE" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
             {
               echo "BAMANASHOP_KEYSTORE_FILE=$KEYSTORE_FILE"
               echo "BAMANASHOP_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
               echo "BAMANASHOP_KEY_ALIAS=$KEY_ALIAS"
               echo "BAMANASHOP_KEY_PASSWORD=$KEY_PASSWORD"
             } >> "$GITHUB_ENV"
+            keytool -list -keystore "$KEYSTORE_FILE" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
           else
-            echo "::warning::Persistent Android signing is not configured; the Gradle debug key will be used where applicable."
+            case "$PROFILE" in
+              dev)
+                echo "::warning::Persistent Android signing is not configured; the DEV APK will use the Android debug key."
+                ;;
+              beta|production)
+                echo "::error::BETA and PRODUCTION APKs require the persistent BamanaShop Android keystore."
+                exit 1
+                ;;
+              *)
+                echo "::error::Unsupported APK profile: $PROFILE"
+                exit 1
+                ;;
+            esac
           fi
 
       - name: Calculate build configuration

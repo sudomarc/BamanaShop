@@ -65,3 +65,16 @@ gradle :app:assembleDebug -PbamanashopVersionName=dev.1.0 -PbamanashopVersionCod
 ```
 
 For BETA/PRODUCTION use `:app:assembleRelease`. Export the same signing environment variables used by CI to sign with the same keystore.
+
+## Mobile backend configuration
+
+Before dispatching an APK build, configure these GitHub Actions repository variables (Settings → Secrets and variables → Actions → Variables):
+
+- `SUPABASE_URL`: the HTTPS URL of the intended Supabase project.
+- `SUPABASE_ANON_KEY`: that project's publishable key or legacy anon key. This is a public client key; it must never be replaced with a service-role key.
+
+The workflow fails before Gradle if either value is missing or the URL is not HTTPS. This prevents publishing an APK that silently runs without its backend configuration.
+
+The DEV profile may use Android's debug signing key when the persistent keystore is not configured. BETA and PRODUCTION fail unless all four signing secrets above are present and the keystore alias can be validated. The same persistent keystore must be retained for future updates to install over existing builds.
+
+The workflow's artifact validation confirms that the APK contains the JavaScript bundle and checks its package ID, debuggable flag, signature structure and ZIP integrity. It does not replace installing the APK on a physical device and exercising the app without Metro.
