@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { createSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -33,12 +33,14 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, nextSession: Session | null) => {
       if (!active) return;
       setSession(nextSession);
       setState(nextSession ? "loading" : "signed-out");
       setMessage(null);
-    });
+      },
+    );
 
     return () => {
       active = false;
