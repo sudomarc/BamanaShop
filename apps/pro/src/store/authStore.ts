@@ -7,6 +7,7 @@ import {
   SellerProfile,
   CourierProfile,
 } from "@bamanashop/contracts";
+import type { ProApplicationPayload } from "@/utils/proApplication";
 
 interface AuthState {
   user: { id: string; email?: string } | null;
@@ -23,6 +24,9 @@ interface AuthState {
   selectedRole: UserRole | null;
   initAuth: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  requestProAccess: (
+    input: ProApplicationPayload,
+  ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   selectRole: (role: UserRole) => void;
   fetchProfiles: () => Promise<void>;
@@ -117,6 +121,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { error: normalized };
     } finally {
       set({ loading: false, initialized: true });
+    }
+  },
+
+  requestProAccess: async (input) => {
+    set({ loading: true });
+    try {
+      const { error } = await supabase.rpc("request_pro_access", {
+        p_full_name: input.fullName,
+        p_phone: input.phone,
+        p_business_name: input.businessName,
+        p_business_activities: input.businessActivities,
+        p_business_details: input.businessDetails,
+        p_courier_requested: input.courierRequested,
+        p_vehicle_type: input.vehicleType,
+        p_vehicle_plate: input.vehiclePlate,
+      });
+      if (error) throw error;
+
+      await get().fetchProfiles();
+      return { error: null };
+    } catch (error) {
+      const normalized =
+        error instanceof Error ? error : new Error(errorMessage(error));
+      return { error: normalized };
+    } finally {
+      set({ loading: false });
     }
   },
 
