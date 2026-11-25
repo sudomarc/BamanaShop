@@ -19,8 +19,14 @@ export default function SellerDashboardScreen() {
         </View>
 
         <View style={styles.notice}>
-          <Ionicons name="information-circle-outline" size={26} color="#2563EB" />
-          <Text style={styles.noticeTitle}>Gestion commerciale non activée</Text>
+          <Ionicons
+            name="information-circle-outline"
+            size={26}
+            color="#2563EB"
+          />
+          <Text style={styles.noticeTitle}>
+            Gestion commerciale non activée
+          </Text>
           <Text style={styles.noticeBody}>
             Les statistiques de ventes, les commandes réelles, les stocks et les
             paiements ne sont pas encore connectés à cet espace. Aucune donnée
@@ -33,7 +39,9 @@ export default function SellerDashboardScreen() {
           <Text style={styles.item}>• Commandes et préparation</Text>
           <Text style={styles.item}>• Catalogue et gestion des stocks</Text>
           <Text style={styles.item}>• Fournisseurs et approvisionnement</Text>
-          <Text style={styles.item}>• Ventes, encaissements et reversements</Text>
+          <Text style={styles.item}>
+            • Ventes, encaissements et reversements
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
