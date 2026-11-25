@@ -71,7 +71,7 @@ export default function OrderDetailScreen() {
   }, [id]);
 
   const handleCancel = async () => {
-    if (!order || order.status === "cancelled" || order.status === "completed")
+    if (!order || order.status !== "pending")
       return;
 
     Alert.alert(
@@ -471,7 +471,7 @@ export default function OrderDetailScreen() {
       </View>
 
       {/* Actions */}
-      {["pending", "confirmed", "preparing"].includes(order.status) && (
+      {order.status === "pending" && (
         <TouchableOpacity
           style={styles.cancelButton}
           onPress={handleCancel}
