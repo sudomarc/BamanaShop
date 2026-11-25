@@ -119,7 +119,9 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   if (state === "loading" || state === "signed-out") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
+      <main
+        className="flex min-h-screen items-center justify-center bg-slate-50"
+      >
         <p className="text-sm text-slate-500">
           Vérification de la session Admin…
         </p>
@@ -129,7 +131,9 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   if (state === "denied" || state === "error") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+      <main
+        className="flex min-h-screen items-center justify-center bg-slate-50 p-6"
+      >
         <section
           className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
         >
