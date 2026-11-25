@@ -280,7 +280,7 @@ BEGIN
         status = CASE
           WHEN existing_seller.status = 'rejected'::public.role_status
             THEN 'pending'::public.role_status
-          ELSE public.seller_profiles.status
+          ELSE existing_seller.status
         END,
         updated_at = pg_catalog.now()
     RETURNING status INTO v_seller_status;
@@ -291,7 +291,7 @@ BEGIN
     SET status = CASE
           WHEN existing_membership.status = 'rejected'::public.role_status
             THEN 'pending'::public.role_status
-          ELSE public.role_memberships.status
+          ELSE existing_membership.status
         END,
         updated_at = pg_catalog.now();
   END IF;
@@ -318,7 +318,7 @@ BEGIN
         status = CASE
           WHEN existing_courier.status = 'rejected'::public.role_status
             THEN 'pending'::public.role_status
-          ELSE public.courier_profiles.status
+          ELSE existing_courier.status
         END,
         updated_at = pg_catalog.now()
     RETURNING status INTO v_courier_status;
@@ -327,9 +327,9 @@ BEGIN
     VALUES (v_user_id, 'courier', 'pending')
     ON CONFLICT (user_id, role) DO UPDATE
     SET status = CASE
-          WHEN public.role_memberships.status = 'rejected'::public.role_status
+          WHEN existing_membership.status = 'rejected'::public.role_status
             THEN 'pending'::public.role_status
-          ELSE public.role_memberships.status
+          ELSE existing_membership.status
         END,
         updated_at = pg_catalog.now();
   END IF;

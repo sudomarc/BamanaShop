@@ -110,7 +110,11 @@ export function buildProApplicationPayload(
   }
 
   if (activities.includes("wholesaler")) {
-    const minimumOrder = Number(draft.wholesaler.minimumOrderGnf.replace(/\s/g, ""));
+    const rawMinimumOrder = draft.wholesaler.minimumOrderGnf.replace(/\s/g, "");
+    if (!/^[0-9]+$/.test(rawMinimumOrder)) {
+      throw new Error("Le minimum de commande grossiste doit être un montant GNF positif.");
+    }
+    const minimumOrder = Number(rawMinimumOrder);
     if (!Number.isSafeInteger(minimumOrder) || minimumOrder <= 0) {
       throw new Error("Le minimum de commande grossiste doit être un montant GNF positif.");
     }
