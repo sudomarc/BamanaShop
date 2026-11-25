@@ -13,7 +13,13 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "@/navigation/compat";
-import { fetchOrder, cancelOrder, Order, OrderStatus, DeliveryStatus } from "@/api";
+import {
+  fetchOrder,
+  cancelOrder,
+  Order,
+  OrderStatus,
+  DeliveryStatus,
+} from "@/api";
 import { GnfAmount } from "@bamanashop/contracts";
 import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
@@ -71,8 +77,7 @@ export default function OrderDetailScreen() {
   }, [id]);
 
   const handleCancel = async () => {
-    if (!order || order.status !== "pending")
-      return;
+    if (!order || order.status !== "pending") return;
 
     Alert.alert(
       "Annuler la commande",
