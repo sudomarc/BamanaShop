@@ -21,7 +21,10 @@ export const createSupabaseClient = () => {
         signOut: async () => ({ error: null }),
       },
       from: () => ({
-        select: () => ({ data: [], error: { message: "Supabase is not configured." } }),
+        select: () => ({
+          data: [],
+          error: { message: "Supabase is not configured." },
+        }),
       }),
       rpc: async () => ({
         data: null,
