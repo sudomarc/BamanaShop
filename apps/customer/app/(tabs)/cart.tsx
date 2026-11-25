@@ -160,9 +160,7 @@ export default function CartScreen() {
       return;
     }
     if (
-      items.some(
-        (item) => item.product.store_id !== items[0].product.store_id,
-      )
+      items.some((item) => item.product.store_id !== items[0].product.store_id)
     ) {
       Alert.alert(
         "Panier invalide",
