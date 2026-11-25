@@ -231,14 +231,14 @@ export function ProApplicationsQueue({
                         <span key={activity} className="badge badge-info">
                           {activityLabels[activity] ?? activity}
                         </span>
-                        ),
-                      )}
+                      ))}
                     </div>
                     <div className="space-y-1 text-sm text-slate-600">
                       {summarizeDetails(seller.business_details).map(
                         (detail) => (
-                        <p key={detail}>{detail}</p>
-                      ))}
+                          <p key={detail}>{detail}</p>
+                        ),
+                      )}
                     </div>
                   </div>
                 ) : null}
