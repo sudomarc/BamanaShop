@@ -9,6 +9,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS orders_customer_idempotency_key_uidx
   ON public.orders (customer_id, idempotency_key)
   WHERE idempotency_key IS NOT NULL;
 
+-- Internal RPC implementations stay outside the exposed Data API schemas.
+CREATE SCHEMA IF NOT EXISTS private;
+REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated;
+GRANT USAGE ON SCHEMA private TO authenticated;
+COMMENT ON SCHEMA private IS 'Internal functions only. Do not expose this schema through the Supabase Data API.';
+
 -- The previous public RPC accepted an arbitrary customer id and calculated a
 -- zero subtotal. Retire it; only the authenticated checkout RPC below remains.
 REVOKE EXECUTE ON FUNCTION public.create_order(
@@ -20,7 +26,7 @@ REVOKE INSERT ON public.orders FROM anon, authenticated;
 REVOKE INSERT ON public.order_items FROM anon, authenticated;
 REVOKE INSERT ON public.payments FROM anon, authenticated;
 
-CREATE OR REPLACE FUNCTION public.create_customer_order(
+CREATE OR REPLACE FUNCTION private.create_customer_order(
   p_store_id UUID,
   p_delivery_address_id UUID,
   p_payment_method public.payment_method,
@@ -293,7 +299,7 @@ END;
 $function$;
 
 -- Release reserved stock exactly once when a pending COD order is cancelled.
-CREATE OR REPLACE FUNCTION public.release_cancelled_order_inventory()
+CREATE OR REPLACE FUNCTION private.release_cancelled_order_inventory()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -332,7 +338,7 @@ END;
 $function$;
 
 -- Customers may cancel only their own, unassigned COD orders while pending.
-CREATE OR REPLACE FUNCTION public.cancel_customer_order(
+CREATE OR REPLACE FUNCTION private.cancel_customer_order(
   p_order_id UUID,
   p_reason TEXT
 )
@@ -381,14 +387,14 @@ END;
 $function$;
 
 -- Trigger functions are only callable as triggers, not as client RPCs.
-REVOKE ALL ON FUNCTION public.release_cancelled_order_inventory()
+REVOKE ALL ON FUNCTION private.release_cancelled_order_inventory()
   FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS release_cancelled_order_inventory ON public.orders;
 CREATE TRIGGER release_cancelled_order_inventory
 AFTER UPDATE OF status ON public.orders
 FOR EACH ROW
-EXECUTE FUNCTION public.release_cancelled_order_inventory();
+EXECUTE FUNCTION private.release_cancelled_order_inventory();
 
 -- The legacy order RPC trusts a caller-supplied customer ID and does not accept
 -- cart lines. It must not remain callable from public client roles.
@@ -417,6 +423,58 @@ REVOKE INSERT ON public.orders FROM anon, authenticated;
 REVOKE INSERT ON public.order_items FROM anon, authenticated;
 REVOKE INSERT ON public.payments FROM anon, authenticated;
 
+-- The client-visible functions are invoker wrappers. The implementations
+-- run as their owner in the non-exposed private schema and validate auth.uid().
+CREATE OR REPLACE FUNCTION public.cancel_customer_order(
+  p_order_id UUID,
+  p_reason TEXT
+)
+RETURNS VOID
+LANGUAGE sql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+  SELECT private.cancel_customer_order(p_order_id, p_reason);
+$function$;
+
+CREATE OR REPLACE FUNCTION public.create_customer_order(
+  p_store_id UUID,
+  p_delivery_address_id UUID,
+  p_payment_method public.payment_method,
+  p_expected_delivery_fee_gnf BIGINT,
+  p_items JSONB,
+  p_idempotency_key TEXT
+)
+RETURNS UUID
+LANGUAGE sql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+  SELECT private.create_customer_order(
+    p_store_id,
+    p_delivery_address_id,
+    p_payment_method,
+    p_expected_delivery_fee_gnf,
+    p_items,
+    p_idempotency_key
+  );
+$function$;
+
+-- Internal implementations are only callable by authenticated sessions;
+-- they are not exposed as Data API endpoints.
+REVOKE ALL ON FUNCTION private.cancel_customer_order(UUID, TEXT)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION private.cancel_customer_order(UUID, TEXT)
+  TO authenticated;
+
+REVOKE ALL ON FUNCTION private.create_customer_order(
+  UUID, UUID, public.payment_method, BIGINT, JSONB, TEXT
+) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION private.create_customer_order(
+  UUID, UUID, public.payment_method, BIGINT, JSONB, TEXT
+) TO authenticated;
+
+-- Public invoker wrappers are the only customer RPC endpoints.
 REVOKE ALL ON FUNCTION public.cancel_customer_order(UUID, TEXT)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.cancel_customer_order(UUID, TEXT)
@@ -453,8 +511,16 @@ BEGIN
     'anon',
     'public.cancel_customer_order(uuid, text)',
     'EXECUTE'
+  ) OR pg_catalog.has_function_privilege(
+    'anon',
+    'private.create_customer_order(uuid, uuid, public.payment_method, bigint, jsonb, text)',
+    'EXECUTE'
+  ) OR pg_catalog.has_function_privilege(
+    'anon',
+    'private.cancel_customer_order(uuid, text)',
+    'EXECUTE'
   ) THEN
-    RAISE EXCEPTION 'Customer checkout RPCs must not be executable by anon';
+    RAISE EXCEPTION 'Customer checkout functions must not be executable by anon';
   END IF;
 
   IF NOT pg_catalog.has_function_privilege(
@@ -465,8 +531,28 @@ BEGIN
     'authenticated',
     'public.cancel_customer_order(uuid, text)',
     'EXECUTE'
+  ) OR NOT pg_catalog.has_function_privilege(
+    'authenticated',
+    'private.create_customer_order(uuid, uuid, public.payment_method, bigint, jsonb, text)',
+    'EXECUTE'
+  ) OR NOT pg_catalog.has_function_privilege(
+    'authenticated',
+    'private.cancel_customer_order(uuid, text)',
+    'EXECUTE'
   ) THEN
     RAISE EXCEPTION 'Authenticated customers must be able to call the checkout RPCs';
+  END IF;
+
+  IF pg_catalog.has_function_privilege(
+    'anon',
+    'private.release_cancelled_order_inventory()',
+    'EXECUTE'
+  ) OR pg_catalog.has_function_privilege(
+    'authenticated',
+    'private.release_cancelled_order_inventory()',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'The inventory trigger function must not be executable by client roles';
   END IF;
 
   IF pg_catalog.has_function_privilege(
