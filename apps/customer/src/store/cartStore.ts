@@ -14,8 +14,16 @@ interface CartItem {
   quantity: number;
 }
 
+interface CheckoutKey {
+  context: string;
+  key: string;
+}
+
 interface CartState {
   items: CartItem[];
+  checkoutKey: CheckoutKey | null;
+  getCheckoutKey: (context: string) => string;
+  resetCheckoutKey: () => void;
   addItem: (product: Product, quantity?: number) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
@@ -29,6 +37,18 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      checkoutKey: null,
+
+      getCheckoutKey: (context) => {
+        const current = get().checkoutKey;
+        if (current?.context === context) return current.key;
+
+        const key = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+        set({ checkoutKey: { context, key } });
+        return key;
+      },
+
+      resetCheckoutKey: () => set({ checkoutKey: null }),
 
       addItem: (product: Product, quantity = 1) => {
         if (!Number.isInteger(quantity) || quantity < 1) {
@@ -44,9 +64,12 @@ export const useCartStore = create<CartState>()(
           if (existingIndex >= 0) {
             const newItems = [...state.items];
             newItems[existingIndex].quantity += quantity;
-            return { items: newItems };
+            return { items: newItems, checkoutKey: null };
           }
-          return { items: [...state.items, { product, quantity }] };
+          return {
+            items: [...state.items, { product, quantity }],
+            checkoutKey: null,
+          };
         });
       },
 
@@ -59,17 +82,19 @@ export const useCartStore = create<CartState>()(
           items: state.items.map((i) =>
             i.product.id === productId ? { ...i, quantity } : i,
           ),
+          checkoutKey: null,
         }));
       },
 
       removeItem: (productId: string) => {
         set((state) => ({
           items: state.items.filter((i) => i.product.id !== productId),
+          checkoutKey: null,
         }));
       },
 
       clearCart: () => {
-        set({ items: [] });
+        set({ items: [], checkoutKey: null });
       },
 
       getTotalItems: () => {
@@ -92,7 +117,10 @@ export const useCartStore = create<CartState>()(
     {
       name: "bamanashop-cart",
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ items: state.items }),
+      partialize: (state) => ({
+        items: state.items,
+        checkoutKey: state.checkoutKey,
+      }),
     },
   ),
 );
