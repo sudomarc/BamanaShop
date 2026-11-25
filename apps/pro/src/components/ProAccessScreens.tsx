@@ -59,8 +59,8 @@ export function SignInScreen() {
         <Text style={styles.eyebrow}>BAMANASHOP PRO</Text>
         <Text style={styles.title}>Connexion professionnelle</Text>
         <Text style={styles.body}>
-          Connectez-vous avec le compte auquel un accès vendeur ou livreur a
-          été attribué.
+          Connectez-vous avec le compte auquel un accès vendeur ou livreur a été
+          attribué.
         </Text>
 
         <Text style={styles.label}>Adresse e-mail</Text>
@@ -148,9 +148,7 @@ export function AccessReviewScreen({
         </Text>
         {user?.email ? <Text style={styles.account}>{user.email}</Text> : null}
 
-        {profileError ? (
-          <Text style={styles.error}>{profileError}</Text>
-        ) : null}
+        {profileError ? <Text style={styles.error}>{profileError}</Text> : null}
 
         <View style={styles.statusList}>
           {(["seller", "courier"] as const).map((role) => {
