@@ -1,8 +1,6 @@
 name: BamanaShop
 
 on:
-  push:
-    branches: [chore/single-bamanashop-workflow]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -40,9 +38,7 @@ concurrency:
 jobs:
   cleanup-history:
     name: One-time Actions history cleanup
-    if: >-
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[cleanup-history]')) ||
-      (github.event_name == 'workflow_dispatch' && inputs.clean_history)
+    if: github.event_name == 'workflow_dispatch' && inputs.clean_history
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
