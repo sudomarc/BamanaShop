@@ -700,9 +700,14 @@ export async function fetchOrder(id: string): Promise<Order | null> {
 
 export async function createOrder(params: {
   storeId: string;
-  items: Array<{ productId: string; quantity: number }>;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    expectedUnitPrice: number;
+  }>;
   deliveryAddressId: string;
   paymentMethod: PaymentMethod;
+  expectedDeliveryFee: number;
   idempotencyKey: string;
 }): Promise<Order> {
   if (isMockMode) {
@@ -717,9 +722,11 @@ export async function createOrder(params: {
       p_store_id: params.storeId,
       p_delivery_address_id: params.deliveryAddressId,
       p_payment_method: params.paymentMethod,
+      p_expected_delivery_fee_gnf: params.expectedDeliveryFee,
       p_items: params.items.map((item) => ({
         product_id: item.productId,
         quantity: item.quantity,
+        unit_price_gnf: item.expectedUnitPrice,
       })),
       p_idempotency_key: params.idempotencyKey,
     },
