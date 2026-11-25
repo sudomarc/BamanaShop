@@ -63,13 +63,17 @@ export default function CartScreen() {
   }, []);
 
   useEffect(() => {
-    if (items.length > 0) {
+    if (items.length > 0 && addresses.length > 0 && selectedAddressId) {
       calculateTotals();
     } else {
       totalsRequestId.current += 1;
       setTotals(null);
     }
-  }, [items, paymentMethod]);
+
+    return () => {
+      totalsRequestId.current += 1;
+    };
+  }, [items, paymentMethod, addresses, selectedAddressId]);
 
   const loadAddresses = async () => {
     try {
@@ -111,12 +115,33 @@ export default function CartScreen() {
       if (!store) throw new Error("Store not found");
       if (partners.length === 0) throw new Error("No active delivery partners");
 
-      // Match the server tariff selection: lowest base + COD handling fee.
-      const partner = [...partners].sort(
+      const deliveryAddress = addresses.find(
+        (address) => address.id === selectedAddressId,
+      );
+      if (!deliveryAddress) throw new Error("Delivery address not found");
+
+      // Match the server: only partners covering this commune are eligible.
+      const eligiblePartners = partners.filter(
+        (candidate) =>
+          candidate.coverage_zones.length === 0 ||
+          candidate.coverage_zones.some(
+            (zone) =>
+              zone.trim().toLocaleLowerCase() ===
+              deliveryAddress.commune.trim().toLocaleLowerCase(),
+          ),
+      );
+      if (eligiblePartners.length === 0) {
+        throw new Error("Aucun partenaire ne dessert cette commune.");
+      }
+
+      // Match the server tariff selection: lowest base + COD handling fee,
+      // then stable partner ID ordering for deterministic ties.
+      const partner = [...eligiblePartners].sort(
         (a, b) =>
           a.base_fee_gnf +
           a.cod_handling_fee_gnf -
-          (b.base_fee_gnf + b.cod_handling_fee_gnf),
+          (b.base_fee_gnf + b.cod_handling_fee_gnf) ||
+          a.id.localeCompare(b.id),
       )[0];
 
       // Routing is not integrated yet; the server uses a zero-distance estimate.
