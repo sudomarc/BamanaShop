@@ -53,11 +53,11 @@ describe("delivery partner selection", () => {
   });
 
   it("returns null when no active partner covers the commune", () => {
-    expect(
-      selectDeliveryPartner(
-        [partner("outside", 1000, 0, ["Kaloum"])],
-        "Matam",
-      ),
-    ).toBeNull();
+    const selected = selectDeliveryPartner(
+      [partner("outside", 1000, 0, ["Kaloum"])],
+      "Matam",
+    );
+
+    expect(selected).toBeNull();
   });
 });
