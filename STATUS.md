@@ -1,51 +1,63 @@
 # BamanaShop — État du projet
 
-Mise à jour : 19 novembre 2026
+Mise à jour : 25 novembre 2026
 
-## État vérifié du dépôt
+## Références vérifiées
 
 - Dépôt : `sudomarc/BamanaShop`
-- Branche de base : `main`
-- Commit de base vérifié : `631bc24c8479eef62df45bdcec89e5f9774ca292`
-- Branche de préparation : `chore/marketplace-project-foundation`
-- Le dépôt de base contient une vitrine statique HTML/CSS/JavaScript.
-- Aucun workspace mobile, dashboard Next.js, backend marketplace ou dossier Supabase n'était présent dans l'arbre de base.
-- Le panier existant utilise le stockage local du navigateur et le checkout affiche une simulation ; il ne réalise pas de transaction réelle.
-- Aucun `ROADMAP.md` ni `STATUS.md` n'existait sur la branche de base.
+- Branche principale : `main`
+- HEAD de `main` vérifié : `def99676548ae35e45db5ed9ae928af75b43daea`
+- Monorepo pnpm présent : `apps/customer`, `apps/pro`, `apps/admin`, `packages/contracts`, `packages/domain`, `supabase`.
+- PR #29 (garde d'accès Pro selon les rôles approuvés) est intégrée à `main`.
+- PR #30 (candidature Pro multi-activité) est ouverte en brouillon.
+- PR #31 (chemin explicite vers `apksigner` dans le workflow Android) est ouverte en brouillon.
+- PR #28 (checkout serveur) a été fermée sans merge ; ses changements ne sont pas présents dans `main`.
 
-## Situation actuelle
+## État de `main`
 
-**Statut global :** cadrage prêt ; implémentation applicative non commencée.
-
-| Domaine | Statut | Note |
+| Domaine | État vérifié | Limite actuelle |
 |---|---|---|
-| Vision produit | DONE | Deux apps mobiles + Admin web |
-| Roadmap et gouvernance | DONE | Documents de cadrage ajoutés |
-| Workspace monorepo | TODO | Prochaine tâche technique |
-| Supabase / schéma / RLS | TODO | Aucun schéma appliqué |
-| App Customer | TODO | Pas de code applicatif |
-| App Pro | TODO | Pas de code applicatif |
-| Admin web | TODO | Pas de dashboard |
-| Paiements réels | BLOCKED | Contrat, accès et tests fournisseur requis |
-| Livraison intégrée | BLOCKED | Partenaire et contrat/API non confirmés |
-| Ouverture commerciale | BLOCKED | Validation juridique, commerciale et opérationnelle requise |
+| Workspace | Présent | Vérifier les frontières de packages à chaque changement |
+| Supabase | Migrations `0001` à `0003` présentes | La migration Pro de PR #30 n'est pas encore intégrée |
+| Customer | App mobile et parcours panier/commande présents | Le durcissement checkout de PR #28 n'est pas intégré ; le client ne doit pas être considéré comme source de vérité |
+| Pro | Authentification et garde d'accès selon rôles approuvés intégrées via PR #29 | Pas encore de formulaire de candidature sur `main` |
+| Admin | Dashboard Next.js présent | La page vendeurs utilise encore des données mockées ; aucun workflow d'approbation vendeur/livreur vérifié |
+| Paiements | Méthodes et structures de paiement présentes dans le modèle | Aucune intégration fournisseur réelle ni rapprochement de paiements vérifié |
+| Livraison | Modèles de partenaires et de zones présents | Aucun contrat/API partenaire de livraison confirmé |
+| Android | Workflow de build APK présent | Le run manuel #45540866677 a compilé l'APK mais a échoué à la vérification car `apksigner` n'était pas trouvé dans le PATH ; PR #31 corrige le chemin, sans build final validé sur le nouveau commit |
 
-## Prochaine itération
+## Travail ouvert
 
-- [ ] L'orchestrateur crée le workspace pnpm et les configurations racine.
-- [ ] L'agent Platform propose les contrats et le schéma initial avant que les autres workstreams ne fassent des appels réseau réels.
-- [ ] Les agents Customer et Pro créent des parcours UI sur des données mockées typées.
-- [ ] L'agent Admin & QA crée l'interface interne et les premiers tests.
-- [ ] Aucun paiement ni reversement réel pendant le bootstrap.
+### PR #30 — Onboarding Pro
 
-## Blocages externes à lever
+- Formulaire progressif en trois étapes pour les comptes déjà authentifiés.
+- Activités cumulables : commerce physique, vente en ligne, grossiste, distributeur.
+- Candidature livreur facultative, avec véhicule.
+- RPC serveur qui valide et crée les profils et demandes de rôles en attente.
+- Protection des champs d'approbation contre l'auto-validation.
+- CI #45542828904 : succès, incluant lint, Prettier, typecheck, tests unitaires, build Admin, reset Supabase local et génération des types.
+- Non vérifié : build Android Pro, test sur appareil, approbation Admin réelle, déploiement Supabase distant.
+- Dépendance restante : interface Admin sécurisée pour examiner et approuver les demandes.
 
-1. Confirmer les droits commerciaux sur la marque et les attributions existantes.
-2. Vérifier les obligations juridiques et administratives applicables à l'opérateur marketplace.
-3. Obtenir les conditions et accès marchands des prestataires de paiement.
-4. Choisir les partenaires de livraison et formaliser tarifs, zones, SLA, preuve de livraison, responsabilités et encaissement COD.
-5. Définir les conditions vendeurs, commissions, remboursements, retours et délais de reversement.
+### PR #31 — Vérification APK
+
+- Remplace l'appel `apksigner` dépendant du PATH par le binaire du SDK Android.
+- Les exécutions CI sur le nouveau HEAD sont en cours ; ne pas déclarer le correctif validé avant leur conclusion.
+
+### Checkout sécurisé
+
+- PR #28 fermée sans merge.
+- Les changements de checkout serveur, d'idempotence, de réservation de stock, de contrôle des tarifs et d'annulation restent sur sa branche et ne sont pas actifs sur `main`.
+- Ne pas annoncer le checkout actuel comme transactionnellement sécurisé avant intégration et validation de ce correctif.
+
+## Prochaines actions
+
+1. Terminer et faire relire PR #30.
+2. Ajouter l'authentification Admin et un workflow serveur d'examen/approbation des demandes Pro.
+3. Terminer PR #31 puis reconstruire l'APK sur le HEAD validé et tester l'installation ADB.
+4. Reprendre le durcissement checkout dans une PR explicitement acceptée ; ajouter des tests d'intégration pour les sessions RLS, l'idempotence, les prix et le stock.
+5. Valider les contrats fournisseurs, le rapprochement COD, les remboursements et les obligations commerciales avant tout paiement réel.
 
 ## Règle de mise à jour
 
-Mettre à jour ce fichier à chaque PR intégrée : statut par lot, changements livrés, vérifications réellement exécutées, incidents connus et prochaine action. Ne jamais déclarer une intégration ou un test réussi sans preuve.
+Mettre à jour ce fichier à chaque PR intégrée : changements livrés, preuves CI, tests réellement exécutés, limites connues et prochaine action. Distinguer systématiquement `main`, les branches ouvertes et les intégrations externes non vérifiées.

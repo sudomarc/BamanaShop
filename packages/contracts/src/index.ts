@@ -172,10 +172,20 @@ export const RoleMembership = z.object({
 });
 export type RoleMembership = z.infer<typeof RoleMembership>;
 
+export const SellerBusinessActivity = z.enum([
+  "physical_store",
+  "online_seller",
+  "wholesaler",
+  "distributor",
+]);
+export type SellerBusinessActivity = z.infer<typeof SellerBusinessActivity>;
+
 export const SellerProfile = z.object({
   id: Uuid,
   user_id: Uuid,
   business_name: z.string().min(1).max(200),
+  business_activities: z.array(SellerBusinessActivity).default([]),
+  business_details: z.record(z.unknown()).default({}),
   business_registration_number: z.string().max(100).nullable().optional(),
   tax_id: z.string().max(100).nullable().optional(),
   bank_account_name: z.string().max(200).nullable().optional(),

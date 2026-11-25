@@ -8,6 +8,8 @@ import {
   View,
 } from "react-native";
 import { useAuthStore } from "@/store/authStore";
+import { ProApplicationForm } from "@/components/ProApplicationForm";
+import type { ProApplicationDraft } from "@/utils/proApplication";
 import type { RoleStatus, UserRole } from "@bamanashop/contracts";
 
 type ProRole = Extract<UserRole, "seller" | "courier">;
@@ -59,8 +61,8 @@ export function SignInScreen() {
         <Text style={styles.eyebrow}>BAMANASHOP PRO</Text>
         <Text style={styles.title}>Connexion professionnelle</Text>
         <Text style={styles.body}>
-          Connectez-vous avec le compte auquel un accès vendeur ou livreur a été
-          attribué.
+          Connectez-vous avec votre compte BamanaShop. Vous pourrez ensuite
+          demander un accès vendeur, grossiste, distributeur ou livreur.
         </Text>
 
         <Text style={styles.label}>Adresse e-mail</Text>
@@ -122,7 +124,13 @@ export function AccessReviewScreen({
   onSignOut: () => void | Promise<void>;
 }) {
   const user = useAuthStore((state) => state.user);
+  const profile = useAuthStore((state) => state.profile);
+  const sellerProfile = useAuthStore((state) => state.sellerProfile);
+  const courierProfile = useAuthStore((state) => state.courierProfile);
   const profileLoading = useAuthStore((state) => state.profileLoading);
+  const requestLoading = useAuthStore((state) => state.loading);
+  const requestProAccess = useAuthStore((state) => state.requestProAccess);
+  const [showApplication, setShowApplication] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handleSignOut = async () => {
@@ -135,6 +143,70 @@ export function AccessReviewScreen({
       );
     }
   };
+
+  const details = sellerProfile?.business_details ?? {};
+  const readRecord = (value: unknown): Record<string, unknown> =>
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  const readString = (record: Record<string, unknown>, key: string) =>
+    typeof record[key] === "string" ? (record[key] as string) : "";
+  const readList = (record: Record<string, unknown>, key: string) =>
+    Array.isArray(record[key])
+      ? (record[key] as unknown[])
+          .filter((value): value is string => typeof value === "string")
+          .join(", ")
+      : "";
+
+  const physicalStore = readRecord(details.physical_store);
+  const onlineSeller = readRecord(details.online_seller);
+  const wholesaler = readRecord(details.wholesaler);
+  const distributor = readRecord(details.distributor);
+  const initialDraft: Partial<ProApplicationDraft> = {
+    fullName: profile?.full_name ?? "",
+    phone: profile?.phone ?? "",
+    businessName: sellerProfile?.business_name ?? "",
+    activities: sellerProfile?.business_activities ?? [],
+    physicalStore: {
+      commune: readString(physicalStore, "commune"),
+      quartier: readString(physicalStore, "quartier"),
+      addressLine: readString(physicalStore, "address_line"),
+    },
+    onlineSeller: {
+      channels: readList(onlineSeller, "channels"),
+      deliveryZones: readList(onlineSeller, "delivery_zones"),
+    },
+    wholesaler: {
+      goods: readList(wholesaler, "goods"),
+      minimumOrderGnf:
+        typeof wholesaler.minimum_order_gnf === "number"
+          ? String(wholesaler.minimum_order_gnf)
+          : "",
+    },
+    distributor: {
+      suppliers: readList(distributor, "suppliers"),
+      distributionZones: readList(distributor, "distribution_zones"),
+    },
+    courierRequested: requestedRoles.includes("courier"),
+    vehicleType: courierProfile?.vehicle_type ?? "motorcycle",
+    vehiclePlate: courierProfile?.vehicle_plate ?? "",
+  };
+
+  if (showApplication) {
+    return (
+      <ProApplicationForm
+        initialDraft={initialDraft}
+        loading={requestLoading}
+        onCancel={() => setShowApplication(false)}
+        onSubmit={async (payload) => {
+          const result = await requestProAccess(payload);
+          if (result.error) return result.error.message;
+          setShowApplication(false);
+          return null;
+        }}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -182,7 +254,21 @@ export function AccessReviewScreen({
               <Text style={styles.primaryButtonText}>Réessayer</Text>
             )}
           </Pressable>
-        ) : null}
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setShowApplication(true)}
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>
+              {requestedRoles.some(
+                (role) => role === "seller" || role === "courier",
+              )
+                ? "Compléter ou modifier ma demande"
+                : "Demander un accès professionnel"}
+            </Text>
+          </Pressable>
+        )}
 
         {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
         <Pressable

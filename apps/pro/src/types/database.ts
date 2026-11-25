@@ -91,6 +91,8 @@ export type Database = {
           id: string;
           user_id: string;
           business_name: string;
+          business_activities: string[];
+          business_details: Json;
           business_registration_number: string | null;
           tax_id: string | null;
           bank_account_name: string | null;
@@ -106,6 +108,8 @@ export type Database = {
           id?: string;
           user_id: string;
           business_name: string;
+          business_activities?: string[];
+          business_details?: Json;
           business_registration_number?: string | null;
           tax_id?: string | null;
           bank_account_name?: string | null;
@@ -121,6 +125,8 @@ export type Database = {
           id?: string;
           user_id?: string;
           business_name?: string;
+          business_activities?: string[];
+          business_details?: Json;
           business_registration_number?: string | null;
           tax_id?: string | null;
           bank_account_name?: string | null;
@@ -1381,6 +1387,19 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      request_pro_access: {
+        Args: {
+          p_full_name: string;
+          p_phone: string;
+          p_business_name: string | null;
+          p_business_activities: string[];
+          p_business_details: Json;
+          p_courier_requested: boolean;
+          p_vehicle_type: string | null;
+          p_vehicle_plate: string | null;
+        };
+        Returns: Json;
+      };
       create_order: {
         Args: {
           p_customer_id: string;

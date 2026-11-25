@@ -15,6 +15,7 @@ import {
   PaymentStatus,
   PaymentMethod,
   Profile,
+  SellerProfile,
   Store,
   Product,
   Order,
@@ -165,6 +166,49 @@ describe("Entity Schemas", () => {
     };
     const result = Profile.safeParse(profile);
     expect(result.success).toBe(false);
+  });
+
+  it("SellerProfile validates multiple business activities and details", () => {
+    const sellerProfile = {
+      id: "55555555-5555-5555-5555-555555555555",
+      user_id: "123e4567-e89b-12d3-a456-426614174000",
+      business_name: "Boutique Aissata",
+      business_activities: ["physical_store", "online_seller"],
+      business_details: {
+        physical_store: {
+          commune: "Dixinn",
+          quartier: "Donka",
+          address_line: "Route de Donka",
+        },
+        online_seller: {
+          channels: ["Facebook", "Instagram"],
+          delivery_zones: ["Matam", "Ratoma"],
+        },
+      },
+      status: "pending",
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    };
+
+    expect(SellerProfile.safeParse(sellerProfile).success).toBe(true);
+  });
+
+  it("SellerProfile defaults missing activity metadata", () => {
+    const sellerProfile = {
+      id: "55555555-5555-5555-5555-555555555555",
+      user_id: "123e4567-e89b-12d3-a456-426614174000",
+      business_name: "Boutique Aissata",
+      status: "pending",
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    };
+
+    const parsed = SellerProfile.safeParse(sellerProfile);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.business_activities).toEqual([]);
+      expect(parsed.data.business_details).toEqual({});
+    }
   });
 
   it("Store validates correctly", () => {
