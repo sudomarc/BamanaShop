@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { useAuthStore } from "@/store/authStore";
-import type { UserRole } from "@bamanashop/contracts";
+import type { RoleStatus, UserRole } from "@bamanashop/contracts";
 
 type ProRole = Extract<UserRole, "seller" | "courier">;
 
@@ -108,20 +108,27 @@ export function SignInScreen() {
   );
 }
 
-export function AccessReviewScreen() {
+export function AccessReviewScreen({
+  profileError,
+  requestedRoles,
+  roleStatuses,
+  onRetry,
+  onSignOut,
+}: {
+  profileError: string | null;
+  requestedRoles: UserRole[];
+  roleStatuses: Record<UserRole, RoleStatus | null>;
+  onRetry: () => void;
+  onSignOut: () => void | Promise<void>;
+}) {
   const user = useAuthStore((state) => state.user);
-  const requestedRoles = useAuthStore((state) => state.requestedRoles);
-  const roleStatuses = useAuthStore((state) => state.roleStatuses);
-  const profileError = useAuthStore((state) => state.profileError);
   const profileLoading = useAuthStore((state) => state.profileLoading);
-  const fetchProfiles = useAuthStore((state) => state.fetchProfiles);
-  const signOut = useAuthStore((state) => state.signOut);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     setActionError(null);
     try {
-      await signOut();
+      await onSignOut();
     } catch (error) {
       setActionError(
         error instanceof Error ? error.message : "Déconnexion impossible.",
@@ -165,9 +172,7 @@ export function AccessReviewScreen() {
           <Pressable
             accessibilityRole="button"
             disabled={profileLoading}
-            onPress={() => {
-              void fetchProfiles().catch(() => undefined);
-            }}
+            onPress={onRetry}
             style={[styles.primaryButton, profileLoading && styles.disabledButton]}
           >
             {profileLoading ? (
@@ -194,18 +199,19 @@ export function AccessReviewScreen() {
 export function RolePickerScreen({
   roles,
   onSelect,
+  onSignOut,
 }: {
   roles: ProRole[];
   onSelect: (role: ProRole) => void;
+  onSignOut: () => void | Promise<void>;
 }) {
-  const signOut = useAuthStore((state) => state.signOut);
   const user = useAuthStore((state) => state.user);
   const [error, setError] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     setError(null);
     try {
-      await signOut();
+      await onSignOut();
     } catch (signOutError) {
       setError(
         signOutError instanceof Error
