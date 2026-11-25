@@ -98,8 +98,12 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   if (!isSupabaseConfigured()) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
-        <section className="w-full max-w-lg rounded-xl border border-amber-200 bg-white p-6 shadow-sm">
+      <main
+        className="flex min-h-screen items-center justify-center bg-slate-50 p-6"
+      >
+        <section
+          className="w-full max-w-lg rounded-xl border border-amber-200 bg-white p-6 shadow-sm"
+        >
           <h1 className="text-lg font-semibold text-slate-900">
             Configuration Supabase requise
           </h1>
@@ -116,7 +120,9 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
   if (state === "loading" || state === "signed-out") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-sm text-slate-500">Vérification de la session Admin…</p>
+        <p className="text-sm text-slate-500">
+          Vérification de la session Admin…
+        </p>
       </main>
     );
   }
@@ -124,7 +130,9 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
   if (state === "denied" || state === "error") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
-        <section className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section
+          className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+        >
           <h1 className="text-lg font-semibold text-slate-900">
             {accessTitle}
           </h1>
@@ -146,7 +154,9 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div>
-      <div className="flex items-center justify-end gap-3 border-b border-slate-200 bg-white px-5 py-2 text-xs text-slate-500">
+      <div
+        className="flex items-center justify-end gap-3 border-b border-slate-200 bg-white px-5 py-2 text-xs text-slate-500"
+      >
         <span>{session?.user.email ?? "Administrateur"}</span>
         <button
           type="button"
