@@ -150,7 +150,9 @@ export function ProApplicationsQueue({
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+      <div
+        className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"
+      >
         Configurez Supabase pour charger les candidatures réelles.
       </div>
     );
@@ -203,13 +205,16 @@ export function ProApplicationsQueue({
             const courier = application.courier_profile;
             return (
               <article key={key} className="card space-y-4 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div
+                  className="flex flex-wrap items-start justify-between gap-3"
+                >
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">
                       {application.profile.full_name || "Nom non renseigné"}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      {application.profile.email || "E-mail non renseigné"} ·{" "}
+                      {application.profile.email || "E-mail non renseigné"}
+                      {" · "}
                       {application.profile.phone || "Téléphone non renseigné"}
                     </p>
                   </div>
@@ -226,10 +231,12 @@ export function ProApplicationsQueue({
                         <span key={activity} className="badge badge-info">
                           {activityLabels[activity] ?? activity}
                         </span>
-                      ))}
+                        ),
+                      )}
                     </div>
                     <div className="space-y-1 text-sm text-slate-600">
-                      {summarizeDetails(seller.business_details).map((detail) => (
+                      {summarizeDetails(seller.business_details).map(
+                        (detail) => (
                         <p key={detail}>{detail}</p>
                       ))}
                     </div>
@@ -237,7 +244,9 @@ export function ProApplicationsQueue({
                 ) : null}
 
                 {courier ? (
-                  <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700">
+                  <div
+                    className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700"
+                  >
                     <p>
                       <strong>Moyen de transport :</strong>{" "}
                       {courier.vehicle_type || "Non renseigné"}
@@ -253,7 +262,9 @@ export function ProApplicationsQueue({
                   Demande reçue le {formatDate(application.submitted_at)}
                 </div>
 
-                <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row">
+                <div
+                  className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row"
+                >
                   <input
                     value={reasons[key] ?? ""}
                     onChange={(event) =>
