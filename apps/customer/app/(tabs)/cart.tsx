@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -47,6 +47,7 @@ export default function CartScreen() {
   >([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const totalsRequestId = useRef(0);
   const [totals, setTotals] = useState<{
     subtotal: GnfAmount;
     deliveryFee: GnfAmount;
@@ -65,6 +66,7 @@ export default function CartScreen() {
     if (items.length > 0) {
       calculateTotals();
     } else {
+      totalsRequestId.current += 1;
       setTotals(null);
     }
   }, [items, paymentMethod]);
@@ -94,6 +96,10 @@ export default function CartScreen() {
 
   const calculateTotals = async () => {
     if (items.length === 0) return;
+
+    const requestId = ++totalsRequestId.current;
+    setTotals(null);
+
     try {
       // Get store from first item's product
       const storeId = items[0].product.store_id;
@@ -128,10 +134,14 @@ export default function CartScreen() {
         commissionRules: [],
         categoryId: items[0].product.category_id,
       });
-      setTotals(result);
+      if (requestId === totalsRequestId.current) {
+        setTotals(result);
+      }
     } catch (error) {
-      console.error("Calculate totals error:", error);
-      Alert.alert("Erreur", "Impossible de calculer les totaux");
+      if (requestId === totalsRequestId.current) {
+        console.error("Calculate totals error:", error);
+        Alert.alert("Erreur", "Impossible de calculer les totaux");
+      }
     }
   };
 
@@ -161,6 +171,13 @@ export default function CartScreen() {
       Alert.alert("Adresse requise", "Sélectionnez une adresse de livraison");
       return;
     }
+    if (!totals) {
+      Alert.alert(
+        "Récapitulatif indisponible",
+        "Attendez le recalcul du total avant de confirmer la commande.",
+      );
+      return;
+    }
 
     setLoading(true);
     try {
@@ -181,7 +198,7 @@ export default function CartScreen() {
         quantity: item.quantity,
         expectedUnitPrice: item.product.price_gnf,
       }));
-      const expectedDeliveryFee = totals!.deliveryFee;
+      const expectedDeliveryFee = totals.deliveryFee;
       const checkoutContext = JSON.stringify({
         storeId: items[0].product.store_id,
         items: checkoutItems,
