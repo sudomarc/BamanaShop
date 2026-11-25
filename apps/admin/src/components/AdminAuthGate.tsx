@@ -98,19 +98,15 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   if (!isSupabaseConfigured()) {
     return (
-      <main
-        className="flex min-h-screen items-center justify-center bg-slate-50 p-6"
-      >
-        <section
-          className="w-full max-w-lg rounded-xl border border-amber-200 bg-white p-6 shadow-sm"
-        >
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <section className="w-full max-w-lg rounded-xl border border-amber-200 bg-white p-6 shadow-sm">
           <h1 className="text-lg font-semibold text-slate-900">
             Configuration Supabase requise
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Définissez NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY
-            pour activer l'authentification Admin. Aucun mode mock n'est autorisé
-            pour accéder au dashboard.
+            pour activer l'authentification Admin. Aucun mode mock n'est
+            autorisé pour accéder au dashboard.
           </p>
         </section>
       </main>
@@ -119,9 +115,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   if (state === "loading" || state === "signed-out") {
     return (
-      <main
-        className="flex min-h-screen items-center justify-center bg-slate-50"
-      >
+      <main className="flex min-h-screen items-center justify-center bg-slate-50">
         <p className="text-sm text-slate-500">
           Vérification de la session Admin…
         </p>
@@ -131,12 +125,8 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   if (state === "denied" || state === "error") {
     return (
-      <main
-        className="flex min-h-screen items-center justify-center bg-slate-50 p-6"
-      >
-        <section
-          className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-        >
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <section className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-lg font-semibold text-slate-900">
             {accessTitle}
           </h1>
@@ -158,9 +148,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div>
-      <div
-        className="flex items-center justify-end gap-3 border-b border-slate-200 bg-white px-5 py-2 text-xs text-slate-500"
-      >
+      <div className="flex items-center justify-end gap-3 border-b border-slate-200 bg-white px-5 py-2 text-xs text-slate-500">
         <span>{session?.user.email ?? "Administrateur"}</span>
         <button
           type="button"
