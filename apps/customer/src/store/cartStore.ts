@@ -30,6 +30,17 @@ export const useCartStore = create<CartState>()(
       items: [],
 
       addItem: (product: Product, quantity = 1) => {
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          throw new Error("La quantité doit être un entier positif.");
+        }
+
+        const currentStoreId = get().getStoreId();
+        if (currentStoreId && currentStoreId !== product.store_id) {
+          throw new Error(
+            "Le panier est limité à une seule boutique. Videz-le avant de choisir une autre boutique.",
+          );
+        }
+
         set((state) => {
           const existingIndex = state.items.findIndex(
             (i) => i.product.id === product.id,
