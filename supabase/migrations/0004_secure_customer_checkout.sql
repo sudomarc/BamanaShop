@@ -339,6 +339,7 @@ BEGIN
 
   UPDATE public.orders
   SET status = 'cancelled',
+      payment_status = 'failed',
       cancellation_reason = pg_catalog.left(v_reason, 500),
       cancelled_at = pg_catalog.now(),
       updated_at = pg_catalog.now()
@@ -353,6 +354,14 @@ BEGIN
     RAISE EXCEPTION 'This order cannot be cancelled by the current customer'
       USING ERRCODE = '42501';
   END IF;
+
+  UPDATE public.payments
+  SET status = 'failed',
+      failed_at = pg_catalog.now(),
+      failure_reason = 'Order cancelled by customer',
+      updated_at = pg_catalog.now()
+  WHERE order_id = p_order_id
+    AND status = 'cash_due';
 END;
 $function$;
 
