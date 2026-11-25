@@ -19,7 +19,6 @@ import {
   fetchAddresses,
   createOrder,
   fetchDeliveryPartners,
-  fetchCommissionRules,
   fetchStore,
 } from "@/api";
 import { isSupabaseConfigured } from "@/utils/supabase";
@@ -62,9 +61,6 @@ export default function CartScreen() {
     courierCost: GnfAmount;
     sellerPayable: GnfAmount;
   } | null>(null);
-  const deliveryCommune =
-    addresses.find((address) => address.id === selectedAddressId)?.commune ??
-    "Matam";
 
   useEffect(() => {
     loadAddresses();
@@ -80,7 +76,7 @@ export default function CartScreen() {
     } else {
       setTotals(null);
     }
-  }, [items, paymentMethod, deliveryCommune]);
+  }, [items, paymentMethod]);
 
   const loadAddresses = async () => {
     try {
@@ -110,24 +106,23 @@ export default function CartScreen() {
     try {
       // Get store from first item's product
       const storeId = items[0].product.store_id;
-      const [store, partners, commissionRules] = await Promise.all([
+      const [store, partners] = await Promise.all([
         fetchStore(storeId),
         fetchDeliveryPartners(),
-        fetchCommissionRules(),
       ]);
 
       if (!store) throw new Error("Store not found");
       if (partners.length === 0) throw new Error("No active delivery partners");
 
-      // Use the first (cheapest) active partner for MVP
-      const partner = partners[0];
+      // Match the server tariff selection: lowest base + COD handling fee.
+      const partner = [...partners].sort(
+        (a, b) =>
+          a.base_fee_gnf + a.cod_handling_fee_gnf -
+          (b.base_fee_gnf + b.cod_handling_fee_gnf),
+      )[0];
 
-      // Estimate distance - for MVP use store commune vs delivery commune
-      // In a real app this would use geolocation/routing
-      const address = addresses.find((a) => a.id === selectedAddressId);
-      const sameCommune =
-        address?.commune?.toLowerCase() === store.commune?.toLowerCase();
-      const distanceKm = sameCommune ? 0 : 5;
+      // Routing is not integrated yet; the server uses a zero-distance estimate.
+      const distanceKm = 0;
 
       const result = await calculateOrderTotals({
         items: items.map((i) => ({
@@ -138,7 +133,7 @@ export default function CartScreen() {
         partner,
         distanceKm,
         paymentMethod,
-        commissionRules,
+        commissionRules: [],
         categoryId: items[0].product.category_id,
       });
       setTotals(result);
@@ -363,7 +358,7 @@ export default function CartScreen() {
             <View>
               <Text style={styles.paymentOptionLabel}>Orange Money</Text>
               <Text style={styles.paymentOptionDesc}>
-                Paiement mobile (bientôt disponible)
+                Non disponible pour le moment
               </Text>
             </View>
           </View>
@@ -415,7 +410,7 @@ export default function CartScreen() {
       <TouchableOpacity
         style={[styles.checkoutButton, loading && styles.buttonDisabled]}
         onPress={handleCheckout}
-        disabled={loading}
+        disabled={loading || !totals}
       >
         {loading ? (
           <ActivityIndicator size="small" color="#FFFFFF" />
