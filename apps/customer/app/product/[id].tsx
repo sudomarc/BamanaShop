@@ -68,13 +68,18 @@ export default function ProductDetailScreen() {
         `${product.name} x${quantity} ajouté à votre panier`,
         [
           { text: "Continuer mes achats", style: "cancel" },
-          { text: "Voir le panier", onPress: () => router.push("/(tabs)/cart") },
+          {
+            text: "Voir le panier",
+            onPress: () => router.push("/(tabs)/cart"),
+          },
         ],
       );
     } catch (error) {
       Alert.alert(
         "Panier mono-boutique",
-        error instanceof Error ? error.message : "Impossible d'ajouter ce produit.",
+        error instanceof Error
+          ? error.message
+          : "Impossible d'ajouter ce produit.",
       );
     }
   };
