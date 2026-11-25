@@ -699,74 +699,42 @@ export async function fetchOrder(id: string): Promise<Order | null> {
 }
 
 export async function createOrder(params: {
-  customerId: string;
   storeId: string;
-  items: Array<{ productId: string; quantity: number; unitPrice: number }>;
+  items: Array<{ productId: string; quantity: number }>;
   deliveryAddressId: string;
-  deliveryAddressSnapshot: Order["delivery_address_snapshot"];
   paymentMethod: PaymentMethod;
-  subtotal: number;
-  deliveryFee: number;
-  paymentFee: number;
-  total: number;
-  commissionRateBps: number;
-  commission: number;
-  courierCost: number;
-  sellerPayable: number;
+  idempotencyKey: string;
 }): Promise<Order> {
-  if (isMockMode)
-    return {
-      id: "mock-order" as Uuid,
-      customer_id: "mock-user" as Uuid,
-      store_id: params.storeId as Uuid,
-      status: "pending",
-      subtotal_gnf: params.subtotal as GnfAmount,
-      delivery_fee_gnf: params.deliveryFee as GnfAmount,
-      payment_fee_gnf: params.paymentFee as GnfAmount,
-      total_gnf: params.total as GnfAmount,
-      commission_rate_bps: params.commissionRateBps,
-      commission_gnf: params.commission as GnfAmount,
-      courier_cost_gnf: params.courierCost as GnfAmount,
-      seller_payable_gnf: params.sellerPayable as GnfAmount,
-      payment_method: params.paymentMethod,
-      payment_status: "pending",
-      delivery_status: "unassigned",
-      delivery_address_id: params.deliveryAddressId as Uuid,
-      delivery_address_snapshot: {
-        commune: "",
-        quartier: "",
-        phone: "+224620000000" as PhoneE164,
-      },
-      created_at: new Date().toISOString() as IsoDateTime,
-      updated_at: new Date().toISOString() as IsoDateTime,
-    };
+  if (isMockMode) {
+    throw new Error(
+      "Le backend BamanaShop n'est pas configuré. Aucune commande de démonstration ne sera créée.",
+    );
+  }
 
-  const { data, error } = await (
-    await from("orders")
-  )
-    .insert({
-      customer_id: params.customerId as Uuid,
-      store_id: params.storeId as Uuid,
-      status: "pending",
-      subtotal_gnf: params.subtotal as GnfAmount,
-      delivery_fee_gnf: params.deliveryFee as GnfAmount,
-      payment_fee_gnf: params.paymentFee as GnfAmount,
-      total_gnf: params.total as GnfAmount,
-      commission_rate_bps: params.commissionRateBps,
-      commission_gnf: params.commission as GnfAmount,
-      courier_cost_gnf: params.courierCost as GnfAmount,
-      seller_payable_gnf: params.sellerPayable as GnfAmount,
-      payment_method: params.paymentMethod,
-      payment_status: "pending",
-      delivery_address_id: params.deliveryAddressId as Uuid,
-      delivery_address_snapshot: params.deliveryAddressSnapshot,
-      created_at: new Date().toISOString() as IsoDateTime,
-      updated_at: new Date().toISOString() as IsoDateTime,
-    })
-    .select()
+  const { data: orderId, error: createError } = await supabase.rpc(
+    "create_customer_order",
+    {
+      p_store_id: params.storeId,
+      p_delivery_address_id: params.deliveryAddressId,
+      p_payment_method: params.paymentMethod,
+      p_items: params.items.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+      })),
+      p_idempotency_key: params.idempotencyKey,
+    },
+  );
+
+  if (createError) throw createError;
+  if (!orderId) throw new Error("Order creation returned no id");
+
+  const { data, error } = await (await from("orders"))
+    .select("*")
+    .eq("id", orderId)
     .single();
+
   if (error) throw error;
-  if (!data) throw new Error("Order creation returned no row");
+  if (!data) throw new Error("Created order could not be loaded");
   return mapOrder(data);
 }
 
