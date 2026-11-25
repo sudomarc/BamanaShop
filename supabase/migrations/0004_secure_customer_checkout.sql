@@ -19,7 +19,6 @@ DROP POLICY IF EXISTS "orders_customer_insert" ON public.orders;
 REVOKE INSERT ON public.orders FROM anon, authenticated;
 REVOKE INSERT ON public.order_items FROM anon, authenticated;
 REVOKE INSERT ON public.payments FROM anon, authenticated;
-REVOKE INSERT ON public.inventory_movements FROM anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.create_customer_order(
   p_store_id UUID,
@@ -272,6 +271,48 @@ BEGIN
   RETURN v_order_id;
 END;
 $function$;
+
+-- Release inventory reservations exactly once when an order is cancelled.
+CREATE OR REPLACE FUNCTION public.release_cancelled_order_inventory()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+BEGIN
+  IF OLD.status IS DISTINCT FROM 'cancelled'::public.order_status
+     AND NEW.status = 'cancelled'::public.order_status
+     AND NOT EXISTS (
+       SELECT 1
+       FROM public.inventory_movements AS im
+       WHERE im.reference_id = NEW.id
+         AND im.reason = 'release'
+     ) THEN
+    INSERT INTO public.inventory_movements (
+      product_id, quantity_delta, reason, reference_id, created_by
+    )
+    SELECT im.product_id, -pg_catalog.sum(im.quantity_delta)::INTEGER,
+           'release', NEW.id, NEW.customer_id
+    FROM public.inventory_movements AS im
+    WHERE im.reference_id = NEW.id
+      AND im.reason = 'reservation'
+    GROUP BY im.product_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.release_cancelled_order_inventory()
+  FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS release_cancelled_order_inventory
+  ON public.orders;
+
+CREATE TRIGGER release_cancelled_order_inventory
+AFTER UPDATE OF status ON public.orders
+FOR EACH ROW
+EXECUTE FUNCTION public.release_cancelled_order_inventory();
 
 REVOKE ALL ON FUNCTION public.create_customer_order(
   UUID, UUID, public.payment_method, JSONB, TEXT
