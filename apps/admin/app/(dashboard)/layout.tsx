@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { AdminAuthGate } from "@/components/AdminAuthGate";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createSupabaseClient } from "@/lib/supabase";
 
 const navigation = [
   { title: "Tableau de bord", href: "/dashboard", icon: "📊" },
   { title: "Vendeurs", href: "/dashboard/sellers", icon: "👥" },
+  { title: "Livreurs", href: "/dashboard/couriers", icon: "🚴" },
   { title: "Boutiques", href: "/dashboard/stores", icon: "🏪" },
   { title: "Produits", href: "/dashboard/products", icon: "📦" },
   { title: "Commandes", href: "/dashboard/orders", icon: "📋" },
@@ -25,10 +26,10 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const supabase = createSupabaseClient();
 
   return (
-    <div className="flex min-h-screen">
+    <AdminAuthGate>
+      <div className="flex min-h-screen">
       <aside
         className={`sidebar transition-all duration-200 ${sidebarOpen ? "w-64" : "w-20"}`}
       >
@@ -76,6 +77,6 @@ export default function DashboardLayout({
         </header>
         <main className="main flex-1">{children}</main>
       </div>
-    </div>
+    </AdminAuthGate>
   );
 }
