@@ -28,18 +28,16 @@ import { formatGnf } from "@bamanashop/domain";
 import { SemanticColors } from "@/constants/colors";
 import { BorderRadius, Spacing, FontSize, FontWeight } from "@/constants/theme";
 
-function createCheckoutKey(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-}
-
 export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { items, updateQuantity, clearCart } = useCartStore();
+  const {
+    items,
+    updateQuantity,
+    clearCart,
+    getCheckoutKey,
+  } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
-  const [idempotencyKey, setIdempotencyKey] = useState(() =>
-    createCheckoutKey(),
-  );
   const [addresses, setAddresses] = useState<
     Array<{
       id: string;
@@ -67,10 +65,6 @@ export default function CartScreen() {
   useEffect(() => {
     loadAddresses();
   }, []);
-
-  useEffect(() => {
-    setIdempotencyKey(createCheckoutKey());
-  }, [items, selectedAddressId, paymentMethod]);
 
   useEffect(() => {
     if (items.length > 0) {
@@ -187,20 +181,43 @@ export default function CartScreen() {
         throw new Error("Adresse de livraison introuvable");
       }
 
-      const order = await createOrder({
+      const checkoutItems = items.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        expectedUnitPrice: item.product.price_gnf,
+      }));
+      const expectedDeliveryFee = totals!.deliveryFee;
+      const checkoutContext = JSON.stringify({
         storeId: items[0].product.store_id,
-        items: items.map((i) => ({
-          productId: i.product.id,
-          quantity: i.quantity,
-          expectedUnitPrice: i.product.price_gnf,
-        })),
+        items: checkoutItems,
         deliveryAddressId: selectedAddressId,
         paymentMethod,
-        expectedDeliveryFee: totals!.deliveryFee,
+        expectedDeliveryFee,
+      });
+      const idempotencyKey = getCheckoutKey(checkoutContext);
+
+      const order = await createOrder({
+        storeId: items[0].product.store_id,
+        items: checkoutItems,
+        deliveryAddressId: selectedAddressId,
+        paymentMethod,
+        expectedDeliveryFee,
         idempotencyKey,
       });
 
-      clearCart();
+      const currentItems = useCartStore.getState().items;
+      const cartUnchanged =
+        currentItems.length === checkoutItems.length &&
+        checkoutItems.every((checkoutItem, index) => {
+          const currentItem = currentItems[index];
+          return (
+            currentItem?.product.id === checkoutItem.productId &&
+            currentItem.quantity === checkoutItem.quantity &&
+            currentItem.product.price_gnf === checkoutItem.expectedUnitPrice
+          );
+        });
+
+      if (cartUnchanged) clearCart();
       router.push(`/orders/${order.id}`);
     } catch (error) {
       Alert.alert(
@@ -266,6 +283,7 @@ export default function CartScreen() {
             <View style={styles.quantityControls}>
               <TouchableOpacity
                 style={styles.qtyButton}
+                disabled={loading}
                 onPress={() =>
                   updateQuantity(item.product.id, item.quantity - 1)
                 }
@@ -279,6 +297,7 @@ export default function CartScreen() {
               <Text style={styles.qtyText}>{item.quantity}</Text>
               <TouchableOpacity
                 style={styles.qtyButton}
+                disabled={loading}
                 onPress={() =>
                   updateQuantity(item.product.id, item.quantity + 1)
                 }
@@ -305,6 +324,7 @@ export default function CartScreen() {
                 selectedAddressId === addr.id && styles.addressOptionSelected,
               ]}
               onPress={() => setSelectedAddressId(addr.id)}
+              disabled={loading}
             >
               <View style={styles.addressOptionContent}>
                 <Text style={styles.addressLabel}>{addr.label}</Text>
