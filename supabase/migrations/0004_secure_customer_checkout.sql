@@ -81,8 +81,11 @@ BEGIN
     WHERE pg_catalog.jsonb_typeof(entry.item) <> 'object'
        OR entry.item->>'product_id' IS NULL
        OR entry.item->>'quantity' IS NULL
-       OR (entry.item->>'quantity') !~ '^[0-9]+  ) THEN
-    RAISE EXCEPTION 'Cart contains an invalid product or quantity'
+       OR (entry.item->>'quantity') !~ '^[0-9]+$'
+       OR entry.item->>'unit_price_gnf' IS NULL
+       OR (entry.item->>'unit_price_gnf') !~ '^[0-9]+$'
+  ) THEN
+    RAISE EXCEPTION 'Cart contains an invalid product, quantity or price'
       USING ERRCODE = '22023';
   END IF;
 
