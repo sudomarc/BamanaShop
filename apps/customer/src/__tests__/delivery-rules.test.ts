@@ -9,7 +9,7 @@ const partner = (
 ) => ({ id, base_fee_gnf, cod_handling_fee_gnf, coverage_zones });
 
 describe("delivery partner selection", () => {
-  it("ignores cheaper partners that do not serve the selected commune", () => {
+  it("ignores cheaper partners outside the selected commune", () => {
     const selected = selectDeliveryPartner(
       [
         partner("outside", 1000, 0, ["Kaloum"]),
@@ -30,7 +30,7 @@ describe("delivery partner selection", () => {
     expect(selected?.id).toBe("global");
   });
 
-  it("matches commune names without case or surrounding-space differences", () => {
+  it("matches commune names case-insensitively", () => {
     const selected = selectDeliveryPartner(
       [partner("case-insensitive", 4000, 1000, ["  mAtAm "])],
       "Matam",
@@ -39,7 +39,7 @@ describe("delivery partner selection", () => {
     expect(selected?.id).toBe("case-insensitive");
   });
 
-  it("selects the lowest combined tariff and breaks ties by partner ID", () => {
+  it("chooses the lowest tariff and breaks ties by ID", () => {
     const selected = selectDeliveryPartner(
       [
         partner("z-partner", 4000, 1000, ["Matam"]),
@@ -52,7 +52,7 @@ describe("delivery partner selection", () => {
     expect(selected?.id).toBe("a-partner");
   });
 
-  it("returns null when no active partner covers the commune", () => {
+  it("returns null when no partner covers the commune", () => {
     const selected = selectDeliveryPartner(
       [partner("outside", 1000, 0, ["Kaloum"])],
       "Matam",

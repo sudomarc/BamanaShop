@@ -22,11 +22,13 @@ export function selectDeliveryPartner<T extends DeliveryPartnerQuote>(
       ),
   );
 
-  return [...eligible].sort(
+  const sorted = [...eligible].sort(
     (a, b) =>
       a.base_fee_gnf +
       a.cod_handling_fee_gnf -
       (b.base_fee_gnf + b.cod_handling_fee_gnf) ||
       a.id.localeCompare(b.id),
-  )[0] ?? null;
+  );
+
+  return sorted[0] ?? null;
 }
