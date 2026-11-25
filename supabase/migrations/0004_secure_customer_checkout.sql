@@ -303,6 +303,51 @@ BEGIN
 END;
 $function$;
 
+-- Customer cancellation is restricted to the customer's own pending COD order.
+CREATE OR REPLACE FUNCTION public.cancel_customer_order(
+  p_order_id UUID,
+  p_reason TEXT
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  v_customer_id UUID := auth.uid();
+  v_reason TEXT := COALESCE(
+    NULLIF(pg_catalog.btrim(p_reason), ''),
+    'Annulée par le client'
+  );
+BEGIN
+  IF v_customer_id IS NULL THEN
+    RAISE EXCEPTION 'Authentication required' USING ERRCODE = '28000';
+  END IF;
+
+  UPDATE public.orders
+  SET status = 'cancelled',
+      cancellation_reason = pg_catalog.left(v_reason, 500),
+      cancelled_at = pg_catalog.now(),
+      updated_at = pg_catalog.now()
+  WHERE id = p_order_id
+    AND customer_id = v_customer_id
+    AND status = 'pending'
+    AND delivery_status = 'unassigned'
+    AND payment_method = 'cod'::public.payment_method
+    AND payment_status = 'cash_due'::public.payment_status;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'This order cannot be cancelled by the current customer'
+      USING ERRCODE = '42501';
+  END IF;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.cancel_customer_order(UUID, TEXT)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cancel_customer_order(UUID, TEXT)
+  TO authenticated;
+
 REVOKE ALL ON FUNCTION public.release_cancelled_order_inventory()
   FROM PUBLIC, anon, authenticated;
 
