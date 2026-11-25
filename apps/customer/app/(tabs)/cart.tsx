@@ -37,7 +37,9 @@ export default function CartScreen() {
   const { user } = useAuthStore();
   const { items, updateQuantity, clearCart } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
-  const [idempotencyKey, setIdempotencyKey] = useState(() => createCheckoutKey());
+  const [idempotencyKey, setIdempotencyKey] = useState(() =>
+    createCheckoutKey(),
+  );
   const [addresses, setAddresses] = useState<
     Array<{
       id: string;
@@ -117,7 +119,8 @@ export default function CartScreen() {
       // Match the server tariff selection: lowest base + COD handling fee.
       const partner = [...partners].sort(
         (a, b) =>
-          a.base_fee_gnf + a.cod_handling_fee_gnf -
+          a.base_fee_gnf +
+          a.cod_handling_fee_gnf -
           (b.base_fee_gnf + b.cod_handling_fee_gnf),
       )[0];
 
@@ -156,7 +159,11 @@ export default function CartScreen() {
       Alert.alert("Panier vide", "Ajoutez des produits avant de commander");
       return;
     }
-    if (items.some((item) => item.product.store_id !== items[0].product.store_id)) {
+    if (
+      items.some(
+        (item) => item.product.store_id !== items[0].product.store_id,
+      )
+    ) {
       Alert.alert(
         "Panier invalide",
         "Une commande doit concerner une seule boutique. Retirez les produits d'autres boutiques avant de continuer.",
