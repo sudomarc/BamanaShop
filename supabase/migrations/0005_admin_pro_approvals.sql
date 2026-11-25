@@ -15,7 +15,13 @@ SET search_path = ''
 AS $function$
 BEGIN
   IF current_user IN ('postgres', 'service_role')
-     OR public.is_admin() THEN
+     OR EXISTS (
+       SELECT 1
+       FROM public.role_memberships AS admin_role
+       WHERE admin_role.user_id = auth.uid()
+         AND admin_role.role = 'admin'::public.user_role
+         AND admin_role.status = 'approved'::public.role_status
+     ) THEN
     IF TG_OP = 'UPDATE'
        AND OLD.status = 'rejected'::public.role_status
        AND NEW.status = 'pending'::public.role_status THEN
@@ -54,7 +60,13 @@ SET search_path = ''
 AS $function$
 BEGIN
   IF current_user IN ('postgres', 'service_role')
-     OR public.is_admin() THEN
+     OR EXISTS (
+       SELECT 1
+       FROM public.role_memberships AS admin_role
+       WHERE admin_role.user_id = auth.uid()
+         AND admin_role.role = 'admin'::public.user_role
+         AND admin_role.status = 'approved'::public.role_status
+     ) THEN
     IF TG_OP = 'UPDATE'
        AND OLD.status = 'rejected'::public.role_status
        AND NEW.status = 'pending'::public.role_status THEN
