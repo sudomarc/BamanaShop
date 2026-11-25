@@ -1462,6 +1462,16 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      create_customer_order: {
+        Args: {
+          p_store_id: string;
+          p_delivery_address_id: string;
+          p_payment_method: "cod" | "orange_money";
+          p_items: Json;
+          p_idempotency_key: string;
+        };
+        Returns: string;
+      };
       create_order: {
         Args: {
           p_customer_id: string;
