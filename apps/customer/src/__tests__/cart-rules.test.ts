@@ -6,7 +6,9 @@ import {
 
 describe("single-store cart rule", () => {
   it("allows adding a product to an empty cart", () => {
-    expect(() => assertSingleStoreCart([], { store_id: "store-a" })).not.toThrow();
+    expect(() =>
+      assertSingleStoreCart([], { store_id: "store-a" }),
+    ).not.toThrow();
   });
 
   it("allows adding products from the current store", () => {
