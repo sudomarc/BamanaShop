@@ -30,7 +30,9 @@ export function getProAccessDecision(
   input: ProAccessInput,
 ): ProAccessDecision {
   if (!input.backendConfigured) return { kind: "backend-unavailable" };
-  if (!input.initialized || input.profileLoading) return { kind: "loading" };
+  if (!input.initialized || input.profileLoading) {
+    return { kind: "loading" };
+  }
   if (!input.userId) return { kind: "sign-in" };
   if (input.profileError) {
     return { kind: "profile-error", message: input.profileError };
