@@ -7,6 +7,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Product } from "@bamanashop/contracts";
+import { assertSingleStoreCart } from "@/utils/cartRules";
 
 interface CartItem {
   product: Product;
@@ -34,12 +35,7 @@ export const useCartStore = create<CartState>()(
           throw new Error("La quantité doit être un entier positif.");
         }
 
-        const currentStoreId = get().getStoreId();
-        if (currentStoreId && currentStoreId !== product.store_id) {
-          throw new Error(
-            "Le panier est limité à une seule boutique. Videz-le avant de choisir une autre boutique.",
-          );
-        }
+        assertSingleStoreCart(get().items, product);
 
         set((state) => {
           const existingIndex = state.items.findIndex(
