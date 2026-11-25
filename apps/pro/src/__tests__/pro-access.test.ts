@@ -38,7 +38,10 @@ describe("Pro role access gate", () => {
 
   it("blocks on profile lookup errors rather than exposing a dashboard", () => {
     expect(
-      getProAccessDecision({ ...base, profileError: "RLS denied profile read" }),
+      getProAccessDecision({
+        ...base,
+        profileError: "RLS denied profile read",
+      }),
     ).toEqual({
       kind: "profile-error",
       message: "RLS denied profile read",
