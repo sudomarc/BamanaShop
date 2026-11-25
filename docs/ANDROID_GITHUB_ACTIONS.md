@@ -68,12 +68,12 @@ For BETA/PRODUCTION use `:app:assembleRelease`. Export the same signing environm
 
 ## Mobile backend configuration
 
-Before dispatching an APK build, configure these GitHub Actions repository variables (Settings → Secrets and variables → Actions → Variables):
+The workflow now includes the current project's **public mobile configuration** as defaults, so Customer and Pro builds can run without manually creating GitHub variables. Repository secrets or variables can still override these defaults for another Supabase environment. To configure a different project, set these GitHub Actions values (Settings → Secrets and variables → Actions):
 
 - `SUPABASE_URL`: the HTTPS URL of the intended Supabase project.
 - `SUPABASE_ANON_KEY`: that project's publishable key or legacy anon key. This is a public client key; it must never be replaced with a service-role key.
 
-The workflow fails before Gradle if either value is missing or the URL is not HTTPS. This prevents publishing an APK that silently runs without its backend configuration.
+The workflow validates that the resolved URL is HTTPS and refuses to build if the configuration is empty. The built-in anon key is a public client credential intended for mobile apps; RLS and backend authorization remain the security boundary. Never use a service-role key in this workflow or an APK.
 
 The DEV profile may use Android's debug signing key when the persistent keystore is not configured. BETA and PRODUCTION fail unless all four signing secrets above are present and the keystore alias can be validated. The same persistent keystore must be retained for future updates to install over existing builds.
 
