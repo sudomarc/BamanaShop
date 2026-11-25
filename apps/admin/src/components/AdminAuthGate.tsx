@@ -47,10 +47,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   useEffect(() => {
-    if (!session) {
-      if (state === "signed-out") router.replace("/login");
-      return;
-    }
+    if (!session) return;
 
     let active = true;
     setState("loading");
@@ -81,7 +78,13 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
     return () => {
       active = false;
     };
-  }, [router, session, state === "signed-out", supabase]);
+  }, [session, supabase]);
+
+  useEffect(() => {
+    if (!session && state === "signed-out") {
+      router.replace("/login");
+    }
+  }, [router, session, state]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
