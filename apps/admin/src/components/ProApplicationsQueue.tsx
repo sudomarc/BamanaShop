@@ -174,7 +174,10 @@ export function ProApplicationsQueue({
       </header>
 
       {error ? (
-        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <p
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+        >
           {error}
         </p>
       ) : null}
@@ -185,7 +188,9 @@ export function ProApplicationsQueue({
         </div>
       ) : applications.length === 0 ? (
         <div className="card p-8 text-center">
-          <h2 className="font-semibold text-slate-900">Aucune demande en attente</h2>
+          <h2 className="font-semibold text-slate-900">
+            Aucune demande en attente
+          </h2>
           <p className="mt-2 text-sm text-slate-500">
             Les nouvelles candidatures apparaîtront ici après leur soumission.
           </p>
@@ -232,7 +237,8 @@ export function ProApplicationsQueue({
                 {courier ? (
                   <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700">
                     <p>
-                      <strong>Moyen de transport :</strong> {courier.vehicle_type || "Non renseigné"}
+                      <strong>Moyen de transport :</strong>{" "}
+                      {courier.vehicle_type || "Non renseigné"}
                     </p>
                     <p className="mt-1">
                       Immatriculation : {courier.vehicle_plate || "Non renseignée"}
