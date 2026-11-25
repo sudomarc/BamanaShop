@@ -359,9 +359,73 @@ AFTER UPDATE OF status ON public.orders
 FOR EACH ROW
 EXECUTE FUNCTION public.release_cancelled_order_inventory();
 
+-- Privileged backend operations must never be callable from mobile clients.
+-- A future server/Edge Function may call these with the service-role credential.
+REVOKE ALL ON FUNCTION public.confirm_payment(UUID, VARCHAR, JSONB)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.confirm_payment(UUID, VARCHAR, JSONB)
+  TO service_role;
+
+REVOKE ALL ON FUNCTION public.dispatch_delivery(UUID, UUID, UUID)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.dispatch_delivery(UUID, UUID, UUID)
+  TO service_role;
+
+REVOKE ALL ON FUNCTION public.process_payout(UUID, TIMESTAMPTZ, TIMESTAMPTZ)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.process_payout(UUID, TIMESTAMPTZ, TIMESTAMPTZ)
+  TO service_role;
+
 REVOKE ALL ON FUNCTION public.create_customer_order(
   UUID, UUID, public.payment_method, JSONB, TEXT
 ) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.create_customer_order(
   UUID, UUID, public.payment_method, JSONB, TEXT
 ) TO authenticated;
+
+-- Fail the migration if privileged RPCs remain exposed to public client roles.
+DO $assertions$
+BEGIN
+  IF pg_catalog.has_function_privilege(
+    'anon',
+    'public.confirm_payment(uuid, character varying, jsonb)',
+    'EXECUTE'
+  ) OR pg_catalog.has_function_privilege(
+    'authenticated',
+    'public.confirm_payment(uuid, character varying, jsonb)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'confirm_payment must not be executable by anon/authenticated';
+  END IF;
+
+  IF pg_catalog.has_function_privilege(
+    'anon',
+    'public.dispatch_delivery(uuid, uuid, uuid)',
+    'EXECUTE'
+  ) OR pg_catalog.has_function_privilege(
+    'authenticated',
+    'public.dispatch_delivery(uuid, uuid, uuid)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'dispatch_delivery must not be executable by anon/authenticated';
+  END IF;
+
+  IF pg_catalog.has_function_privilege(
+    'anon',
+    'public.process_payout(uuid, timestamp with time zone, timestamp with time zone)',
+    'EXECUTE'
+  ) OR pg_catalog.has_function_privilege(
+    'authenticated',
+    'public.process_payout(uuid, timestamp with time zone, timestamp with time zone)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'process_payout must not be executable by anon/authenticated';
+  END IF;
+
+  IF pg_catalog.has_table_privilege('authenticated', 'public.orders', 'INSERT')
+     OR pg_catalog.has_table_privilege('authenticated', 'public.order_items', 'INSERT')
+     OR pg_catalog.has_table_privilege('authenticated', 'public.payments', 'INSERT') THEN
+    RAISE EXCEPTION 'Authenticated clients must not insert orders, order items or payments directly';
+  END IF;
+END;
+$assertions$;
