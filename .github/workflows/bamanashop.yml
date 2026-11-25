@@ -155,19 +155,6 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
-      - name: Capture exact Pro Prettier diff
-        run: |
-          pnpm exec prettier --write \
-            apps/pro/src/__tests__/pro-access.test.ts \
-            apps/pro/src/components/ProAccessScreens.tsx \
-            apps/pro/src/store/authStore.ts \
-            apps/pro/src/utils/proAccess.ts
-          git --no-pager diff -- \
-            apps/pro/src/__tests__/pro-access.test.ts \
-            apps/pro/src/components/ProAccessScreens.tsx \
-            apps/pro/src/store/authStore.ts \
-            apps/pro/src/utils/proAccess.ts
-
       - name: Check formatting
         run: pnpm run format:check
 
